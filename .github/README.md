@@ -32,6 +32,9 @@
 - **Dependabot alerts** и **automated security fixes** включены.
 - Локальный гейт: pre-merge хук `.claude/hooks/pre-merge-gate.js` требует
   security-подпись перед push/PR в рабочую ветку (см. корневой `CLAUDE.md`).
+  **Doc-only исключение:** PR/push, где дифф состоит только из документации/текста
+  (`.md`, `.mdc`, `.txt`, `LICENSE`, …), проходит без аудита; любой файл
+  кода/конфига/зависимостей включает гейт. Дифф не вычислился → fail-safe (блок).
 
 ## Прочее
 - Wiki отключена; Issues и Projects включены.

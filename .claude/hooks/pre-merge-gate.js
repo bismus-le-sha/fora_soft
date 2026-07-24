@@ -7,12 +7,20 @@
  *   - git merge (находясь на develop/main)
  *   - git push в develop/main (явно указана ветка или текущая ветка = develop/main)
  *
+ * Исключение (doc-only): если ВСЁ, что вливается (дифф <base>...HEAD), —
+ * документация/текст (.md, .mdc, .txt, LICENSE, .gitignore и т.п.), security-аудит
+ * НЕ требуется и действие пропускается. Стоит хоть один файл кода/конфига/
+ * зависимостей (.js, .ts, .json, .yml, Dockerfile, lock-файлы …) — гейт включается.
+ * Исключение контентное, а не по намерению: код-«фиксы» тоже аудируются.
+ *
  * Разрешает действие ТОЛЬКО если для текущего HEAD есть security-подпись:
  *   .gates/security-<short-HEAD>.ok  (создаёт security-auditor после PASS).
  * Иначе блокирует (exit 2) и напоминает запустить /security-audit.
  *
  * Прочие команды пропускает мгновенно (exit 0). При внутренней ошибке на
  * НЕгейтовой команде — тоже пропускает (fail-open), чтобы не ломать workflow.
+ * НО: если для гейтовой команды не удалось вычислить дифф — fail-safe:
+ * doc-only исключение НЕ применяется, проверяется маркер (по умолчанию блок).
  */
 'use strict';
 
@@ -77,6 +85,62 @@ else if (isMerge && onWorkBranch()) gated = true;
 else if (isPush && (mentionsWorkBranch || onWorkBranch())) gated = true;
 
 if (!gated) allow();
+
+// --- Doc-only исключение: аудит не нужен, если вливается только документация ---
+// Расширения/имена, которые не несут исполняемого кода/конфигурации/зависимостей.
+const SAFE_EXT = new Set(['.md', '.mdc', '.markdown', '.txt', '.rst', '.adoc']);
+const SAFE_BASENAMES = new Set([
+  'LICENSE',
+  'NOTICE',
+  '.gitignore',
+  '.gitattributes',
+  '.editorconfig',
+]);
+
+function isDocFile(file) {
+  const base = file.split('/').pop();
+  if (SAFE_BASENAMES.has(base)) return true;
+  const dot = base.lastIndexOf('.');
+  const ext = dot >= 0 ? base.slice(dot).toLowerCase() : '';
+  return SAFE_EXT.has(ext);
+}
+
+// База сравнения: явный --base/-B у `gh pr create`, иначе рабочая ветка по умолчанию.
+function targetBase() {
+  const m = cmd.match(/(?:--base|-B)[=\s]+([^\s]+)/);
+  if (m) return m[1];
+  if (/^(main|master)$/.test(branch())) return branch();
+  return 'develop';
+}
+
+// Список изменённых файлов относительно базы (merge-base, three-dot).
+// Возвращает null, если дифф вычислить не удалось (→ fail-safe, исключение не применяем).
+function changedFiles() {
+  const base = targetBase();
+  for (const ref of [`origin/${base}`, base]) {
+    try {
+      git(`rev-parse --verify --quiet ${ref}^{commit}`);
+    } catch {
+      continue; // такого ref нет — пробуем следующий
+    }
+    try {
+      const out = git(`diff --name-only ${ref}...HEAD`);
+      return out ? out.split('\n').map((s) => s.trim()).filter(Boolean) : [];
+    } catch {
+      return null; // ref есть, но diff упал — не рискуем
+    }
+  }
+  return null; // ни origin/base, ни base не нашли
+}
+
+const files = changedFiles();
+if (files && files.length > 0 && files.every(isDocFile)) {
+  process.stderr.write(
+    `🟢 Security gate: вливаются только документация/текст (${files.length} файл(ов)) — ` +
+      `security-аудит не требуется.\n`
+  );
+  allow();
+}
 
 // --- Гейтовая команда: проверяем security-подпись для текущего HEAD ---
 let head = '';
