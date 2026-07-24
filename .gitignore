@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs / tmp
+*.log
+tmp/
+.cache/
+
+# Claude Code — локальные настройки не коммитим (агенты/команды — коммитим)
+.claude/settings.local.json
+
+# Стек-специфичное добавим, когда определимся (node_modules/, dist/, __pycache__/, …)
