@@ -7,8 +7,8 @@
     "node": ">=20.0.0"
   },
   "workspaces": [
-    "server",
-    "client"
+    "app/server",
+    "app/client"
   ],
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",

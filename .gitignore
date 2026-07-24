@@ -26,6 +26,6 @@ tmp/
 
 # Node / npm workspaces
 node_modules/
-client/dist/
+app/client/dist/
 npm-debug.log*
 coverage/
