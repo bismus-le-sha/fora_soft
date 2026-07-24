@@ -16,11 +16,11 @@
 <!-- По одной секции на задачу плана. Для критичных включены test-first гейты.
      critical: YES/NO проставляет task-planner. -->
 
-### [ ] Задача 1 — Скаффолд монорепо (npm workspaces) — critical: NO
+### [x] Задача 1 — Скаффолд монорепо (npm workspaces) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [x] Code review пройден — `/code-review` (high effort; findings 1–2 применены)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS, маркер `.gates/security-b266f9d.ok`)
+- [x] PR в `develop` открыт — #3
 
 ### [ ] Задача 2 — Единый config.js с константами лимитов — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
