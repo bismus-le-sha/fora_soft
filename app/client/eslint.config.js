@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import globals from 'globals';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
@@ -17,10 +18,10 @@ export default [
         ecmaFeatures: { jsx: true },
       },
       globals: {
-        document: 'readonly',
-        window: 'readonly',
-        console: 'readonly',
-        process: 'readonly',
+        // Браузерные глобалы для src/ (navigator, RTCPeerConnection, crypto, …)
+        ...globals.browser,
+        // Node-глобалы для конфигов сборки (vite.config.js: process и т.п.)
+        ...globals.node,
       },
     },
     settings: {
