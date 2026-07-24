@@ -37,6 +37,9 @@ PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► �
 - Коммиты и PR ссылаются на пункт плана; PR заполняется по шаблону
   `.github/pull_request_template.md`.
 - Мерж только после `code-reviewer`, а для критичного — ещё и `security-auditor`.
+- **GitHub-настройки** (защита веток, auto-merge, CI, стратегия мержа) описаны
+  в `.github/README.md`. `develop`/`main` защищены: только PR, зелёный CI
+  (`hygiene`), запрет force-push/удаления; merge-коммиты; auto-merge по зелёному.
 
 ## Живой чеклист и гейты (защита от «человеческого фактора»)
 На каждую фичу `task-planner` генерирует `prds/<feature>/checklist.md` из
