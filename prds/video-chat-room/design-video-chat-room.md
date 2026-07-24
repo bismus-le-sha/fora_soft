@@ -74,8 +74,8 @@ graph TD
         D["rules/ mdc-правила"]
         E[".github/ CI hygiene, PR-шаблон"]
     end
-    F["client/ — НЕ СУЩЕСТВУЕТ, проектируется"]:::new
-    G["server/ — НЕ СУЩЕСТВУЕТ, проектируется"]:::new
+    F["app/client/ — НЕ СУЩЕСТВУЕТ, проектируется"]:::new
+    G["app/server/ — НЕ СУЩЕСТВУЕТ, проектируется"]:::new
     classDef new fill:#eef,stroke:#66f,stroke-dasharray:5 5;
 ```
 
@@ -123,72 +123,74 @@ graph TB
 ### 3.2 Структура проекта (монорепо, npm workspaces)
 ```
 video-chat-room/
-├── package.json                # workspaces: ["server","client"], скрипты dev/build/test/lint/audit
+├── package.json                # workspaces: ["app/server","app/client"], скрипты dev/build/test/lint/audit
 ├── package-lock.json           # зафиксирован (SEC-19)
 ├── .nvmrc                      # Node LTS (20.x)
-├── server/
-│   ├── package.json
-│   └── src/
-│       ├── index.js            # точка входа: Express (http) + Socket.io + (prod) статика client/dist
-│       ├── config.js           # ЕДИНЫЙ источник конфигурации/лимитов (см. §9.3)
-│       ├── logger.js           # обезличенное логирование (SEC-16)
-│       ├── security/
-│       │   └── headers.js      # secure-заголовки + CSP (SEC-13)
-│       ├── socket/
-│       │   ├── gateway.js      # io init, maxHttpBufferSize, CORS/origin (SEC-08,15)
-│       │   └── handlers.js     # обработчики событий (join/signal/chat/media/leave/disconnect)
-│       ├── domain/
-│       │   ├── Room.js         # сущность комнаты (участники, история, счётчик)
-│       │   ├── Participant.js  # сущность участника
-│       │   ├── Message.js      # сущность сообщения (chat/system)
-│       │   └── RoomRegistry.js # Map<roomId,Room>; create/get/cleanup; caps (SEC-10,11)
-│       ├── services/
-│       │   └── RoomService.js  # атомарный join/leave, lifecycle, broadcast-хелперы (SEC-07,11)
-│       └── lib/
-│           ├── validate.js     # серверная валидация имени/текста (SEC-01,02,03)
-│           ├── sanitize.js     # нейтрализация контента (SEC-03)
-│           └── rateLimit.js    # token-bucket на соединение (SEC-05)
-├── client/
-│   ├── package.json
-│   ├── index.html
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx            # bootstrap React
-│       ├── App.jsx             # роутинг Start ↔ Room, глобальные ошибки окружения
-│       ├── config.js           # ICE-серверы (STUN), URL сигналинга (SEC-17)
-│       ├── screens/
-│       │   ├── StartScreen.jsx # ввод имени, «Создать комнату» (US-1,2)
-│       │   └── RoomScreen.jsx  # видеосетка + панель управления + чат (US-6..10)
-│       ├── components/
-│       │   ├── VideoGrid.jsx   # адаптивная сетка 1–4 плитки (F-07)
-│       │   ├── VideoTile.jsx   # self/remote плитка: видео|заглушка, оверлей имени, mic-off (F-08,16,18)
-│       │   ├── ControlBar.jsx  # тумблеры mic/cam, «Выйти», «копировать ссылку» (F-03,09,10,17)
-│       │   ├── ChatPanel.jsx   # список сообщений + автопрокрутка + ввод (US-8, F-12..15)
-│       │   ├── ParticipantList.jsx # актуальный список (F-16)
-│       │   ├── JoinGate.jsx    # запрос имени при входе по ссылке + user-gesture (autoplay, F-37)
-│       │   └── errors/         # RoomFull, DeviceDenied, ServerDown, NoWebRTC баннеры (US-12,13)
-│       ├── webrtc/
-│       │   ├── MeshManager.js  # управление N соединениями, glare-free инициатива
-│       │   └── PeerConnection.js # обёртка одного RTCPeerConnection
-│       ├── media/
-│       │   └── mediaController.js # getUserMedia, toggle mic (enabled), toggle cam (stop+replaceTrack) (F-19)
-│       ├── socket/
-│       │   └── signalingClient.js # обёртка socket.io-client, типобезопасные emit/on
-│       ├── hooks/
-│       │   ├── useSignaling.js
-│       │   ├── useMesh.js
-│       │   └── useMedia.js
-│       └── lib/
-│           ├── escape.js       # клиентская нейтрализация (defense-in-depth; рендер через {value})
-│           └── compat.js       # детект поддержки WebRTC/getUserMedia (F-36)
-└── tests/ (в каждом workspace: server/tests, client/tests, e2e/)
+└── app/                        # кодовая база приложения (отделена от prds/, security/, rules/, .claude/, .github/)
+    ├── server/
+    │   ├── package.json
+    │   └── src/
+    │       ├── index.js            # точка входа: Express (http) + Socket.io + (prod) статика app/client/dist
+    │       ├── config.js           # ЕДИНЫЙ источник конфигурации/лимитов (см. §9.3)
+    │       ├── logger.js           # обезличенное логирование (SEC-16)
+    │       ├── security/
+    │       │   └── headers.js      # secure-заголовки + CSP (SEC-13)
+    │       ├── socket/
+    │       │   ├── gateway.js      # io init, maxHttpBufferSize, CORS/origin (SEC-08,15)
+    │       │   └── handlers.js     # обработчики событий (join/signal/chat/media/leave/disconnect)
+    │       ├── domain/
+    │       │   ├── Room.js         # сущность комнаты (участники, история, счётчик)
+    │       │   ├── Participant.js  # сущность участника
+    │       │   ├── Message.js      # сущность сообщения (chat/system)
+    │       │   └── RoomRegistry.js # Map<roomId,Room>; create/get/cleanup; caps (SEC-10,11)
+    │       ├── services/
+    │       │   └── RoomService.js  # атомарный join/leave, lifecycle, broadcast-хелперы (SEC-07,11)
+    │       └── lib/
+    │           ├── validate.js     # серверная валидация имени/текста (SEC-01,02,03)
+    │           ├── sanitize.js     # нейтрализация контента (SEC-03)
+    │           └── rateLimit.js    # token-bucket на соединение (SEC-05)
+    └── client/
+        ├── package.json
+        ├── index.html
+        ├── vite.config.js
+        └── src/
+            ├── main.jsx            # bootstrap React
+            ├── App.jsx             # роутинг Start ↔ Room, глобальные ошибки окружения
+            ├── config.js           # ICE-серверы (STUN), URL сигналинга (SEC-17)
+            ├── screens/
+            │   ├── StartScreen.jsx # ввод имени, «Создать комнату» (US-1,2)
+            │   └── RoomScreen.jsx  # видеосетка + панель управления + чат (US-6..10)
+            ├── components/
+            │   ├── VideoGrid.jsx   # адаптивная сетка 1–4 плитки (F-07)
+            │   ├── VideoTile.jsx   # self/remote плитка: видео|заглушка, оверлей имени, mic-off (F-08,16,18)
+            │   ├── ControlBar.jsx  # тумблеры mic/cam, «Выйти», «копировать ссылку» (F-03,09,10,17)
+            │   ├── ChatPanel.jsx   # список сообщений + автопрокрутка + ввод (US-8, F-12..15)
+            │   ├── ParticipantList.jsx # актуальный список (F-16)
+            │   ├── JoinGate.jsx    # запрос имени при входе по ссылке + user-gesture (autoplay, F-37)
+            │   └── errors/         # RoomFull, DeviceDenied, ServerDown, NoWebRTC баннеры (US-12,13)
+            ├── webrtc/
+            │   ├── MeshManager.js  # управление N соединениями, glare-free инициатива
+            │   └── PeerConnection.js # обёртка одного RTCPeerConnection
+            ├── media/
+            │   └── mediaController.js # getUserMedia, toggle mic (enabled), toggle cam (stop+replaceTrack) (F-19)
+            ├── socket/
+            │   └── signalingClient.js # обёртка socket.io-client, типобезопасные emit/on
+            ├── hooks/
+            │   ├── useSignaling.js
+            │   ├── useMesh.js
+            │   └── useMedia.js
+            └── lib/
+                ├── escape.js       # клиентская нейтрализация (defense-in-depth; рендер через {value})
+                └── compat.js       # детект поддержки WebRTC/getUserMedia (F-36)
+
+Тесты — в каждом workspace: app/server/tests, app/client/tests, app/e2e/ (Playwright).
 ```
 
 **Обоснование монорепо:** один `package-lock.json` (SEC-19), общий CI-гейт `hygiene` + будущие `lint`/`test`, простое совместное версионирование клиента и протокола. В проде Node-сервер отдаёт статическую сборку клиента с того же origin (упрощает CORS/CSP — SEC-13,15).
 
 **Зафиксированный тулинг (v1.1):**
-- **Клиент:** Vite (dev-сервер + `vite build` → `client/dist`), React 18, `socket.io-client`.
-- **Сервер:** Node.js 20 LTS, **Express** (http-сервер под Socket.io + раздача статики `client/dist` в проде + `/healthz`), `socket.io`.
+- **Клиент:** Vite (dev-сервер + `vite build` → `app/client/dist`), React 18, `socket.io-client`.
+- **Сервер:** Node.js 20 LTS, **Express** (http-сервер под Socket.io + раздача статики `app/client/dist` в проде + `/healthz`), `socket.io`.
 - **Тесты:** **Vitest** (unit — сервер и клиент), **Playwright** (e2e, многопользовательские WebRTC-сценарии с fake-media).
 - **Реверс-прокси (прод):** nginx/Caddy перед Node — терминирует HTTPS/WSS; статика + Socket.io проксируются с одного origin (см. §10 SEC-12, §12).
 
@@ -478,7 +480,7 @@ sequenceDiagram
 - **Битрейт не нормируется** (PRD §5) — на усмотрение WebRTC/браузера.
 
 ### 9.3 Конфигурируемые лимиты (единый `config.js`) — принятые константы (v1.1)
-> Значения **утверждены продуктовой командой** и фиксируются как константы конфигурации в `server/src/config.js` (единый источник). PRD F-40 отдавал числа «на усмотрение с разумными дефолтами» — ниже принятые значения. Все правки только через `config.js`.
+> Значения **утверждены продуктовой командой** и фиксируются как константы конфигурации в `app/server/src/config.js` (единый источник). PRD F-40 отдавал числа «на усмотрение с разумными дефолтами» — ниже принятые значения. Все правки только через `config.js`.
 
 | Параметр | Значение | Требование |
 |---|---|---|
@@ -535,7 +537,7 @@ sequenceDiagram
 ### 10.5 Устойчивость сигналинга и зависимостей
 | SEC | Статус | Как закрывается |
 |---|---|---|
-| **SEC-17** (medium) | **covered** | ICE-конфиг в одном месте (`client/config.js`, дублируется в `join:ok`); недоступность STUN / несостоявшийся P2P → graceful (плитка без медиа, приложение живёт). (§8, §9.3) |
+| **SEC-17** (medium) | **covered** | ICE-конфиг в одном месте (`app/client/src/config.js`, дублируется в `join:ok`); недоступность STUN / несостоявшийся P2P → graceful (плитка без медиа, приложение живёт). (§8, §9.3) |
 | **SEC-18** (medium) | **covered** | SDP/ICE обрабатываются только `RTCPeerConnection`; **без собственного парсинга/eval/шаблонизации SDP**; `setRemoteDescription`/`addIceCandidate` в try/catch — ошибка не роняет клиент. Сервер ретранслирует SDP как непрозрачную строку. (§6.1, §8) |
 | **SEC-19** (low) | **covered** | Минимум прод-зависимостей (`express`/встроенный http, `socket.io`, `react`, `react-dom`, `socket.io-client`); зафиксированный `package-lock.json`; новая зависимость — только после ревью. |
 | **SEC-20** (medium) | **covered** (план) | `npm audit` добавляется в CI-джобу под гейт `hygiene`/`test`; `high`/`critical` блокируют мерж или явно принимаются; поддерживаемые Node LTS 20 и браузеры 100+. Наполнение CI — §12. |
@@ -588,7 +590,7 @@ sequenceDiagram
 ## 12. Deployment & Migration Plan
 
 ### 12.1 Инициализация проекта (нет миграции данных — greenfield)
-1. `package.json` (workspaces server/client), `.nvmrc` (Node 20 LTS), `.gitignore` (node_modules, build).
+1. `package.json` (workspaces app/server, app/client), `.nvmrc` (Node 20 LTS), `.gitignore` (node_modules, build).
 2. `server` (Socket.io + http/express для статики) и `client` (Vite + React) как отдельные workspace.
 3. Наполнить CI-джобы `lint` и `test` в `.github/workflows/ci.yml` (сейчас заготовки) + `npm audit` (SEC-20); добавить их в required checks (см. `.github/README.md`).
 
@@ -596,7 +598,7 @@ sequenceDiagram
 | Среда | Клиент | Сервер | Транспорт |
 |---|---|---|---|
 | Dev | Vite dev-server (HMR), proxy на сервер | `node src/index.js` (nodemon) | `localhost` (secure context для WebRTC разрешён без TLS) |
-| Prod | `vite build` → `client/dist` | Express отдаёт `client/dist` + Socket.io **с того же origin** | **Реверс-прокси (nginx/Caddy)** терминирует **HTTPS/WSS** и проксирует на Node по http (SEC-12) |
+| Prod | `vite build` → `app/client/dist` | Express отдаёт `app/client/dist` + Socket.io **с того же origin** | **Реверс-прокси (nginx/Caddy)** терминирует **HTTPS/WSS** и проксирует на Node по http (SEC-12) |
 
 **Топология прод-развёртывания (single-instance):**
 ```mermaid

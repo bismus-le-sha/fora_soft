@@ -25,10 +25,10 @@
 ## Область 0 — Скаффолд монорепо и tooling (DevOps)
 
 - [ ] **1. Скаффолд монорепо (npm workspaces)**
-  - Инициализировать монорепо: root `package.json` (workspaces `["server","client"]`, скрипты `dev/build/test/lint/audit`), `.nvmrc` (Node 20 LTS), `.gitignore` (node_modules, `client/dist`, `.gates`), зафиксированный `package-lock.json`.
+  - Инициализировать монорепо: root `package.json` (workspaces `["app/server","app/client"]`, скрипты `dev/build/test/lint/audit`), `.nvmrc` (Node 20 LTS), `.gitignore` (node_modules, `app/client/dist`, `.gates`), зафиксированный `package-lock.json`. Весь код приложения — под `app/` (отделён от `prds/`, `security/`, `rules/`, `.claude/`, `.github/`).
   - **1.1** Root `package.json` + `.nvmrc` + `.gitignore` + пустой `package-lock.json` (SEC-19).
-  - **1.2** Workspace `server/`: `package.json` (express, socket.io), заготовка `src/index.js` (Express + http-сервер, слушает порт), `trust proxy`.
-  - **1.3** Workspace `client/`: `package.json`, `vite.config.js`, `index.html`, `src/main.jsx` + `App.jsx` (пустой рендер), dev-proxy на сервер.
+  - **1.2** Workspace `app/server/`: `package.json` (express, socket.io), заготовка `src/index.js` (Express + http-сервер, слушает порт), `trust proxy`.
+  - **1.3** Workspace `app/client/`: `package.json`, `vite.config.js`, `index.html`, `src/main.jsx` + `App.jsx` (пустой рендер), dev-proxy на сервер.
   - **1.4** Наполнить CI-джобы `lint` и `test` в `.github/workflows/ci.yml` + `npm audit` (high/critical блокируют мерж); добавить в required checks.
   - _Требования: F-06 (стек), SEC-19, SEC-20. Design: §2.1, §3.2, §11.1, §12.1, §12.2_
   - **Критерии приёмки:** `npm install` в корне ставит оба workspace; `npm run dev` поднимает Vite + Node; CI `hygiene`/`lint`/`test`/`audit` зелёные на пустом проекте.
@@ -144,7 +144,7 @@
   - **Оценка:** 0.75 ч-д. **Зависимости:** после 9.
 
 - [ ] **15. Прод-раздача статики и `/healthz`**
-  - Express отдаёт `client/dist` с того же origin в проде; `GET /healthz` → `200 {status:'ok', rooms: count()}` без PII.
+  - Express отдаёт `app/client/dist` с того же origin в проде; `GET /healthz` → `200 {status:'ok', rooms: count()}` без PII.
   - _Требования: SEC-12, SEC-15. Design: §3.2, §12.2, §12.4_
   - **Критерии приёмки:** health-check возвращает число комнат; статика раздаётся; в dev не мешает Vite.
   - **Оценка:** 0.5 ч-д. **Зависимости:** после 6.
