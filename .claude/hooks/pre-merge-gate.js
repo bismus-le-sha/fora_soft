@@ -88,7 +88,10 @@ if (!gated) allow();
 
 // --- Doc-only исключение: аудит не нужен, если вливается только документация ---
 // Расширения/имена, которые не несут исполняемого кода/конфигурации/зависимостей.
-const SAFE_EXT = new Set(['.md', '.mdc', '.markdown', '.txt', '.rst', '.adoc']);
+// Намеренно узко: только markdown. `.txt` НЕ включён — он используется как манифест
+// зависимостей (requirements.txt/runtime.txt) и может маскировать переименованный
+// код/секрет, а такие изменения обязаны проходить аудит (аудит M1).
+const SAFE_EXT = new Set(['.md', '.mdc', '.markdown']);
 const SAFE_BASENAMES = new Set([
   'LICENSE',
   'NOTICE',
@@ -105,10 +108,13 @@ function isDocFile(file) {
   return SAFE_EXT.has(ext);
 }
 
-// База сравнения: явный --base/-B у `gh pr create`, иначе рабочая ветка по умолчанию.
+// База сравнения: явный --base/-B ТОЛЬКО у `gh pr create` (у push/merge такого флага
+// нет, и его парсинг из произвольной строки отвязал бы базу от реального таргета — аудит M2).
 function targetBase() {
-  const m = cmd.match(/(?:--base|-B)[=\s]+([^\s]+)/);
-  if (m) return m[1];
+  if (isPrCreate) {
+    const m = cmd.match(/(?:--base|-B)[=\s]+([^\s]+)/);
+    if (m) return m[1];
+  }
   if (/^(main|master)$/.test(branch())) return branch();
   return 'develop';
 }
@@ -119,7 +125,10 @@ function changedFiles() {
   const base = targetBase();
   for (const ref of [`origin/${base}`, base]) {
     try {
-      git(`rev-parse --verify --quiet ${ref}^{commit}`);
+      // Без ^{commit}: execSync на Windows идёт через cmd.exe, где ^ — символ
+      // экранирования и `ref^{commit}` ломается. Для проверки существования
+      // ref достаточно --verify --quiet.
+      git(`rev-parse --verify --quiet ${ref}`);
     } catch {
       continue; // такого ref нет — пробуем следующий
     }
