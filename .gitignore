@@ -24,4 +24,8 @@ tmp/
 # Security-gate маркеры — эфемерные, привязаны к хешу коммита
 .gates/
 
-# Стек-специфичное добавим, когда определимся (node_modules/, dist/, __pycache__/, …)
+# Node / npm workspaces
+node_modules/
+client/dist/
+npm-debug.log*
+coverage/

@@ -17,7 +17,7 @@
      critical: YES/NO проставляет task-planner. -->
 
 ### [ ] Задача 1 — Скаффолд монорепо (npm workspaces) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
