@@ -1,9 +1,6 @@
 import express from 'express';
 import { createServer } from 'node:http';
-
-// NOTE: числовые лимиты/порт переедут в единый config.js (см. impl-video-chat-room.md, задача 2).
-// Здесь — только скаффолд Express + http-сервер (задача 1.2).
-const PORT = process.env.PORT || 3001;
+import { PORT } from './config.js';
 
 const app = express();
 

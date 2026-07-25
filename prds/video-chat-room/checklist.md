@@ -22,11 +22,11 @@
 - [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS, маркер `.gates/security-b266f9d.ok`)
 - [x] PR в `develop` открыт — #3
 
-### [ ] Задача 2 — Единый config.js с константами лимитов — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 2 — Единый config.js с константами лимитов — critical: NO
+- [x] Код написан, тесты зелёные — `implementer`
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; 3 minor — косметика/будущие задачи)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS; без находок critical/high; маркер `.gates/security-12b8457.ok`)
+- [x] PR в `develop` открыт — #4
 
 ### [ ] Задача 3 — Доменные сущности и RoomRegistry — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
