@@ -28,11 +28,11 @@
 - [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS; без находок critical/high; маркер `.gates/security-12b8457.ok`)
 - [x] PR в `develop` открыт — #4
 
-### [ ] Задача 3 — Доменные сущности и RoomRegistry — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 3 — Доменные сущности и RoomRegistry — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (36/36 vitest зелёные, lint чист; `Room`/`Participant`/`Message`/`RoomRegistry` в `app/server/src/domain/`)
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; тесты 22/22 доменных зелёные, lint чист; замечания только nit)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS; без находок critical/high; SEC-09/10/11 covered; маркер `.gates/security-db7ff80.ok`)
+- [x] PR в `develop` открыт — #6
 
 ### [ ] Задача 4 — Валидация и санитизация ввода (SEC-01/02/03) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
