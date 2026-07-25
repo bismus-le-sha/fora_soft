@@ -213,7 +213,7 @@ video-chat-room/
 | `services/RoomService.js` | **Атомарные** join/leave; lifecycle комнаты; формирование payload; broadcast. | `join(socket,{roomId,name}) -> {ok, selfId, snapshot} \| {ok:false, code}`; `leave(socket)`; `relaySignal(...)`; `postChat(...)`; `setMedia(...)` |
 | `domain/RoomRegistry.js` | Map комнат; создание по требованию; очистка пустых; caps на число комнат. | `getOrCreate(roomId)`, `get(roomId)`, `delete(roomId)`, `count()` |
 | `domain/Room.js` | Инкапсуляция участников (Map<socketId,Participant>), истории (ring-buffer), счётчика. | `add(p)`, `remove(id)`, `size()`, `isFull()`, `pushMessage(m)`, `snapshot()` |
-| `lib/validate.js` | Серверная валидация имени (≤30, allow-list символов, непустое после trim) и текста (непустой после trim, ≤ maxLen). | `validateName(raw)->{ok,value\|error}`, `validateText(raw)->{ok,value\|error}` |
+| `lib/validate.js` | Серверная валидация имени (≤30, allow-list символов, непустое после trim) и текста (непустой после trim, ≤ maxLen). | `validateName(raw)->{ok,value\|code}`, `validateText(raw)->{ok,value\|code}` |
 | `lib/sanitize.js` | Нейтрализация контента перед хранением/ретрансляцией (экранирование/удаление опасных символов). | `sanitize(str)->str` |
 | `lib/rateLimit.js` | Token-bucket на соединение по категориям (chat, signal, join). | `allow(socketId, category)->bool` |
 
