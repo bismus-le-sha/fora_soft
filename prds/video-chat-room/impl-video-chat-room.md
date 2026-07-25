@@ -76,7 +76,7 @@
 
 ## Область 3 — Сервер: транспорт, безопасность заголовков, каркас хендлеров
 
-- [ ] **6. Socket.io gateway (SEC-08, SEC-15)**
+- [x] **6. Socket.io gateway (SEC-08, SEC-15)**
   - `socket/gateway.js`: инициализация Socket.io поверх http-сервера с явным `maxHttpBufferSize=64KB`, CORS/origin allow-list из `ALLOWED_ORIGIN` (wildcard `*` в проде запрещён), WSS-транспорт; регистрация хендлеров.
   - _Требования: SEC-08, SEC-12, SEC-15. Design: §4.1, §6, §9.3, §10.3, §10.4_
   - **Критерии приёмки:** интеграционный тест: payload >64KB рвётся до обработки; подключение с чужого origin отклоняется; корректный origin проходит.
