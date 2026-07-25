@@ -71,5 +71,11 @@ jobs:
           cache: npm
 
       - run: npm ci
-      # high/critical блокируют мерж (SEC-20); package-lock.json зафиксирован (SEC-19).
+      # Блокирующий гейт — только прод-дерево: high/critical в поставляемых
+      # зависимостях блокируют мерж (SEC-20); package-lock.json зафиксирован (SEC-19).
+      # Dev-тулинг (eslint и т.п.) в прод-бандл не попадает и оценивается отдельно ниже.
       - run: npm run audit
+      # Информационный аудит dev-зависимостей — не блокирует мерж, для видимости.
+      - name: audit (dev, non-blocking)
+        continue-on-error: true
+        run: npm run audit:dev

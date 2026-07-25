@@ -17,7 +17,8 @@
     "build": "npm run build --workspace=client",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "audit:dev": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
