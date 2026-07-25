@@ -24,7 +24,7 @@
 
 ### [ ] Задача 2 — Единый config.js с константами лимитов — critical: NO
 - [x] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; 3 minor — косметика/будущие задачи)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
 
