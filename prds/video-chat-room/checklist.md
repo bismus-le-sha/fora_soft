@@ -23,7 +23,7 @@
 - [x] PR в `develop` открыт — #3
 
 ### [ ] Задача 2 — Единый config.js с константами лимитов — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
