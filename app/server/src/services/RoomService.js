@@ -10,10 +10,10 @@
  * Design: §4.1 (таблица `services/RoomService.js`), §5.1, §5.2, §6.1, §7.
  */
 
-import { validateName } from '../lib/validate.js';
+import { validateName, validateText } from '../lib/validate.js';
 import { sanitize } from '../lib/sanitize.js';
 import { Participant } from '../domain/Participant.js';
-import { createSystemMessage } from '../domain/Message.js';
+import { createSystemMessage, createChatMessage } from '../domain/Message.js';
 
 /** Сообщения `join:rejected` клиенту (SEC-15, без внутренних деталей). */
 const JOIN_REJECT_MESSAGES = Object.freeze({
@@ -211,16 +211,75 @@ export function leave(socket, ctx) {
 /**
  * Отправка сообщения чата с анти-спуфингом авторства (SEC-06). Задача 11
  * [critical].
+ *
+ * Rate-limit(chat) уже применён вызывающим `socket/handlers.js` до вызова
+ * этой функции (Design §6.1). Пайплайн здесь: сессия сокета (`socket.data.roomId`
+ * + `room.get(socket.id)`) → `validateText` → `sanitize` → `Message{kind:'chat'}`
+ * с авторством ИЗ СЕРВЕРНОЙ СЕССИИ (`socket.id`/`participant.name`) → push в
+ * историю комнаты → broadcast `chat:message` всем в комнате, включая автора
+ * (Design §6.2/§7.4 — «всем в комнате»).
+ *
+ * Анти-спуфинг (SEC-06): `payload.authorId`/`authorName`/`id`/`ts`/`kind`
+ * полностью игнорируются — `createChatMessage` строит `Message` только из
+ * `socket.id` и серверного снимка `participant.name`, никогда из полей
+ * клиентского payload.
+ *
+ * Без валидной сессии (сокет не состоит в комнате либо уже не числится
+ * участником — race с `leave`/`disconnect`) — безопасный no-op, без ошибки
+ * клиенту и без утечки в чужие комнаты (не бросает, не роняет процесс, F-40).
+ *
  * @param {import('socket.io').Socket} socket
- * @param {{text?: string}} payload
+ * @param {{text?: unknown}} payload
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
  * @returns {void}
  */
-export function postChat(_socket, _payload, _ctx) {
-  // TODO(задача 11, critical, SEC-02/03/05/06): validateText → sanitize →
-  // Message{kind:chat, authorId=socket.id, authorName=снимок} (поля автора
-  // из payload игнорируются) → push в историю (задача 12 — HISTORY_MAX) →
-  // broadcast chat:message.
+export function postChat(socket, payload, ctx) {
+  const { registry } = ctx;
+
+  const roomId = socket.data.roomId;
+  if (!roomId) {
+    // Нет успешного join по этому сокету — нет серверной сессии, из которой
+    // можно взять авторство. Безопасный no-op (SEC-06).
+    return;
+  }
+
+  const room = registry.get(roomId);
+  if (!room) {
+    // Комната уже удалена (race с leave/disconnect другого пути) — no-op.
+    return;
+  }
+
+  const participant = room.get(socket.id);
+  if (!participant) {
+    // Сокет более не числится участником этой комнаты — no-op.
+    return;
+  }
+
+  const textResult = validateText(payload?.text);
+  if (!textResult.ok) {
+    // Пустой/пробельный/не-строковый/слишком длинный текст (SEC-02) —
+    // отклоняется молча, без broadcast и без ошибки клиенту.
+    return;
+  }
+  const text = sanitize(textResult.value);
+  if (text.length === 0) {
+    // Defense-in-depth: санитизация не должна схлопывать валидный текст в
+    // пустую строку в норме, но если это произошло — не рассылаем пустое
+    // сообщение (симметрично validateText's empty-check).
+    return;
+  }
+
+  // Авторство — ИСКЛЮЧИТЕЛЬНО из серверной сессии (SEC-06); поля
+  // authorId/authorName/id/ts/kind клиентского payload игнорируются целиком.
+  const message = createChatMessage({
+    authorId: socket.id,
+    authorName: participant.name,
+    text,
+  });
+
+  room.pushMessage(message);
+
+  ctx.io.to(roomId).emit('chat:message', message);
 }
 
 /**
