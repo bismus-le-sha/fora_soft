@@ -100,8 +100,8 @@
 - [x] Отчёт по тестам предоставлен пользователю
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно (пользователь запросил `/implement` задачи 10)
 - [x] Код написан, тесты зелёные — `implementer`, `RoomService.leave` (SEC-11, единый путь leave/disconnect, cleanup при size==0); `tests/socket/leave.test.js` 12/12, монорепо 172/172 зелёные, lint чист.
-- [ ] Code review пройден — `code-reviewer` нашёл 5 находок CONFIRMED (double-join guard отсутствовал в `join()` — SEC-11 утечка слота; дублирование `chat:system` broadcast между join/leave; двойной Map-lookup в leave(); тройное дублирование `socket.data.roomId=undefined`; формат чеклиста). Все закрыты `implementer`: добавлен guard `if (socket.data.roomId)` → `error{bad-payload}` + регресс-тест в `join.test.js`; вынесен хелпер `broadcastSystemEvent`; `leave()` схлопнут до одного lookup и одного места сброса `socket.data.roomId`. `npx vitest run` (весь server): 173/173 зелёные (172 + новый регресс-тест); `npm run lint --workspace=app/server`: 0 errors (1 pre-existing warning в `join.test.js`, не введён этой правкой). Ожидает повторного `code-reviewer` для подтверждения PASS.
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer`, вердикт **PASS** после фикса; исходные 5 находок CONFIRMED (double-join guard, дедуп broadcast, двойной lookup, тройной сброс `roomId`, формат чеклиста) все закрыты коммитом `802ce64`, повторная проверка не выявила новых багов; тесты 173/173, lint чист.
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (точечный аудит задачи critical:YES, дифф до `origin/develop`; PASS, без находок critical/high/medium; double-join guard закрыл stale-slot-утечку из задачи 9; SEC-11 covered — cleanup при size==0 → `RoomRegistry.delete`→`Room.clear()`; тесты 27/27, `npm audit` 0 vuln)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 11 — Анти-спуфинг авторства + отправка чата (SEC-06) — critical: YES
