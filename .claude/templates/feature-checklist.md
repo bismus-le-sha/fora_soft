@@ -14,6 +14,8 @@
 - [ ] TDD готов — `/design`
 - [ ] Implementation Plan готов — `/plan`
 - [ ] Секции задач ниже сгенерированы из плана
+- [ ] ⛔ Security audit эпика ПРОЙДЕН — `/security-audit` (обязателен перед
+      мержем эпика в `main`; хук блокирует push/merge в `main` без маркера)
 
 ## Задачи
 
@@ -23,8 +25,8 @@
 ### [ ] Задача N — <название> — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — auditor/auto-gate/rebind (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [ ] PR в `develop` открыт (security-гейт на этот PR не распространяется —
+      он про мерж эпика в `main`, см. «Легенда гейтов»)
 
 ### [ ] Задача M — <название> — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
@@ -32,25 +34,24 @@
 - [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
 - [ ] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем, критичное всегда вручную)
+- [ ] Точечный `/security-audit` (рекомендован для критичного, не блокирует PR)
 - [ ] PR в `develop` открыт
 
 ## Легенда гейтов
 - ⛔ **ОЖИДАНИЕ КОМАНДЫ** — критичная задача: код НЕ пишем, пока пользователь
   явно не разрешил после отчёта по тестам.
-- ⛔ **Security review** — обязателен перед любым вливанием в `develop`/`main`.
-  Без него `gh pr create` / push в рабочую ветку **блокируется хуком**
-  (`.claude/hooks/pre-merge-gate.js`). Разблокировать может:
-  - `security-auditor` (`/security-audit`) — ручной аудит, обязателен для
-    критичных задач и для диффов с чувствительными путями (`.claude/**`,
-    `.github/workflows/**`, `security/**`, сокеты/authN/session/crypto/rate-limit,
-    `package.json`/lockfiles, `Dockerfile*`, `.env*`, `config.js`,
-    `validate.js`/`sanitize.js`);
-  - `node scripts/security-gate.js` — авто-гейт для НЕкритичных задач без
-    чувствительных путей: сам гоняет test/lint/`npm audit` и при зелёном
-    результате ставит маркер;
+- ⛔ **Security audit эпика** — обязателен перед вливанием эпика (релиза) в
+  `main`/`master`. Без него `gh pr create --base main` / push/merge в
+  `main`/`master` **блокируется хуком** (`.claude/hooks/pre-merge-gate.js`).
+  PR отдельных задач в `develop` этим хуком НЕ блокируются. Разблокировать
+  можно:
+  - `security-auditor` (`/security-audit`) — ручной аудит диффа до `main`;
+  - `node scripts/security-gate.js` — авто-гейт, если дифф до `main` не
+    трогает чувствительные пути (`.claude/**`, `.gates/**`,
+    `.github/workflows/**`, `security/**`, сокет-слой, `.env*`,
+    authN/session/crypto/rate-limit по имени файла);
   - **Rebind** — если файл в диффе байт-в-байт совпадает с версией, уже
     аудированной ранее (по `.gates/security-*.files`), хук пропускает его
-    без нового ручного аудита — повторно писать «аудит пройден» не нужно.
-  В любом случае маркер — `.gates/security-<short-HEAD>.ok`; новый коммит с
-  реально новым содержимым требует нового прохождения одного из путей выше.
+    без нового ручного аудита.
+  Маркер — `.gates/security-<short-HEAD>.ok`; новый коммит с реально новым
+  содержимым требует нового прохождения одного из путей выше.
