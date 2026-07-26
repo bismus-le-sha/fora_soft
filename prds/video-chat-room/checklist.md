@@ -105,13 +105,13 @@
 - [x] PR в `develop` открыт — [#18](https://github.com/bismus-le-sha/fora_soft/pull/18)
 
 ### [ ] Задача 11 — Анти-спуфинг авторства + отправка чата (SEC-06) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [x] Тесты написаны и падают (red) — `test-author` (13 интеграционных кейсов в `app/server/tests/socket/chat.test.js` — socket.io-client против реального `io`+каркас хендлеров задачи 8, свой `RoomRegistry` в `deps` для чтения `room.snapshot().history`: happy-path (`chat:message` всем в комнате, включая автора; серверный `authorId`=socket.id/настоящее имя/`ts`/`id`; трим текста; доставка всем в комнате из 3), анти-спуфинг SEC-06 (подделанные `authorId`/`authorName`/`id`/`ts`/`kind` в payload игнорируются; нельзя выдать себя за другого участника даже с его реальным socket.id/именем; серверное авторство и в сохранённой истории), валидация SEC-02 (пустой/пробельный/не-строковый/> MESSAGE_MAX текст → не рассылается), санитизация SEC-03 (XSS-пейлоад без сырых `<`/`>` в broadcast и истории), сессия (chat:send до `join` → безопасный no-op, нет утечки в чужую комнату, сервер жив). Red-прогон `npx vitest run tests/socket/chat.test.js`: **9 failed | 4 passed (13)** — все дискриминирующие кейсы (happy/anti-spoof/sanitize + follow-up valid send в robustness-кейсах) падают из-за стаба `RoomService.postChat` (no-op задачи 8), падение из-за отсутствия функционала. 4 «зелёных» — чисто негативные «не рассылается» (empty/whitespace/non-string/too-long): проходят тривиально, т.к. стаб ничего не шлёт → timeout; станут дискриминирующими после реализации. lint чист.)
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно (пользователь запросил реализацию задачи 11)
+- [x] Код написан, тесты зелёные — `implementer`, `RoomService.postChat` (SEC-06: авторство только из серверной сессии сокета; `validateText`+`sanitize` до broadcast/истории); `tests/socket/chat.test.js` 13/13, монорепо 186/186 зелёные, lint чист.
+- [x] Code review пройден — `code-reviewer` (high effort, 8 углов; вердикт PASS с 1 minor находкой — reuse: дублирование резолва сессии в `postChat`/`leave`; устранено `implementer`'ом — вынесены `resolveSession`/`resolveRoomSession`, коммит `9adc9fc`, 186/186 тестов и lint зелёные, тесты не менялись)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS; без находок critical/high; SEC-02/03/05/06 covered; авторство только из серверной сессии, рефактор `resolveSession`/`resolveRoomSession` инварианты leave не ослабил; тесты 13/13, `npm audit` 0 vuln; маркер `.gates/security-9adc9fc.ok`)
+- [x] PR в `develop` открыт — #19
 
 ### [ ] Задача 12 — История чата при позднем входе (F-14/23) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
