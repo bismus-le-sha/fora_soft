@@ -87,10 +87,10 @@
 - [x] PR в `develop` открыт — [#14](https://github.com/bismus-le-sha/fora_soft/pull/14)
 
 ### [ ] Задача 9 — Атомарный join и лимит 4 участника (SEC-07) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Тесты написаны и падают (red) — `test-author` (8 интеграционных кейсов в `app/server/tests/socket/join.test.js` — socket.io-client против реального `io`+каркас хендлеров задачи 8, свой `RoomRegistry` в `deps` для проверки серверного состояния: happy-path (`join:ok` со снимком `selfId`/`participants`/`history`/`iceServers`; трим имени через validate+sanitize; старожил получает `participant:joined`+`chat:system{join}`), ошибки (пустое имя и XSS-имя → `join:rejected{invalid-name}`, слот не занят; 5-й → `join:rejected{room-full}`, в комнате ровно 4), атомарность SEC-07/US-5 (гонка ROOM_CAPACITY+2 одновременных `join` → ровно 4 ok + остальные `room-full`; комната из 3 + 2 одновременных → входит ровно 1; серверный `room.size()` никогда не > ROOM_CAPACITY). Red-прогон `npx vitest run tests/socket/join.test.js`: 8/8 FAIL — стаб `RoomService.join` (no-op задачи 8) не эмитит `join:ok`/`join:rejected` → timeout/пустой снимок; падение из-за отсутствия функционала, не ошибки в тестах.)
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно (пользователь запросил `/implement` задачи 9)
+- [x] Код написан, тесты зелёные — `implementer` (`services/RoomService.join`: `validateName`→`sanitize`→`RoomRegistry.getOrCreate`→атомарная секция `room.isFull()`→`room.add()` без `await` между ними (SEC-07) →`socket.join(roomId)`→`join:ok{selfId,participants,history,iceServers}` инициатору + `participant:joined`/`chat:system{join}` остальным через `socket.to(roomId)`; невалидное имя/переполнение → `join:rejected{invalid-name|room-full}`; структурно битый `roomId`/достижение `ROOMS_MAX` → обобщённый `error` (SEC-15/SEC-10), не документированные `join:rejected`-коды. `tests/socket/join.test.js` НЕ менялся. Точечная правка фейкового сокета/ctx в `tests/services/roomService.test.js` (смоук-тест задачи 8: добавлены стабы `join()`/`to()`/`data`/`config.ICE_SERVERS`, т.к. реальная реализация теперь их использует) — поведенческих ассертов не добавлял/не менял. Прогон `npx vitest run tests/socket/join.test.js`: 8/8 зелёные. Полный `npm run test --workspaces`: 161/161 зелёные (server 160, client 1). `npm run lint --workspaces`: 0 errors (1 pre-existing warning в самом `join.test.js`, файл не редактировался).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт

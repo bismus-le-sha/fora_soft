@@ -12,8 +12,19 @@ import { RoomRegistry } from '../../src/domain/RoomRegistry.js';
  * задачах 9–14 и НЕ дублируются здесь.
  */
 describe('services/RoomService — каркас (Design §4.1, задача 8)', () => {
-  const fakeSocket = { id: 'socket-1', emit: () => {} };
-  const ctx = { io: { emit: () => {} }, config: {}, registry: new RoomRegistry() };
+  // `join` (задача 9) реально использует `socket.join(roomId)`/`socket.to(roomId)`/
+  // `socket.data` и `ctx.config.ICE_SERVERS` — фейковый сокет/ctx дополнены
+  // минимальными стабами, чтобы этот смоук-тест («вызываема, не бросает»)
+  // остался в скоупе задачи 8 и не проверял бизнес-поведение (оно покрыто
+  // `tests/socket/join.test.js`, задача 9).
+  const fakeSocket = {
+    id: 'socket-1',
+    data: {},
+    emit: () => {},
+    join: () => {},
+    to: () => ({ emit: () => {} }),
+  };
+  const ctx = { io: { emit: () => {} }, config: { ICE_SERVERS: [] }, registry: new RoomRegistry() };
 
   it.each([
     ['join', () => join(fakeSocket, { roomId: 'r1', name: 'A' }, ctx)],

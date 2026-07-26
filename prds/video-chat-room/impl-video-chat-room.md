@@ -99,7 +99,7 @@
 
 ## Область 4 — Сервер: критичные инварианты комнаты и чата
 
-- [ ] **9. [critical] Атомарный join и лимит 4 участника (SEC-07)**
+- [x] **9. [critical] Атомарный join и лимит 4 участника (SEC-07)**
   - `RoomService.join` как единый синхронный участок event-loop: `isFull()`→`add()` без `await`; 5-й → `join:rejected{room-full}`. Хендлер `join`: rate-limit → `validateName` → `sanitize` → атомарный join → `join:ok{selfId,participants,history,iceServers}` инициатору + `participant:joined` + `chat:system{join}` остальным.
   - **9.1** `test-author`: интеграционный тест (socket.io-client против реального `io`): 5 одновременных `join` в комнату из 3 → ровно 4 участника, 1 отказ `room-full`; невалидное имя → `invalid-name`. Red.
   - **9.2** `implementer`: `services/RoomService.join` + `join`-хендлер + broadcast.
