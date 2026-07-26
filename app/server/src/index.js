@@ -1,6 +1,10 @@
 import express from 'express';
 import { createServer } from 'node:http';
-import { PORT } from './config.js';
+import * as config from './config.js';
+import { createGateway } from './socket/gateway.js';
+import { registerHandlers } from './socket/handlers.js';
+
+const { PORT } = config;
 
 const app = express();
 
@@ -13,6 +17,10 @@ app.get('/healthz', (_req, res) => {
 
 const httpServer = createServer(app);
 
+// Socket.io-транспорт (задача 6) + каркас обработчиков событий (задача 8).
+const io = createGateway(httpServer, config);
+registerHandlers(io, config);
+
 // Запуск сервера пропускаем при импорте модуля в тестах.
 if (process.env.NODE_ENV !== 'test') {
   httpServer.listen(PORT, () => {
@@ -20,4 +28,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-export { app, httpServer };
+export { app, httpServer, io };
