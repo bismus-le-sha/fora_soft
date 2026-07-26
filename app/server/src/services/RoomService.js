@@ -33,6 +33,18 @@ function rejectJoin(socket, code) {
 }
 
 /**
+ * Общий `chat:system`-broadcast остальным участникам комнаты (используется
+ * и `join()`, и `leave()` — см. Design §6.2/§7.3).
+ * @param {import('socket.io').Socket} socket
+ * @param {string} roomId
+ * @param {'join' | 'leave'} event
+ * @param {string} subjectName
+ */
+function broadcastSystemEvent(socket, roomId, event, subjectName) {
+  socket.to(roomId).emit('chat:system', createSystemMessage({ event, subjectName }));
+}
+
+/**
  * Атомарный вход в комнату (лимит `ROOM_CAPACITY`, SEC-07). Задача 9 [critical].
  *
  * Rate-limit(join) уже применён вызывающим `socket/handlers.js` до вызова
@@ -48,6 +60,13 @@ function rejectJoin(socket, code) {
  * гонка «check → reserve» невозможна по конструкции, а не по счастливой
  * случайности тайминга.
  *
+ * Double-join guard (SEC-11, post-review находка задачи 10): сокет,
+ * уже состоящий в комнате (`socket.data.roomId` проставлен), отклоняется
+ * обобщённой ошибкой `error{bad-payload}` ДО какого-либо обращения к
+ * `registry`/`Room` — без guard'а повторный `join` перезаписал бы
+ * `socket.data.roomId` новой комнатой, а прежняя комната навсегда сохранила
+ * бы «призрачного» участника и никогда не была бы удалена из `RoomRegistry`.
+ *
  * @param {import('socket.io').Socket} socket
  * @param {{roomId?: unknown, name?: unknown}} payload
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
@@ -55,6 +74,19 @@ function rejectJoin(socket, code) {
  */
 export function join(socket, payload, ctx) {
   const { registry, config } = ctx;
+
+  if (socket.data.roomId) {
+    // Сокет уже состоит в другой комнате (предшествующий успешный join) —
+    // повторный join по тому же соединению отклоняется без падения процесса
+    // (F-40). Иначе `socket.data.roomId` был бы перезаписан новой комнатой,
+    // а старая комната навсегда сохранила бы «призрачного» участника — её
+    // `size()` никогда не достигнет 0, и она никогда не будет удалена из
+    // `RoomRegistry` (утечка слота ROOMS_MAX, SEC-11). Не документированный
+    // в §6.2 код `join:rejected`, поэтому тот же обобщённый транспортный
+    // путь (SEC-15), что и структурно некорректный `roomId` ниже.
+    socket.emit('error', { code: 'bad-payload', message: 'Некорректный запрос.' });
+    return;
+  }
 
   const nameResult = validateName(payload?.name);
   if (!nameResult.ok) {
@@ -109,20 +141,71 @@ export function join(socket, payload, ctx) {
   });
 
   socket.to(roomId).emit('participant:joined', participant.toSnapshot());
-  socket.to(roomId).emit('chat:system', createSystemMessage({ event: 'join', subjectName: name }));
+  broadcastSystemEvent(socket, roomId, 'join', name);
 }
 
 /**
  * Явный выход из комнаты (`leave`) либо cleanup при обрыве (`disconnect`).
  * Задача 10 [critical], SEC-11.
+ *
+ * Единый путь для обоих триггеров (Design §6.1/§7.3: «leave — эквивалент
+ * disconnect»): `socket/handlers.js` вызывает эту же функцию и на явное
+ * событие `leave`, и на транспортный `disconnect`. Инварианты:
+ *   - идемпотентность — сокет без предшествующего успешного `join`
+ *     (`socket.data.roomId` не проставлен) либо уже вышедший (комната/
+ *     участник отсутствуют) → безопасный no-op, без ошибки клиенту и без
+ *     повторного broadcast;
+ *   - остальным участникам уходят `participant:left{id}` +
+ *     `chat:system{event:'leave', subjectName}` (снимок имени берётся ДО
+ *     удаления участника из `Room`);
+ *   - если после удаления `room.size() === 0` — комната целиком стирается из
+ *     `RoomRegistry` (участники, счётчик, история) — SEC-11, комнату нельзя
+ *     «оживить» остатками старого состояния при повторном входе по тому же
+ *     `roomId` (`RoomRegistry.getOrCreate` создаст свежую `Room`).
+ *
  * @param {import('socket.io').Socket} socket
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
  * @returns {void}
  */
-export function leave(_socket, _ctx) {
-  // TODO(задача 10, critical, SEC-11): room.remove(id) → participant:left +
-  // chat:system(leave) остальным; при room.size()==0 → RoomRegistry.delete
-  // (участники/история/id стёрты, без утечки состояния).
+export function leave(socket, ctx) {
+  const { registry } = ctx;
+
+  const roomId = socket.data.roomId;
+  if (!roomId) {
+    // Сокет никогда не входил в комнату (либо уже обработан выше) — nothing
+    // to clean up.
+    return;
+  }
+  // Схлопнуто в одно место (не дублируется по веткам ниже): как только
+  // roomId прочитан и признан истинным, состояние сокета сбрасывается сразу,
+  // до всех остальных проверок.
+  socket.data.roomId = undefined;
+
+  const room = registry.get(roomId);
+  if (!room) {
+    // Комната уже удалена ранее (double leave/disconnect) — no-op.
+    return;
+  }
+
+  // Один lookup вместо двух: инвариант однопоточности/без await (см. выше)
+  // гарантирует, что `get`/`remove` по одному и тому же ключу согласованы.
+  const participant = room.get(socket.id);
+  if (!participant) {
+    // Идемпотентность: этот сокет в комнате уже не числится (повторный
+    // leave/disconnect по тому же соединению) — no-op, без повторного
+    // broadcast и без ошибки процесса.
+    return;
+  }
+  room.remove(socket.id);
+
+  socket.leave(roomId);
+
+  socket.to(roomId).emit('participant:left', { id: socket.id });
+  broadcastSystemEvent(socket, roomId, 'leave', participant.name ?? '');
+
+  if (room.size() === 0) {
+    registry.delete(roomId);
+  }
 }
 
 /**

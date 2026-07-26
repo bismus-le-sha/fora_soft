@@ -96,13 +96,13 @@
 - [x] PR в `develop` открыт — [#16](https://github.com/bismus-le-sha/fora_soft/pull/16)
 
 ### [ ] Задача 10 — Очистка состояния комнаты при выходе/обрыве последнего (SEC-11) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [x] Тесты написаны и падают (red) — `test-author`, 12 кейсов в `app/server/tests/socket/leave.test.js` (SEC-11, happy-path/idempotency/race/anti-leak), red-прогон 11 failed | 1 passed.
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно (пользователь запросил `/implement` задачи 10)
+- [x] Код написан, тесты зелёные — `implementer`, `RoomService.leave` (SEC-11, единый путь leave/disconnect, cleanup при size==0); `tests/socket/leave.test.js` 12/12, монорепо 172/172 зелёные, lint чист.
+- [x] Code review пройден — `code-reviewer`, вердикт **PASS** после фикса; исходные 5 находок CONFIRMED (double-join guard, дедуп broadcast, двойной lookup, тройной сброс `roomId`, формат чеклиста) все закрыты коммитом `802ce64`, повторная проверка не выявила новых багов; тесты 173/173, lint чист.
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (точечный аудит задачи critical:YES, дифф до `origin/develop`; PASS, без находок critical/high/medium; double-join guard закрыл stale-slot-утечку из задачи 9; SEC-11 covered — cleanup при size==0 → `RoomRegistry.delete`→`Room.clear()`; тесты 27/27, `npm audit` 0 vuln)
+- [x] PR в `develop` открыт — [#18](https://github.com/bismus-le-sha/fora_soft/pull/18)
 
 ### [ ] Задача 11 — Анти-спуфинг авторства + отправка чата (SEC-06) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
