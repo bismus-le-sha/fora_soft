@@ -96,8 +96,8 @@
 - [x] PR в `develop` открыт — [#16](https://github.com/bismus-le-sha/fora_soft/pull/16)
 
 ### [ ] Задача 10 — Очистка состояния комнаты при выходе/обрыве последнего (SEC-11) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
+- [x] Тесты написаны и падают (red) — `test-author` (12 интеграционных кейсов в `app/server/tests/socket/leave.test.js` — socket.io-client против реального `io`+каркас хендлеров задачи 8, свой `RoomRegistry` в `deps` для чтения серверного состояния: happy-path (явный `leave`/`disconnect` ПОСЛЕДНЕГО → `registry.count()`→0, `get(roomId)` пуст; остальные получают `participant:left{id}`+`chat:system{event:leave,subjectName}`; disconnect≡leave), НЕ последний (комната ЖИВА, остаётся оставшийся участник; история чата сохраняется — инжект через `room.pushMessage`, т.к. `chat:send` — задача 11), идемпотентность/robustness (double-leave без краша, гонка выхода/обрыва всех 4 → count→0), SEC-11 (массовый create-then-abandon 20 комнат → count→0 без «висящих»; нельзя «оживить» — повторный вход по тому же roomId даёт СВЕЖУЮ пустую комнату, старая история не утекает). Red-прогон `npx vitest run tests/socket/leave.test.js`: **11 failed | 1 passed** — все 11 падают из-за стаба `RoomService.leave` (no-op задачи 8): нет `participant:left`/`chat:system`, комната не удаляется из реестра (timeout/count≠0); падение из-за отсутствия функционала, не ошибки в тестах. 1 passed — робастность-гвард «leave без join → безопасный no-op» (стаб тривиально удовлетворяет, `join` задачи 9 работает).)
+- [x] Отчёт по тестам предоставлен пользователю
 - [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
 - [ ] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
