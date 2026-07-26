@@ -45,6 +45,56 @@ function broadcastSystemEvent(socket, roomId, event, subjectName) {
 }
 
 /**
+ * Резолв `room`/`participant` по уже известному `roomId` (без чтения
+ * `socket.data.roomId` — это ответственность вызывающего, см. `resolveSession`
+ * ниже и `leave()`, которой нужно прочитать/сбросить `socket.data.roomId` до
+ * остальных проверок). Общая часть трёхшагового резолва сессии сокета
+ * (post-review находка задачи 11): `registry.get(roomId)` → `room.get(socket.id)`,
+ * no-op (`null`) при любом промахе.
+ * @param {import('socket.io').Socket} socket
+ * @param {import('../domain/RoomRegistry.js').RoomRegistry} registry
+ * @param {string} roomId
+ * @returns {{room: import('../domain/Room.js').Room, participant: import('../domain/Participant.js').Participant} | null}
+ */
+function resolveRoomSession(socket, registry, roomId) {
+  const room = registry.get(roomId);
+  if (!room) {
+    // Комната уже удалена (race с leave/disconnect другого пути) — no-op.
+    return null;
+  }
+  const participant = room.get(socket.id);
+  if (!participant) {
+    // Сокет более не числится участником этой комнаты — no-op.
+    return null;
+  }
+  return { room, participant };
+}
+
+/**
+ * Полный трёхшаговый резолв активной сессии сокета (post-review находка
+ * задачи 11 — было продублировано в `postChat`): `socket.data.roomId` →
+ * `registry.get(roomId)` → `room.get(socket.id)`, no-op (`null`) при любом
+ * промахе. Используется методами без побочных эффектов до/во время резолва
+ * (`postChat`, будущие `setMedia`/`relaySignal` — задачи 13/14). `leave()`
+ * читает `socket.data.roomId` и сбрасывает его отдельно (нужно сделать это
+ * ДО остальных проверок — специфика её семантики), поэтому использует
+ * `resolveRoomSession` напрямую вместо этой обёртки.
+ * @param {import('socket.io').Socket} socket
+ * @param {import('../domain/RoomRegistry.js').RoomRegistry} registry
+ * @returns {{roomId: string, room: import('../domain/Room.js').Room, participant: import('../domain/Participant.js').Participant} | null}
+ */
+function resolveSession(socket, registry) {
+  const roomId = socket.data.roomId;
+  if (!roomId) {
+    // Нет успешного join по этому сокету — нет серверной сессии.
+    return null;
+  }
+  const session = resolveRoomSession(socket, registry, roomId);
+  if (!session) return null;
+  return { roomId, ...session };
+}
+
+/**
  * Атомарный вход в комнату (лимит `ROOM_CAPACITY`, SEC-07). Задача 9 [critical].
  *
  * Rate-limit(join) уже применён вызывающим `socket/handlers.js` до вызова
@@ -178,24 +228,21 @@ export function leave(socket, ctx) {
   }
   // Схлопнуто в одно место (не дублируется по веткам ниже): как только
   // roomId прочитан и признан истинным, состояние сокета сбрасывается сразу,
-  // до всех остальных проверок.
+  // до всех остальных проверок. Именно этот побочный эффект (сброс ДО
+  // остальных проверок) не позволяет использовать здесь `resolveSession` —
+  // она читает `socket.data.roomId` заново и увидела бы уже сброшенное
+  // значение; общая часть резолва (`registry.get` → `room.get`) вынесена в
+  // `resolveRoomSession` и используется напрямую с уже прочитанным `roomId`.
   socket.data.roomId = undefined;
 
-  const room = registry.get(roomId);
-  if (!room) {
-    // Комната уже удалена ранее (double leave/disconnect) — no-op.
+  const session = resolveRoomSession(socket, registry, roomId);
+  if (!session) {
+    // Комната уже удалена (double leave/disconnect), либо этот сокет в ней
+    // уже не числится (идемпотентность повторного leave/disconnect) — no-op,
+    // без ошибки процесса и без повторного broadcast.
     return;
   }
-
-  // Один lookup вместо двух: инвариант однопоточности/без await (см. выше)
-  // гарантирует, что `get`/`remove` по одному и тому же ключу согласованы.
-  const participant = room.get(socket.id);
-  if (!participant) {
-    // Идемпотентность: этот сокет в комнате уже не числится (повторный
-    // leave/disconnect по тому же соединению) — no-op, без повторного
-    // broadcast и без ошибки процесса.
-    return;
-  }
+  const { room, participant } = session;
   room.remove(socket.id);
 
   socket.leave(roomId);
@@ -213,11 +260,11 @@ export function leave(socket, ctx) {
  * [critical].
  *
  * Rate-limit(chat) уже применён вызывающим `socket/handlers.js` до вызова
- * этой функции (Design §6.1). Пайплайн здесь: сессия сокета (`socket.data.roomId`
- * + `room.get(socket.id)`) → `validateText` → `sanitize` → `Message{kind:'chat'}`
- * с авторством ИЗ СЕРВЕРНОЙ СЕССИИ (`socket.id`/`participant.name`) → push в
- * историю комнаты → broadcast `chat:message` всем в комнате, включая автора
- * (Design §6.2/§7.4 — «всем в комнате»).
+ * этой функции (Design §6.1). Пайплайн здесь: сессия сокета (`resolveSession`)
+ * → `validateText` → `sanitize` → `Message{kind:'chat'}` с авторством ИЗ
+ * СЕРВЕРНОЙ СЕССИИ (`socket.id`/`participant.name`) → push в историю комнаты
+ * → broadcast `chat:message` всем в комнате, включая автора (Design §6.2/§7.4
+ * — «всем в комнате»).
  *
  * Анти-спуфинг (SEC-06): `payload.authorId`/`authorName`/`id`/`ts`/`kind`
  * полностью игнорируются — `createChatMessage` строит `Message` только из
@@ -236,24 +283,15 @@ export function leave(socket, ctx) {
 export function postChat(socket, payload, ctx) {
   const { registry } = ctx;
 
-  const roomId = socket.data.roomId;
-  if (!roomId) {
-    // Нет успешного join по этому сокету — нет серверной сессии, из которой
-    // можно взять авторство. Безопасный no-op (SEC-06).
+  const session = resolveSession(socket, registry);
+  if (!session) {
+    // Нет валидной серверной сессии (нет успешного join, комната уже
+    // удалена, либо сокет более не числится участником — race с
+    // leave/disconnect) — нет авторства, из которого можно взять имя.
+    // Безопасный no-op (SEC-06).
     return;
   }
-
-  const room = registry.get(roomId);
-  if (!room) {
-    // Комната уже удалена (race с leave/disconnect другого пути) — no-op.
-    return;
-  }
-
-  const participant = room.get(socket.id);
-  if (!participant) {
-    // Сокет более не числится участником этой комнаты — no-op.
-    return;
-  }
+  const { roomId, room, participant } = session;
 
   const textResult = validateText(payload?.text);
   if (!textResult.ok) {
