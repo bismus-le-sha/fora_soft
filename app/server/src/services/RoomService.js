@@ -115,14 +115,65 @@ export function join(socket, payload, ctx) {
 /**
  * Явный выход из комнаты (`leave`) либо cleanup при обрыве (`disconnect`).
  * Задача 10 [critical], SEC-11.
+ *
+ * Единый путь для обоих триггеров (Design §6.1/§7.3: «leave — эквивалент
+ * disconnect»): `socket/handlers.js` вызывает эту же функцию и на явное
+ * событие `leave`, и на транспортный `disconnect`. Инварианты:
+ *   - идемпотентность — сокет без предшествующего успешного `join`
+ *     (`socket.data.roomId` не проставлен) либо уже вышедший (комната/
+ *     участник отсутствуют) → безопасный no-op, без ошибки клиенту и без
+ *     повторного broadcast;
+ *   - остальным участникам уходят `participant:left{id}` +
+ *     `chat:system{event:'leave', subjectName}` (снимок имени берётся ДО
+ *     удаления участника из `Room`);
+ *   - если после удаления `room.size() === 0` — комната целиком стирается из
+ *     `RoomRegistry` (участники, счётчик, история) — SEC-11, комнату нельзя
+ *     «оживить» остатками старого состояния при повторном входе по тому же
+ *     `roomId` (`RoomRegistry.getOrCreate` создаст свежую `Room`).
+ *
  * @param {import('socket.io').Socket} socket
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
  * @returns {void}
  */
-export function leave(_socket, _ctx) {
-  // TODO(задача 10, critical, SEC-11): room.remove(id) → participant:left +
-  // chat:system(leave) остальным; при room.size()==0 → RoomRegistry.delete
-  // (участники/история/id стёрты, без утечки состояния).
+export function leave(socket, ctx) {
+  const { registry } = ctx;
+
+  const roomId = socket.data.roomId;
+  if (!roomId) {
+    // Сокет никогда не входил в комнату (либо уже обработан выше) — nothing
+    // to clean up, но состояние на будущее держим пустым для повторных вызовов.
+    return;
+  }
+
+  const room = registry.get(roomId);
+  if (!room) {
+    // Комната уже удалена ранее (double leave/disconnect) — no-op.
+    socket.data.roomId = undefined;
+    return;
+  }
+
+  const participant = room.get(socket.id);
+  const removed = room.remove(socket.id);
+  if (!removed) {
+    // Идемпотентность: этот сокет в комнате уже не числится (повторный
+    // leave/disconnect по тому же соединению) — no-op, без повторного
+    // broadcast и без ошибки процесса.
+    socket.data.roomId = undefined;
+    return;
+  }
+
+  socket.data.roomId = undefined;
+  socket.leave(roomId);
+
+  socket.to(roomId).emit('participant:left', { id: socket.id });
+  socket.to(roomId).emit(
+    'chat:system',
+    createSystemMessage({ event: 'leave', subjectName: participant?.name ?? '' }),
+  );
+
+  if (room.size() === 0) {
+    registry.delete(roomId);
+  }
 }
 
 /**

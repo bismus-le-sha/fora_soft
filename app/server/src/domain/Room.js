@@ -31,6 +31,14 @@ export class Room {
     return this.participants.delete(id);
   }
 
+  /**
+   * @param {string} id - socket.id участника.
+   * @returns {import('./Participant.js').Participant | undefined}
+   */
+  get(id) {
+    return this.participants.get(id);
+  }
+
   /** @returns {number} текущее число участников. */
   size() {
     return this.participants.size;

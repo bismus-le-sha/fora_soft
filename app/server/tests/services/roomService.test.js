@@ -17,11 +17,16 @@ describe('services/RoomService — каркас (Design §4.1, задача 8)',
   // минимальными стабами, чтобы этот смоук-тест («вызываема, не бросает»)
   // остался в скоупе задачи 8 и не проверял бизнес-поведение (оно покрыто
   // `tests/socket/join.test.js`, задача 9).
+  // `leave` (задача 10) реально использует `socket.leave(roomId)` в happy-path
+  // (участник реально удалён из комнаты) — стаб добавлен по той же причине,
+  // что и `join`/`to` выше: держим этот смоук-тест в скоупе задачи 8, не
+  // проверяя поведение задачи 10 (оно покрыто `tests/socket/leave.test.js`).
   const fakeSocket = {
     id: 'socket-1',
     data: {},
     emit: () => {},
     join: () => {},
+    leave: () => {},
     to: () => ({ emit: () => {} }),
   };
   const ctx = { io: { emit: () => {} }, config: { ICE_SERVERS: [] }, registry: new RoomRegistry() };
