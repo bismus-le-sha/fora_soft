@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * PreToolUse-хук: жёсткий гейт "Security review перед вливанием в рабочую ветку".
+ * PreToolUse-хук: жёсткий гейт "Security review перед мержем эпика в main".
  *
- * Перехватывает команды Bash/PowerShell, которые вливают код в develop/main:
- *   - gh pr create
- *   - git merge (находясь на develop/main)
- *   - git push в develop/main (явно указана ветка или текущая ветка = develop/main)
+ * Гейт привязан к ГРАНИЦЕ ЭПИКА (релиз/hotfix), не к каждому PR задачи.
+ * Перехватывает ТОЛЬКО команды, которые вливают код в main/master:
+ *   - gh pr create --base main/master (без явного --base — не гейтуется,
+ *     т.к. дефолтная база репозитория — develop, см. .github/README.md)
+ *   - git merge (находясь на main/master)
+ *   - git push в main/master (явно указана ветка или текущая ветка = main/master)
+ * PR/push отдельной задачи фичи в develop этим хуком НЕ блокируется — там
+ * security review остаётся рекомендацией по чеклисту (обязательной только
+ * для critical: YES), а не enforced-действием.
  *
  * Исключения (аудит не требуется, гейт пропускает):
  *   1. Doc-only — весь дифф (<base>...HEAD) это документация/текст.
@@ -112,7 +117,7 @@ const detect = sanitizeForDetection(cmd);
 const isPrCreate = /\bgh\b[\s\S]*\bpr\b[\s\S]*\bcreate\b/.test(detect);
 const isMerge = /\bgit\b[\s\S]*\bmerge\b/.test(detect);
 const isPush = /\bgit\b[\s\S]*\bpush\b/.test(detect);
-const mentionsWorkBranch = /\b(develop|main|master)\b/.test(detect);
+const mentionsReleaseBranch = /\b(main|master)\b/.test(detect);
 
 let currentBranch = '';
 function branch() {
@@ -139,12 +144,22 @@ function effectiveBranch() {
   return branch();
 }
 
-const onWorkBranch = () => /^(develop|main|master)$/.test(effectiveBranch());
+const onReleaseBranch = () => /^(main|master)$/.test(effectiveBranch());
+
+// gh pr create гейтуется только если явно указан --base main/master.
+// Без --base GitHub берёт дефолтную базу репозитория (develop) — обычный
+// PR задачи фичи в develop, эпик тут ни при чём.
+function prTargetsRelease() {
+  if (!isPrCreate) return false;
+  const m = cmd.match(/(?:--base|-B)[=\s]+([^\s]+)/);
+  if (!m) return false;
+  return /^(main|master)$/.test(m[1]);
+}
 
 let gated = false;
-if (isPrCreate) gated = true;
-else if (isMerge && onWorkBranch()) gated = true;
-else if (isPush && (mentionsWorkBranch || onWorkBranch())) gated = true;
+if (prTargetsRelease()) gated = true;
+else if (isMerge && onReleaseBranch()) gated = true;
+else if (isPush && (mentionsReleaseBranch || onReleaseBranch())) gated = true;
 
 if (!gated) allow();
 
@@ -171,13 +186,17 @@ function isDocFile(file) {
 
 // База сравнения: явный --base/-B ТОЛЬКО у `gh pr create` (у push/merge такого флага
 // нет, и его парсинг из произвольной строки отвязал бы базу от реального таргета — аудит M2).
+// Раз мы вообще дошли сюда (gated === true), цель — main/master; 'main' —
+// дефолт для push/merge-случаев, где ни explicit --base, ни текущая ветка не
+// дают точного имени (например, `git push origin somebranch:main`).
 function targetBase() {
   if (isPrCreate) {
     const m = cmd.match(/(?:--base|-B)[=\s]+([^\s]+)/);
     if (m) return m[1];
   }
   if (/^(main|master)$/.test(branch())) return branch();
-  return 'develop';
+  const m = detect.match(/\b(main|master)\b/);
+  return m ? m[1] : 'main';
 }
 
 // Список изменённых файлов относительно базы (merge-base, three-dot).
@@ -283,8 +302,8 @@ if (fs.existsSync(marker)) {
 
 block(
   `⛔ Security review НЕ пройден для коммита ${head}.\n` +
-    `Вливание в рабочую ветку заблокировано (строгий гейт).\n` +
-    `Запусти /security-audit (или, для некритичных изменений без чувствительных путей, ` +
+    `Вливание эпика в main/master заблокировано (строгий гейт на границе релиза).\n` +
+    `Запусти /security-audit (или, для диффов без чувствительных путей, ` +
     `node scripts/security-gate.js) — после PASS появится ${marker}, ` +
     `и это действие разблокируется. Новый коммит с реально новым содержимым → нужен новый аудит.`
 );

@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Риск-тиированный авто-гейт для НЕкритичных задач без чувствительных путей.
+ * Авто-гейт перед мержем эпика в main: заменяет ручной /security-audit там,
+ * где это безопасно. Хук .claude/hooks/pre-merge-gate.js блокирует только
+ * merge/push/PR в main/master (границу эпика/релиза) — обычные PR задач
+ * фичи в develop этим скриптом проверять не нужно, он не обязателен для них.
  *
- * Заменяет ручной /security-audit там, где это безопасно: если дифф не
- * трогает ничего из SENSITIVE_PATTERNS, прогоняет test/lint/npm-audit и,
- * при зелёном результате, сам проставляет .gates/security-<HEAD>.ok и
- * .gates/security-<HEAD>.files (хеши для последующего rebind — см.
- * .claude/hooks/pre-merge-gate.js). Если хоть один изменённый файл
- * чувствительный — скрипт НИЧЕГО не создаёт и требует ручной /security-audit.
+ * Если дифф до main не трогает ничего из SENSITIVE_PATH_RES, прогоняет
+ * test/lint/npm-audit и, при зелёном результате, сам проставляет
+ * .gates/security-<HEAD>.ok и .gates/security-<HEAD>.files (хеши для
+ * последующего rebind — см. .claude/hooks/pre-merge-gate.js). Если хоть
+ * один изменённый файл чувствительный — скрипт НИЧЕГО не создаёт и требует
+ * ручной /security-audit.
  *
  * Использование: node scripts/security-gate.js
  * Код выхода: 0 — гейт открыт (маркеры созданы), 1 — нужен ручной аудит
@@ -28,7 +31,11 @@ function git(argv) {
     .trim();
 }
 
-// --- Чувствительные пути: любое совпадение → только ручной /security-audit ---
+// --- Чувствительные пути: узкий список по-настоящему критичного ---
+// Сужено намеренно (было: почти любой .yaml/.sh/Makefile/config.js попадал
+// сюда, из-за чего авто-гейт был бесполезен — почти каждый PR требовал
+// ручного аудита). Теперь только то, что реально касается секретов,
+// authN/authZ, сокет-слоя, CI и доверия самого гейта.
 const SENSITIVE_PATH_RES = [
   /^\.claude\//,
   // .gates/** ЯВНО чувствительный (аудит H1): это сами файлы доверия гейта
@@ -39,20 +46,8 @@ const SENSITIVE_PATH_RES = [
   /^\.gates\//,
   /^\.github\/workflows\//,
   /^security\//,
-  /(^|\/)Dockerfile/i,
-  /(^|\/)docker-compose/i,
-  /(^|\/)package(-lock)?\.json$/,
   /(^|\/)\.env/,
   /^app\/server\/src\/socket\//,
-  /(^|\/)config\.js$/,
-  /(^|\/)(validate|sanitize)\.js$/,
-  // Скрипты/CI-конфиги вне уже перечисленных путей — по умолчанию считаем
-  // чувствительными (default-deny), а не пытаемся перечислить все безопасные.
-  /\.ya?ml$/i,
-  /\.(sh|ps1|bat|cmd)$/i,
-  /(^|\/)\.npmrc$/,
-  /(^|\/)Makefile$/i,
-  /\.config\.(js|cjs|mjs|ts)$/i,
 ];
 // Ключевые слова в пути — файлы про authN/authZ/секреты/rate-limit по имени,
 // даже вне явно перечисленных выше директорий.
@@ -73,7 +68,7 @@ function currentBranch() {
 function targetBase() {
   const b = currentBranch();
   if (/^(main|master)$/.test(b)) return b;
-  return 'develop';
+  return 'main';
 }
 
 function changedFiles() {
