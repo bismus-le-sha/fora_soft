@@ -10,7 +10,7 @@
 ```
 (разово)  Security baseline ─┐
                              ▼
-PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► Ревью + Security-аудит
+PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► Ревью ─► (Security-аудит) ─► PR
 ```
 
 | Стадия | Агент | Команда | Вход / правила | Выход |
@@ -19,9 +19,15 @@ PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► �
 | Дизайн | `design-architect` | `/design` | `rules/prd-design.mdc` + baseline | `prds/<feature>/design-<feature>.md` |
 | План   | `task-planner`     | `/plan`   | `rules/prd-tasks.mdc` | `prds/<feature>/impl-<feature>.md` |
 | Тесты (крит.) | `test-author` | `/test` | TDD §11 + критерии приёмки | падающие тесты |
-| Реализация | `implementer`  | `/implement` | план + TDD | код (тесты зелёные), PR |
-| Ревью  | `code-reviewer`    | —         | TDD + требования | список замечаний |
-| Security-аудит | `security-auditor` | `/security-audit` | baseline + TDD §10 | находки |
+| Реализация | `implementer`  | `/implement` | план + TDD | код (тесты зелёные), **локальный коммит, без push/PR** |
+| Ревью  | `code-reviewer`    | —         | TDD + требования | список замечаний (PASS → чеклист) |
+| Security-аудит (если нужен) | `security-auditor` | `/security-audit` | baseline + TDD §10 | находки |
+| PR | — | — | Ревью PASS (+ Security-аудит, если требовался) | PR в `develop` |
+
+**PR — последний шаг, не промежуточный.** Ветка живёт и коммитится локально,
+пока код-ревью (и, если применимо, security-аудит) не пройдены; `git push` /
+`gh pr create` выполняются только после этого. Причина: PR должен появляться
+уже провалидированным, а не служить площадкой для самого ревью через GitHub.
 
 ## Правила именования `feature-name`
 - `kebab-case`, латиница, `-` — разделитель, ≤ 50 символов.
@@ -36,6 +42,12 @@ PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► �
 - **Один PR = одна задача плана.** PR открывается в `develop`.
 - Коммиты и PR ссылаются на пункт плана; PR заполняется по шаблону
   `.github/pull_request_template.md`.
+- **PR открывается только ПОСЛЕ успешного локального `code-reviewer`** (и
+  `security-auditor`, если он нужен для этой задачи — обязателен для мержа
+  эпика в `main`, рекомендован для отдельной `critical: YES` задачи). До
+  этого момента `implementer` только коммитит в feature-ветку **локально** —
+  без `git push` и без `gh pr create`. Ревью проходит код *до* того, как он
+  покидает локальную ветку, а не через ревью уже открытого GitHub PR.
 - Мерж задачи в `develop` — после `code-reviewer`; ручной `security-auditor`
   для отдельной задачи опционален (рекомендован для `critical: YES`), не
   блокируется хуком. Хук блокирует только мерж эпика в `main` (релиз/hotfix)
