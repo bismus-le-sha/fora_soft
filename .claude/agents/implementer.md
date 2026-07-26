@@ -40,11 +40,20 @@ Implementation Plan и доводишь её до готового к ревью
 3. Реализуй код и тесты.
 4. Прогони проверки, зафиксируй результат.
 5. Отметь пункт в плане как выполненный (`- [x]`) и обнови
-   `prds/<feature-name>/checklist.md`: «Код написан, тесты зелёные».
+   `prds/<feature-name>/checklist.md`: **одной строкой** «Код написан, тесты
+   зелёные» — без пересказа диффа, детали есть в коде/коммите.
 
 ## Результат
 Верни: что сделано, изменённые файлы, результат тестов/линта, номер
 выполненной задачи, обновлённый статус чеклиста и предлагаемое сообщение
 коммита со ссылкой на пункт плана. Напомни, что перед PR нужен `code-reviewer`,
-а для вливания в `develop` — обязательный `security-auditor` (иначе хук
-заблокирует PR/push).
+а для вливания в `develop` — обязательный security-гейт (иначе хук заблокирует
+PR/push):
+- задача `critical: YES` или дифф трогает чувствительный путь (`.claude/**`,
+  `.github/workflows/**`, `security/**`, `app/server/src/socket/**`,
+  `config.js`, `validate.js`/`sanitize.js`, `package.json`/lockfiles,
+  `Dockerfile*`/`docker-compose*`, `.env*`, auth/token/session/crypto/
+  rate-limit в имени файла) → нужен ручной `security-auditor` (`/security-audit`);
+- иначе (`critical: NO` и путь не чувствительный) → можно просто запустить
+  `node scripts/security-gate.js` — он сам прогонит test/lint/`npm audit` и
+  при зелёном результате поставит гейт-маркер, без вызова агента.
