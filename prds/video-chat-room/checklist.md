@@ -93,7 +93,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`services/RoomService.join`: `validateName`→`sanitize`→`RoomRegistry.getOrCreate`→атомарная секция `room.isFull()`→`room.add()` без `await` между ними (SEC-07) →`socket.join(roomId)`→`join:ok{selfId,participants,history,iceServers}` инициатору + `participant:joined`/`chat:system{join}` остальным через `socket.to(roomId)`; невалидное имя/переполнение → `join:rejected{invalid-name|room-full}`; структурно битый `roomId`/достижение `ROOMS_MAX` → обобщённый `error` (SEC-15/SEC-10), не документированные `join:rejected`-коды. `tests/socket/join.test.js` НЕ менялся. Точечная правка фейкового сокета/ctx в `tests/services/roomService.test.js` (смоук-тест задачи 8: добавлены стабы `join()`/`to()`/`data`/`config.ICE_SERVERS`, т.к. реальная реализация теперь их использует) — поведенческих ассертов не добавлял/не менял. Прогон `npx vitest run tests/socket/join.test.js`: 8/8 зелёные. Полный `npm run test --workspaces`: 161/161 зелёные (server 160, client 1). `npm run lint --workspaces`: 0 errors (1 pre-existing warning в самом `join.test.js`, файл не редактировался).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#16](https://github.com/bismus-le-sha/fora_soft/pull/16)
 
 ### [ ] Задача 10 — Очистка состояния комнаты при выходе/обрыве последнего (SEC-11) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
