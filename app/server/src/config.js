@@ -55,3 +55,11 @@ export const ICE_SERVERS = Object.freeze([
  * запрещён — проверяется в `socket/gateway.js` (задача 6).
  */
 export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+
+/**
+ * Прод-домен (host, без схемы) для CSP `connect-src` (`wss://<PROD_DOMAIN>`,
+ * SEC-13). Плейсхолдер — подставляется через env при деплое (Design §10.4,
+ * §14 «Остаётся уточнить при деплое»); в dev не участвует в реальных
+ * соединениях (dev идёт на `localhost`, покрыт `'self'`).
+ */
+export const PROD_DOMAIN = process.env.PROD_DOMAIN || 'example.com';

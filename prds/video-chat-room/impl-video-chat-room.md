@@ -82,7 +82,7 @@
   - **Критерии приёмки:** интеграционный тест: payload >64KB рвётся до обработки; подключение с чужого origin отклоняется; корректный origin проходит.
   - **Оценка:** 0.5 ч-д. **Зависимости:** после 2, 3.
 
-- [ ] **7. Secure-заголовки/CSP и обезличенный логгер (SEC-13, SEC-16)**
+- [x] **7. Secure-заголовки/CSP и обезличенный логгер (SEC-13, SEC-16)**
   - **7.1** `security/headers.js`: CSP под single-origin (`default-src 'self'`, `connect-src 'self' wss://<PROD_DOMAIN> stun:...`, `script-src 'self'`, `frame-ancestors 'none'`), `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, HSTS (prod). Плейсхолдер домена из env.
   - **7.2** `logger.js`: логирование без PII — тип события, усечённый/хешированный roomId, socketId; запрет логировать текст/имена/SDP/ICE/IP.
   - _Требования: SEC-13, SEC-16. Design: §10.4_
