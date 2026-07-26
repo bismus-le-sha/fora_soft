@@ -84,7 +84,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`socket/handlers.js` + `services/RoomService.js` (заглушки задач 9–14) + wiring в `index.js`; монорепо 153/153 vitest зелёные, lint чист)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#14](https://github.com/bismus-le-sha/fora_soft/pull/14)
 
 ### [ ] Задача 9 — Атомарный join и лимит 4 участника (SEC-07) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
