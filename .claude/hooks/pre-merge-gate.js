@@ -7,24 +7,29 @@
  *   - git merge (находясь на develop/main)
  *   - git push в develop/main (явно указана ветка или текущая ветка = develop/main)
  *
- * Исключение (doc-only): если ВСЁ, что вливается (дифф <base>...HEAD), —
- * документация/текст (.md, .mdc, .txt, LICENSE, .gitignore и т.п.), security-аудит
- * НЕ требуется и действие пропускается. Стоит хоть один файл кода/конфига/
- * зависимостей (.js, .ts, .json, .yml, Dockerfile, lock-файлы …) — гейт включается.
- * Исключение контентное, а не по намерению: код-«фиксы» тоже аудируются.
- *
- * Разрешает действие ТОЛЬКО если для текущего HEAD есть security-подпись:
- *   .gates/security-<short-HEAD>.ok  (создаёт security-auditor после PASS).
- * Иначе блокирует (exit 2) и напоминает запустить /security-audit.
+ * Исключения (аудит не требуется, гейт пропускает):
+ *   1. Doc-only — весь дифф (<base>...HEAD) это документация/текст.
+ *   2. Rebind — каждый НЕ-doc файл дифа побайтово совпадает с версией, которая
+ *      уже была аудирована ранее (см. .gates/security-*.files ниже). Типичный
+ *      случай: аудит прошёл по working tree, затем тот же код закоммитили без
+ *      правок — повторный ручной аудит не нужен, достаточно сверить хеши.
+ *      Пользователем явно подтверждено: ребайнд по идентичности содержимого
+ *      (git hash-object), а не по принадлежности предку с маркером — т.е.
+ *      действует "через ветки", пока байты файла не менялись.
+ * Если хоть один изменённый не-doc файл не покрыт ни одним из исключений —
+ * гейт требует .gates/security-<short-HEAD>.ok (создаёт security-auditor или
+ * scripts/security-gate.js после PASS).
  *
  * Прочие команды пропускает мгновенно (exit 0). При внутренней ошибке на
  * НЕгейтовой команде — тоже пропускает (fail-open), чтобы не ломать workflow.
  * НО: если для гейтовой команды не удалось вычислить дифф — fail-safe:
- * doc-only исключение НЕ применяется, проверяется маркер (по умолчанию блок).
+ * исключения НЕ применяются, проверяется только точный маркер (по умолчанию блок).
  */
 'use strict';
 
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 function readStdin() {
   try {
@@ -59,11 +64,27 @@ try {
 const cmd = String(input?.tool_input?.command || '');
 if (!cmd.trim()) allow();
 
+// --- Текст для детекции "это гейтовая команда?" — БЕЗ содержимого сообщений ---
+// commit message / PR title-body часто содержат слова "merge"/"push"/"git" как
+// обычный текст (напр. "docs: fix pre-merge race"), а не как саму git-команду.
+// Без этой зачистки такой текст ложно триггерит гейт (проверено на практике).
+function sanitizeForDetection(raw) {
+  let s = raw;
+  // heredoc-тела (git commit -m "$(cat <<'EOF' ... EOF)") — убираем целиком.
+  s = s.replace(/<<[-~]?\s*(['"]?)([A-Za-z_]\w*)\1[\s\S]*?\n\s*\2\b/g, ' ');
+  // содержимое любых кавычек (title/body/-m/--message и т.п.) — обнуляем.
+  s = s.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+  s = s.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+  return s;
+}
+
+const detect = sanitizeForDetection(cmd);
+
 // --- Является ли команда вливанием в рабочую ветку? ---
-const isPrCreate = /\bgh\b[\s\S]*\bpr\b[\s\S]*\bcreate\b/.test(cmd);
-const isMerge = /\bgit\b[\s\S]*\bmerge\b/.test(cmd);
-const isPush = /\bgit\b[\s\S]*\bpush\b/.test(cmd);
-const mentionsWorkBranch = /\b(develop|main|master)\b/.test(cmd);
+const isPrCreate = /\bgh\b[\s\S]*\bpr\b[\s\S]*\bcreate\b/.test(detect);
+const isMerge = /\bgit\b[\s\S]*\bmerge\b/.test(detect);
+const isPush = /\bgit\b[\s\S]*\bpush\b/.test(detect);
+const mentionsWorkBranch = /\b(develop|main|master)\b/.test(detect);
 
 let currentBranch = '';
 function branch() {
@@ -77,7 +98,20 @@ function branch() {
   return currentBranch;
 }
 
-const onWorkBranch = () => /^(develop|main|master)$/.test(branch());
+// Если в ТОЙ ЖЕ команде раньше стоит `git checkout/switch <ref>`, то к моменту
+// фактического push/merge текущая ветка будет уже другой — live HEAD на момент
+// проверки хука это ещё не отражает (checkout из этой же цепочки ещё не выполнился).
+// Берём последний упомянутый checkout/switch-таргет вместо live HEAD.
+function effectiveBranch() {
+  const matches = [...cmd.matchAll(/\bgit\s+(?:checkout|switch)\b(?:\s+-[bB])?\s+([^\s&|;]+)/g)];
+  if (matches.length > 0) {
+    const target = matches[matches.length - 1][1];
+    if (target && target !== '-') return target;
+  }
+  return branch();
+}
+
+const onWorkBranch = () => /^(develop|main|master)$/.test(effectiveBranch());
 
 let gated = false;
 if (isPrCreate) gated = true;
@@ -86,8 +120,7 @@ else if (isPush && (mentionsWorkBranch || onWorkBranch())) gated = true;
 
 if (!gated) allow();
 
-// --- Doc-only исключение: аудит не нужен, если вливается только документация ---
-// Расширения/имена, которые не несут исполняемого кода/конфигурации/зависимостей.
+// --- Doc-only набор расширений/имён — не несут исполняемого кода/конфигурации ---
 // Намеренно узко: только markdown. `.txt` НЕ включён — он используется как манифест
 // зависимостей (requirements.txt/runtime.txt) и может маскировать переименованный
 // код/секрет, а такие изменения обязаны проходить аудит (аудит M1).
@@ -120,7 +153,7 @@ function targetBase() {
 }
 
 // Список изменённых файлов относительно базы (merge-base, three-dot).
-// Возвращает null, если дифф вычислить не удалось (→ fail-safe, исключение не применяем).
+// Возвращает null, если дифф вычислить не удалось (→ fail-safe, исключения не применяем).
 function changedFiles() {
   const base = targetBase();
   for (const ref of [`origin/${base}`, base]) {
@@ -142,13 +175,62 @@ function changedFiles() {
   return null; // ни origin/base, ни base не нашли
 }
 
+// --- Rebind: читаем все .gates/security-*.files (путь -> git-hash содержимого) ---
+// Формат сайдкара: строки "<путь>\t<git hash-object содержимого>". Пишут его
+// security-auditor (Режим 2) и scripts/security-gate.js после успешной проверки.
+function loadAuditedHashes() {
+  const dir = '.gates';
+  const map = new Map();
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return map;
+  }
+  for (const f of entries) {
+    if (!/^security-.+\.files$/.test(f)) continue;
+    let content;
+    try {
+      content = fs.readFileSync(path.join(dir, f), 'utf8');
+    } catch {
+      continue;
+    }
+    for (const line of content.split('\n')) {
+      const tab = line.indexOf('\t');
+      if (tab < 0) continue;
+      const p = line.slice(0, tab).trim();
+      const hash = line.slice(tab + 1).trim();
+      if (p && hash && !map.has(p)) map.set(p, hash);
+    }
+  }
+  return map;
+}
+
+function isAuditedUnchanged(file, auditedHashes) {
+  if (!auditedHashes.has(file)) return false;
+  let currentHash;
+  try {
+    currentHash = git(`rev-parse HEAD:${file}`);
+  } catch {
+    return false; // файла нет на HEAD (переименован/удалён/не закоммичен) — не рискуем
+  }
+  return currentHash === auditedHashes.get(file);
+}
+
 const files = changedFiles();
-if (files && files.length > 0 && files.every(isDocFile)) {
-  process.stderr.write(
-    `🟢 Security gate: вливаются только документация/текст (${files.length} файл(ов)) — ` +
-      `security-аудит не требуется.\n`
+
+if (files && files.length > 0) {
+  const auditedHashes = loadAuditedHashes();
+  const stillNeedsAudit = files.filter(
+    (f) => !isDocFile(f) && !isAuditedUnchanged(f, auditedHashes)
   );
-  allow();
+  if (stillNeedsAudit.length === 0) {
+    process.stderr.write(
+      `🟢 Security gate: весь дифф (${files.length} файл(ов)) — либо документация, ` +
+        `либо уже аудированный код без изменений содержимого (rebind). Аудит не требуется.\n`
+    );
+    allow();
+  }
 }
 
 // --- Гейтовая команда: проверяем security-подпись для текущего HEAD ---
@@ -162,7 +244,6 @@ try {
   );
 }
 
-const fs = require('fs');
 const marker = `.gates/security-${head}.ok`;
 if (fs.existsSync(marker)) {
   allow();
@@ -171,6 +252,7 @@ if (fs.existsSync(marker)) {
 block(
   `⛔ Security review НЕ пройден для коммита ${head}.\n` +
     `Вливание в рабочую ветку заблокировано (строгий гейт).\n` +
-    `Запусти /security-audit — после PASS security-auditor создаст ${marker}, ` +
-    `и это действие разблокируется. Новый коммит → нужен новый аудит.`
+    `Запусти /security-audit (или, для некритичных изменений без чувствительных путей, ` +
+    `node scripts/security-gate.js) — после PASS появится ${marker}, ` +
+    `и это действие разблокируется. Новый коммит с реально новым содержимым → нужен новый аудит.`
 );
