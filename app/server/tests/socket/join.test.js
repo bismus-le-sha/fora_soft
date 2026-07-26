@@ -270,4 +270,42 @@ describe('socket join — атомарный лимит 4 (SEC-07, US-5; Design 
     expect(rejected[0].data.code).toBe('room-full');
     expect(ctx.registry.get(roomId).size()).toBe(ROOM_CAPACITY);
   }, 20000);
+
+  // --- double-join guard (SEC-11, post-review находка задачи 10) ----------
+
+  it('повторный join на уже вошедшем сокете (другой roomId) отклоняется без краша, комната A не теряет участника', async () => {
+    ctx = await startServer();
+    const [client] = await connectMany(1);
+
+    const first = await joinResult(client, { roomId: 'room-a', name: 'Алиса' });
+    expect(first.type).toBe('ok');
+    expect(ctx.registry.get('room-a')?.size()).toBe(1);
+
+    // Тот же сокет повторно шлёт join с ДРУГИМ roomId — должен быть безопасно
+    // отклонён (без падения процесса), не создавая «призрачного» участника
+    // в новой комнате и не бросая старую комнату без владельца.
+    const errP = waitFor(client, 'error');
+    client.emit('join', { roomId: 'room-b', name: 'Алиса' });
+    const err = await errP;
+    expect(err).toMatchObject({ code: 'bad-payload' });
+
+    // Комната B не создана (либо пуста) — второй join не занял в ней слот.
+    expect(ctx.registry.get('room-b')?.size() ?? 0).toBe(0);
+    // Комната A по-прежнему держит первого участника — не потеряна.
+    expect(ctx.registry.get('room-a')?.size()).toBe(1);
+
+    // leave() очищает корректно именно комнату A (а не оставляет её висеть).
+    client.emit('leave', {});
+    const cleaned = await new Promise((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        if (ctx.registry.get('room-a') === undefined) return resolve(true);
+        if (Date.now() - start >= 2000) return resolve(false);
+        setTimeout(check, 20);
+      };
+      check();
+    });
+    expect(cleaned).toBe(true);
+    expect(ctx.registry.count()).toBe(0);
+  }, 15000);
 });
