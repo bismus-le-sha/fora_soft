@@ -109,8 +109,8 @@
 - [x] Отчёт по тестам предоставлен пользователю
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно (пользователь запросил реализацию задачи 11)
 - [x] Код написан, тесты зелёные — `implementer`, `RoomService.postChat` (SEC-06: авторство только из серверной сессии сокета; `validateText`+`sanitize` до broadcast/истории); `tests/socket/chat.test.js` 13/13, монорепо 186/186 зелёные, lint чист.
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (high effort, 8 углов; вердикт PASS с 1 minor находкой — reuse: дублирование резолва сессии в `postChat`/`leave`; устранено `implementer`'ом — вынесены `resolveSession`/`resolveRoomSession`, коммит `9adc9fc`, 186/186 тестов и lint зелёные, тесты не менялись)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS; без находок critical/high; SEC-02/03/05/06 covered; авторство только из серверной сессии, рефактор `resolveSession`/`resolveRoomSession` инварианты leave не ослабил; тесты 13/13, `npm audit` 0 vuln; маркер `.gates/security-9adc9fc.ok`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 12 — История чата при позднем входе (F-14/23) — critical: YES
