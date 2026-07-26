@@ -15,12 +15,15 @@
  */
 'use strict';
 
-const { execSync, spawnSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-function git(args) {
-  return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'pipe'] })
+// Без shell везде — имена файлов/ref идут из `git diff`/аргументов команды и
+// не должны интерполироваться в shell-строку (аудит H2: command injection
+// через имя файла вида `$(...)` в чужой ветке).
+function git(argv) {
+  return execFileSync('git', argv, { stdio: ['ignore', 'pipe', 'pipe'] })
     .toString()
     .trim();
 }
@@ -28,6 +31,12 @@ function git(args) {
 // --- Чувствительные пути: любое совпадение → только ручной /security-audit ---
 const SENSITIVE_PATH_RES = [
   /^\.claude\//,
+  // .gates/** ЯВНО чувствительный (аудит H1): это сами файлы доверия гейта
+  // (.ok/.files-сайдкары для rebind в pre-merge-gate.js). Если бы авто-гейт
+  // мог сам одобрить diff, создающий/меняющий .gates/*.files, дифф мог бы
+  // вписать фиктивную запись "<чувствительный-файл>\t<нужный-хеш>" и
+  // легитимизировать себе rebind без реального аудита.
+  /^\.gates\//,
   /^\.github\/workflows\//,
   /^security\//,
   /(^|\/)Dockerfile/i,
@@ -37,6 +46,13 @@ const SENSITIVE_PATH_RES = [
   /^app\/server\/src\/socket\//,
   /(^|\/)config\.js$/,
   /(^|\/)(validate|sanitize)\.js$/,
+  // Скрипты/CI-конфиги вне уже перечисленных путей — по умолчанию считаем
+  // чувствительными (default-deny), а не пытаемся перечислить все безопасные.
+  /\.ya?ml$/i,
+  /\.(sh|ps1|bat|cmd)$/i,
+  /(^|\/)\.npmrc$/,
+  /(^|\/)Makefile$/i,
+  /\.config\.(js|cjs|mjs|ts)$/i,
 ];
 // Ключевые слова в пути — файлы про authN/authZ/секреты/rate-limit по имени,
 // даже вне явно перечисленных выше директорий.
@@ -48,7 +64,7 @@ function isSensitive(file) {
 
 function currentBranch() {
   try {
-    return git('rev-parse --abbrev-ref HEAD');
+    return git(['rev-parse', '--abbrev-ref', 'HEAD']);
   } catch {
     return '';
   }
@@ -64,11 +80,11 @@ function changedFiles() {
   const base = targetBase();
   for (const ref of [`origin/${base}`, base]) {
     try {
-      git(`rev-parse --verify --quiet ${ref}`);
+      git(['rev-parse', '--verify', '--quiet', ref]);
     } catch {
       continue;
     }
-    const out = git(`diff --name-only ${ref}...HEAD`);
+    const out = git(['diff', '--name-only', `${ref}...HEAD`]);
     return out ? out.split('\n').map((s) => s.trim()).filter(Boolean) : [];
   }
   return null;
@@ -119,7 +135,7 @@ if (!ok) {
 
 let head;
 try {
-  head = git('rev-parse --short HEAD');
+  head = git(['rev-parse', '--short', 'HEAD']);
 } catch {
   fail('Не удалось определить HEAD.');
 }
@@ -130,7 +146,7 @@ fs.writeFileSync(path.join('.gates', `security-${head}.ok`), '');
 const lines = [];
 for (const f of files) {
   try {
-    const hash = git(`rev-parse HEAD:${f}`);
+    const hash = git(['rev-parse', `HEAD:${f}`]);
     lines.push(`${f}\t${hash}`);
   } catch {
     // файла нет на HEAD (удалён) — пропускаем, для rebind он не нужен

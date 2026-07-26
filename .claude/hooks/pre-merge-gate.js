@@ -16,6 +16,13 @@
  *      Пользователем явно подтверждено: ребайнд по идентичности содержимого
  *      (git hash-object), а не по принадлежности предку с маркером — т.е.
  *      действует "через ветки", пока байты файла не менялись.
+ *      Доверие к самим сайдкарам `.gates/*.files` держится на том, что
+ *      `.gates/**` добавлен в чувствительный денай-лист `scripts/security-gate.js`
+ *      (аудит H1) — значит любой diff, создающий/меняющий сайдкар, обязан
+ *      пройти РУЧНОЙ `/security-audit`, а не может быть само-одобрен авто-гейтом.
+ *      Без этого правила диф мог бы вписать себе фиктивную запись
+ *      `<путь-к-чувствительному-файлу>\t<нужный-хеш>` и авто-гейт создал бы
+ *      маркер, легитимизируя фиктивный ребайнд для будущих коммитов.
  * Если хоть один изменённый не-doc файл не покрыт ни одним из исключений —
  * гейт требует .gates/security-<short-HEAD>.ok (создаёт security-auditor или
  * scripts/security-gate.js после PASS).
@@ -27,7 +34,7 @@
  */
 'use strict';
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -41,6 +48,15 @@ function readStdin() {
 
 function git(args) {
   return execSync(`git ${args}`, { stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString()
+    .trim();
+}
+
+// Для аргументов, содержащих данные из репозитория (имена файлов из дифа и
+// т.п.) — БЕЗ shell, чтобы имя файла вида `$(rm -rf ~)` не исполнялось
+// (execSync выше идёт через шелл и уязвим к этому; execFileSync — нет).
+function gitFile(argv) {
+  return execFileSync('git', argv, { stdio: ['ignore', 'pipe', 'ignore'] })
     .toString()
     .trim();
 }
@@ -68,13 +84,25 @@ if (!cmd.trim()) allow();
 // commit message / PR title-body часто содержат слова "merge"/"push"/"git" как
 // обычный текст (напр. "docs: fix pre-merge race"), а не как саму git-команду.
 // Без этой зачистки такой текст ложно триггерит гейт (проверено на практике).
+// ВАЖНО: зачищаем ТОЛЬКО контент за флагами свободного текста (-m/--message/
+// --title/--body/--notes) и heredoc-тела — а не вообще все кавычки в команде.
+// Бланкетная зачистка всех кавычек (прошлая версия) занижала детекцию: она же
+// стирала `git push origin "develop"`, из-за чего гейт мог не сработать на
+// реальном push в рабочую ветку — найдено аудитом (M).
 function sanitizeForDetection(raw) {
   let s = raw;
   // heredoc-тела (git commit -m "$(cat <<'EOF' ... EOF)") — убираем целиком.
   s = s.replace(/<<[-~]?\s*(['"]?)([A-Za-z_]\w*)\1[\s\S]*?\n\s*\2\b/g, ' ');
-  // содержимое любых кавычек (title/body/-m/--message и т.п.) — обнуляем.
-  s = s.replace(/"(?:[^"\\]|\\.)*"/g, '""');
-  s = s.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+  // содержимое кавычек ТОЛЬКО сразу после флагов свободного текста.
+  const FREE_TEXT_FLAG = /(-m|--message|--title|--body|--notes)(\s*[=\s]\s*)/;
+  s = s.replace(
+    new RegExp(FREE_TEXT_FLAG.source + '"(?:[^"\\\\]|\\\\.)*"', 'g'),
+    '$1$2""'
+  );
+  s = s.replace(
+    new RegExp(FREE_TEXT_FLAG.source + "'(?:[^'\\\\]|\\\\.)*'", 'g'),
+    "$1$2''"
+  );
   return s;
 }
 
@@ -155,18 +183,20 @@ function targetBase() {
 // Список изменённых файлов относительно базы (merge-base, three-dot).
 // Возвращает null, если дифф вычислить не удалось (→ fail-safe, исключения не применяем).
 function changedFiles() {
+  // base приходит из --base/-B команды (текст, который сформировал агент) —
+  // не доверяем ему как части shell-строки, гоним через execFileSync (H2).
   const base = targetBase();
   for (const ref of [`origin/${base}`, base]) {
     try {
-      // Без ^{commit}: execSync на Windows идёт через cmd.exe, где ^ — символ
-      // экранирования и `ref^{commit}` ломается. Для проверки существования
-      // ref достаточно --verify --quiet.
-      git(`rev-parse --verify --quiet ${ref}`);
+      // Без ^{commit}: на Windows execSync/спавн шёл через cmd.exe, где ^ —
+      // экранирующий символ и `ref^{commit}` ломался. Для проверки
+      // существования ref достаточно --verify --quiet.
+      gitFile(['rev-parse', '--verify', '--quiet', ref]);
     } catch {
       continue; // такого ref нет — пробуем следующий
     }
     try {
-      const out = git(`diff --name-only ${ref}...HEAD`);
+      const out = gitFile(['diff', '--name-only', `${ref}...HEAD`]);
       return out ? out.split('\n').map((s) => s.trim()).filter(Boolean) : [];
     } catch {
       return null; // ref есть, но diff упал — не рискуем
@@ -210,7 +240,9 @@ function isAuditedUnchanged(file, auditedHashes) {
   if (!auditedHashes.has(file)) return false;
   let currentHash;
   try {
-    currentHash = git(`rev-parse HEAD:${file}`);
+    // gitFile — без shell: `file` пришёл из `git diff --name-only` и может
+    // быть управляем содержимым чужой ветки/коммита (аудит H2).
+    currentHash = gitFile(['rev-parse', `HEAD:${file}`]);
   } catch {
     return false; // файла нет на HEAD (переименован/удалён/не закоммичен) — не рискуем
   }
