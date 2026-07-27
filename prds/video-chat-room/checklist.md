@@ -164,8 +164,8 @@
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снят явным поручением реализовать подзадачу 19.2
 - [x] Код написан, тесты зелёные — `implementer` — `src/lib/roomId.js` + `src/screens/StartScreen.jsx`; 75/75 тестов, lint чист
 - [x] Фикс по замечанию code-review (навигация не была смонтирована) — `implementer` — `App.jsx` теперь реализует self-made роутинг `/` ↔ `/room/:id` (History API, без библиотеки): монтирует `StartScreen`, `onCreate` вызывает `generateRoomId()` + `history.pushState`, `/room/:id` рендерит временный плейсхолдер (RoomScreen — задача 24); добавлен `tests/App.navigation.test.jsx` (4 кейса) на связку onCreate → generateRoomId → навигация. 79/79 тестов, lint чист
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (повторный проход, PASS; major-замечание закрыто — App.jsx монтирует StartScreen, onCreate→generateRoomId→pushState на /room/:id без reload, preflight-гейт цел; 79/79, lint чист)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS: CSPRNG без фолбэков, roomId не логируется/не утекает, клиентская валидация имени явно помечена как UX, без опасных DOM-паттернов)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 20 — JoinGate — вход по ссылке (имя + user-gesture) — critical: NO
