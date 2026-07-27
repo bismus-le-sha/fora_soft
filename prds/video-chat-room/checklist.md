@@ -159,10 +159,10 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/27
 
 ### [ ] Задача 19 — Энтропия room-id и StartScreen (SEC-14) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Тесты написаны и падают (red) — `test-author` — `tests/lib/roomId.test.js` + `tests/screens/StartScreen.test.jsx`; red: import unresolved (модули ещё не созданы)
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снят явным поручением реализовать подзадачу 19.2
+- [x] Код написан, тесты зелёные — `implementer` — `src/lib/roomId.js` + `src/screens/StartScreen.jsx`; 75/75 тестов, lint чист
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
