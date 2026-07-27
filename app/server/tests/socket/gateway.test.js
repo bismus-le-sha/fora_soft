@@ -3,11 +3,12 @@ import { createServer } from 'node:http';
 import { io as ioClient } from 'socket.io-client';
 import { createGateway } from '../../src/socket/gateway.js';
 import { MAX_HTTP_BUFFER_SIZE as REAL_MAX_HTTP_BUFFER_SIZE } from '../../src/config.js';
+import { listenEphemeral } from '../helpers/http.js';
 
 const TEST_ORIGIN = 'http://localhost:5173';
 
 /** Поднимает gateway на эфемерном порту и возвращает контекст для теста. */
-function startGateway(configOverrides = {}) {
+async function startGateway(configOverrides = {}) {
   const httpServer = createServer();
   const io = createGateway(httpServer, {
     ALLOWED_ORIGIN: TEST_ORIGIN,
@@ -15,12 +16,8 @@ function startGateway(configOverrides = {}) {
     ...configOverrides,
   });
 
-  return new Promise((resolve) => {
-    httpServer.listen(0, () => {
-      const { port } = httpServer.address();
-      resolve({ httpServer, io, url: `http://localhost:${port}` });
-    });
-  });
+  const { url } = await listenEphemeral(httpServer);
+  return { httpServer, io, url };
 }
 
 function connectClient(url, origin) {

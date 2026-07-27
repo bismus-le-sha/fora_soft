@@ -28,6 +28,7 @@
  * Requirements: SEC-08, SEC-12, SEC-15. Design: §4.1, §6, §9.3, §10.3, §10.4.
  */
 import { Server } from 'socket.io';
+import { isProduction as isProductionEnv } from '../config.js';
 
 /**
  * @param {import('node:http').Server} httpServer - HTTP-сервер (напр. из `index.js`), поверх которого поднимается Socket.io.
@@ -39,7 +40,7 @@ import { Server } from 'socket.io';
 export function createGateway(httpServer, config) {
   const { ALLOWED_ORIGIN: allowedOrigin, MAX_HTTP_BUFFER_SIZE: maxHttpBufferSize } = config;
 
-  if (allowedOrigin === '*' && process.env.NODE_ENV === 'production') {
+  if (allowedOrigin === '*' && isProductionEnv()) {
     throw new Error(
       'ALLOWED_ORIGIN="*" запрещён в проде (SEC-15) — задайте конкретный прод-origin через env.',
     );

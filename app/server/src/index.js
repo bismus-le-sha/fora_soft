@@ -1,18 +1,14 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as config from './config.js';
+import { createSecurityHeadersMiddleware } from './security/headers.js';
 import { createGateway } from './socket/gateway.js';
 import { registerHandlers } from './socket/handlers.js';
 import { RoomRegistry } from './domain/RoomRegistry.js';
+import logger from './logger.js';
 
-const { PORT } = config;
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Прод-сборка клиента (Vite `vite build` → app/client/dist, Design §3.2/§12.2).
-const CLIENT_DIST_DIR = path.join(__dirname, '../../client/dist');
+const { PORT, CLIENT_DIST_DIR } = config;
 
 /**
  * Собирает Express-приложение: `/healthz` (без PII, Design §12.4) + прод-раздача
@@ -32,12 +28,21 @@ const CLIENT_DIST_DIR = path.join(__dirname, '../../client/dist');
 export function createApp({
   registry,
   clientDistDir = CLIENT_DIST_DIR,
-  isProduction = process.env.NODE_ENV === 'production',
+  isProduction = config.isProduction(),
 }) {
+  if (!registry) {
+    throw new Error('createApp: registry обязателен (RoomRegistry instance) — /healthz от него зависит.');
+  }
+
   const app = express();
 
   // За реверс-прокси (nginx/Caddy) в проде — для корректных X-Forwarded-* (TDD §12.2).
   app.set('trust proxy', 1);
+
+  // Secure-заголовки (CSP/nosniff/Referrer-Policy/X-Frame-Options/HSTS,
+  // SEC-04/13/14/21) — глобально, до раздачи чего-либо: это первая точка,
+  // реально отдающая ответы браузерам с этого origin (задача 15).
+  app.use(createSecurityHeadersMiddleware(config));
 
   app.get('/healthz', (_req, res) => {
     res.status(200).json({ status: 'ok', rooms: registry.count() });
@@ -49,11 +54,22 @@ export function createApp({
   if (isProduction) {
     app.use(express.static(clientDistDir));
     // SPA-фолбэк: клиентский роутинг (напр. `/room/:id`, задача 19) должен
-    // получать `index.html` при прямом переходе/обновлении страницы. `/healthz`
-    // зарегистрирован выше и `/socket.io/*` перехватывается Socket.io на
-    // уровне http-сервера — сюда не долетают.
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(clientDistDir, 'index.html'));
+    // получать `index.html` при прямом переходе/обновлении страницы.
+    // `/healthz` исключается СТРУКТУРНО через negative lookahead в самом
+    // regex маршрута (а не только порядком регистрации выше) — инвариант
+    // «/healthz никогда не проглатывается SPA-фолбэком» не должен зависеть
+    // от текстового порядка строк в файле. `/socket.io/*` перехватывается
+    // Socket.io на уровне http-сервера — сюда не долетает.
+    app.get(/^\/(?!healthz).*/, (_req, res) => {
+      res.sendFile(path.join(clientDistDir, 'index.html'), (err) => {
+        if (!err) return;
+        // index.html недоступен (отсутствует/нет прав) — не отдаём клиенту
+        // стектрейс/абсолютный путь (SEC-15/16, без PII в ответе и в логе).
+        logger.log('static-file-error');
+        if (!res.headersSent) {
+          res.status(500).end();
+        }
+      });
     });
   }
 

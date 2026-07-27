@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { app, httpServer, createApp } from '../src/index.js';
+import { listenEphemeral } from './helpers/http.js';
 
 describe('scaffold: server entry point', () => {
   it('exports an Express app', () => {
@@ -16,15 +17,11 @@ describe('scaffold: server entry point', () => {
 });
 
 /** Поднимает `createApp(deps)` на эфемерном порту и возвращает базовый URL. */
-function startApp(deps) {
+async function startApp(deps) {
   const testApp = createApp(deps);
   const server = createServer(testApp);
-  return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      resolve({ server, url: `http://127.0.0.1:${port}` });
-    });
-  });
+  const { url } = await listenEphemeral(server, '127.0.0.1');
+  return { server, url };
 }
 
 describe('createApp — /healthz (Design §12.4, без PII)', () => {
@@ -42,6 +39,11 @@ describe('createApp — /healthz (Design §12.4, без PII)', () => {
     const fakeRegistry = { count: () => 0 };
     const testApp = createApp({ registry: fakeRegistry });
     expect(typeof testApp.listen).toBe('function');
+  });
+
+  it('createApp без registry (null/undefined) бросает понятную ошибку, а не падает на первом запросе к /healthz', () => {
+    expect(() => createApp({ registry: null })).toThrow(/registry/i);
+    expect(() => createApp({})).toThrow(/registry/i);
   });
 
   it('GET /healthz -> 200 {status:"ok", rooms: registry.count()}', async () => {
@@ -102,9 +104,10 @@ describe('createApp — раздача статики клиента (Design §3
   }
 
   it('вне прода (isProduction=false) статика НЕ раздаётся — не мешает Vite dev-серверу', async () => {
-    distDir = makeFixtureDist();
+    // isProduction=false не читает clientDistDir вообще — намеренно не
+    // передаём его здесь, чтобы не вводить в заблуждение мёртвым сетапом.
     const fakeRegistry = { count: () => 0 };
-    ctx = await startApp({ registry: fakeRegistry, clientDistDir: distDir, isProduction: false });
+    ctx = await startApp({ registry: fakeRegistry, isProduction: false });
 
     const res = await fetch(`${ctx.url}/app.js`);
     expect(res.status).toBe(404);
@@ -144,5 +147,61 @@ describe('createApp — раздача статики клиента (Design §3
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ status: 'ok', rooms: 7 });
+  });
+
+  it('в проде отсутствующий index.html на SPA-фолбэке отдаёт 500 без стектрейса/абсолютного пути (без утечки, SEC-15/16)', async () => {
+    // Фикстура БЕЗ index.html — sendFile должен упасть с ENOENT.
+    distDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vcr-dist-empty-'));
+    const fakeRegistry = { count: () => 0 };
+    ctx = await startApp({ registry: fakeRegistry, clientDistDir: distDir, isProduction: true });
+
+    const res = await fetch(`${ctx.url}/room/some-uuid`);
+    const body = await res.text();
+
+    expect(res.status).toBe(500);
+    expect(body).not.toContain(distDir);
+    expect(body.toLowerCase()).not.toContain('enoent');
+    expect(body.toLowerCase()).not.toContain('at sendfile');
+  });
+});
+
+describe('createApp — secure-заголовки (SEC-04/13, wiring задача 15)', () => {
+  /** @type {{server: import('node:http').Server} | undefined} */
+  let ctx;
+
+  afterEach(async () => {
+    if (ctx) {
+      await new Promise((resolve) => ctx.server.close(resolve));
+      ctx = undefined;
+    }
+  });
+
+  it('/healthz отдаётся с secure-заголовками (CSP/nosniff/Referrer-Policy/X-Frame-Options)', async () => {
+    const fakeRegistry = { count: () => 0 };
+    ctx = await startApp({ registry: fakeRegistry });
+
+    const res = await fetch(`${ctx.url}/healthz`);
+
+    expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(res.headers.get('x-frame-options')).toBe('DENY');
+  });
+
+  it('статика клиента (проде) отдаётся с теми же secure-заголовками', async () => {
+    const distDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vcr-dist-headers-'));
+    fs.writeFileSync(path.join(distDir, 'index.html'), '<!doctype html><div id="app"></div>');
+    fs.writeFileSync(path.join(distDir, 'app.js'), 'console.log("asset");');
+    try {
+      const fakeRegistry = { count: () => 0 };
+      ctx = await startApp({ registry: fakeRegistry, clientDistDir: distDir, isProduction: true });
+
+      const res = await fetch(`${ctx.url}/app.js`);
+
+      expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
+      expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    } finally {
+      fs.rmSync(distDir, { recursive: true, force: true });
+    }
   });
 });
