@@ -192,11 +192,11 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/32
 
-### [ ] Задача 24 — RoomScreen + хуки оркестрации — critical: NO
+### [x] Задача 24 — RoomScreen + хуки оркестрации — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/hooks/useSignaling.js` — обёртка `signalingClient`, инкапсулирует `connect()`→`on()`→`emit('join',...)`, `enabled`-гейт откладывает сетевой вход до готовности медиа, форвардит Server→Client события в `handlers`; `app/client/src/hooks/useMesh.js` — обёртка `MeshManager`, ленивое `ensureMesh(iceServers)` (SEC-17 приоритет серверного списка), агрегирует `remoteStreams`, `closeAll()` на unmount; `app/client/src/hooks/useMedia.js` — обёртка `mediaController`, эмитит `media:state` при тумблерах (обязанность вызывающего кода по JSDoc `mediaController.js`); `app/client/src/screens/RoomScreen.jsx` — оркестрация media→mesh→signaling: на маунте `media.init()` → сигналинг подключается только после этого (Design §7.1 «getUserMedia» до «join»); `join:ok` раскладывает снимок в state + `addExistingParticipant` для всех кроме self + `attachLocalTrack`; `participant:joined/left`, `chat:message/system`, `media:state`, `signal:offer/answer/ice`, `connect_error` — все замкнуты через централизованные `handlers`; минимальная инлайн-разметка (`video-tile`/`participant-list`/`chat-panel` testid) — компоненты 25-29 вне скоупа. `App.jsx` подключает `RoomScreen` вместо стаба `handleJoin` (по имени из `JoinGate`, DI `deps.room` для тестируемости). Новые тесты: `tests/screens/RoomScreen.test.jsx` (7), `tests/hooks/useSignaling.test.js` (6), `tests/hooks/useMesh.test.js` (5), `tests/hooks/useMedia.test.js` (5); `tests/App.joinGate.test.jsx` актуализирован под переход JoinGate→RoomScreen (DI, без реального сетевого соединения). Монорепо `npm run test --workspaces`: 225 server + 176 client (23 новых) зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
 - [x] Code review пройден — `code-reviewer` (вердикт PASS; glare-free соблюдён, протокол §6.1/§6.2 точен, cleanup корректен, только React-state; 225 server + 176 client зелёные, lint чист)
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/33
 
 ### [ ] Задача 25 — VideoGrid — адаптивная сетка 1–4 плитки — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
