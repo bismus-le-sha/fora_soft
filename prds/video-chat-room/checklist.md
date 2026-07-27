@@ -128,11 +128,11 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/22
 
-### [ ] Задача 14 — Ретрансляция сигналинга (offer/answer/ice) — critical: NO
+### [x] Задача 14 — Ретрансляция сигналинга (offer/answer/ice) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`RoomService.relaySignal` — сессия отправителя → `to` строкой и участник ТОЙ ЖЕ комнаты → relay `signal:<kind>{from,sdp|candidate}` только адресату через `io.to(to)`, без broadcast; сервер не парсит SDP; `tests/socket/signal.test.js` 9/9 новых, монорепо 213/213 server + 1 client зелёные, lint 0 errors)
 - [x] Code review пройден — `code-reviewer` (соответствует контракту Design §6.1/§7.1: relay {from,sdp|candidate} только адресату той же комнаты, SDP не парсится, rate-limit(signal) на уровне handlers; тесты 9/9 покрывают адресность/чужой to/opaque SDP/pre-join no-op/rate-limit)
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/23
 
 ### [ ] Задача 15 — Прод-раздача статики и /healthz — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
