@@ -181,7 +181,7 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/30
 
 ### [ ] Задача 22 — PeerConnection.js — обёртка одного RTCPeerConnection — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/webrtc/PeerConnection.js` — `createPeerConnection(deps)` → `{createOffer,acceptOffer,acceptAnswer,addIce,addTrack,replaceTrack,onTrack,onIceCandidate,close}`; `setRemoteDescription`/`addIceCandidate` в try/catch — битый SDP/ICE не роняет клиент (SEC-18), возвращают `null`/`false`; своего парсинга SDP нет — строка/объект кандидата передаются нативному `RTCPeerConnection` как есть; `replaceTrack` без renegotiation на sender этого соединения (Design §3.3 п.2). Тесты `app/client/tests/webrtc/PeerConnection.test.js` — 23 кейса (offer/answer/ice happy-path, битый SDP/ICE перехватывается, дословная передача без парсинга, replaceTrack/addTrack, onTrack/onIceCandidate подписки+отписка+изоляция подписчиков, close). Монорепо `npm run test --workspaces`: 225 server + 124 client (23 новых) зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
