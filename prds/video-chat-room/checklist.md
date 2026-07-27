@@ -153,7 +153,7 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/26
 
 ### [ ] Задача 18 — signalingClient.js (обёртка socket.io-client) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/signalingClient.js` — `createSignalingClient(deps)` → `{connect,emit,on,onError,disconnect}` строго по Design §4.2; `emit`/`on` типобезопасны по контракту §6.1/§6.2 — неизвестное/чужого направления событие бросает `TypeError`; `connect_error` реэмитится подписчикам `onError(cb)` (US-13 «сервер недоступен»); пустой `SIGNALING_URL` корректно транслируется в `undefined` перед `io()` (иначе `socket.io-client` парсит пустую строку в битый URL с пустым host — проверено эмпирически). Баннер «Ошибка сервера» НЕ реализован — это задача 30, вне скоупа. `app/client/tests/signalingClient.test.js` — 33 кейса (идемпотентность connect/пустой url→undefined/connect_error→onError, включая множественных подписчиков и отписку/типобезопасность emit и on по всем событиям контракта/disconnect+повторный connect). Монорепо `npm run test --workspaces`: 225 server + 58 client зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
