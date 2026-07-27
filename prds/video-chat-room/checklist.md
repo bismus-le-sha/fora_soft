@@ -118,8 +118,8 @@
 - [x] Отчёт по тестам предоставлен пользователю
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно: пользователь выбрал «закрыть задачу 12 как уже реализованную».
 - [x] Код написан, тесты зелёные — `implementer` (нового production-кода не потребовалось — критерий приёмки задачи 12 уже выполнен кодом задач 3/9/10/11: `Room.pushMessage` ring-buffer `HISTORY_MAX`, `RoomService.join` кладёт `history` в `join:ok`, `RoomService.leave` стирает историю при `size()==0`; проверено чтением `app/server/src/domain/Room.js`/`app/server/src/services/RoomService.js` и PRD F-14/design §11.2. `npx vitest run tests/socket/history.test.js`: 7/7 зелёные; `npm run test --workspaces`: 193/193 зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в `join.test.js`, вне скоупа задачи 12).)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (high effort, 8 углов; вердикт **PASS**, 0 находок — дифф только тесты `history.test.js`+doc, сверен построчно с текущими `Room.js`/`RoomService.js`/`RoomRegistry.js`, расхождений нет)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` — PASS, 0 critical/high. Дифф = только новый `history.test.js` (тест, без секретов) + doc-правки; prod-код не менялся. SEC-06/09/11 подтверждены чтением текущих `Room.pushMessage`/`RoomService.join`/`leave`/`RoomRegistry.delete`. `npm audit --omit=dev`: 0 vulns (server+root); `npm run test --workspaces`: 194/194; lint 0 errors. Маркер `.gates/security-3b7fab4.ok` (+`.files` для rebind).
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 13 — Обработчик media:state и broadcast — critical: NO
