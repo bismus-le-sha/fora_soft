@@ -3,6 +3,7 @@ import { checkWebrtcSupport } from './lib/compat.js';
 import { generateRoomId } from './lib/roomId.js';
 import NoWebRtcBanner from './components/errors/NoWebRtcBanner.jsx';
 import StartScreen from './screens/StartScreen.jsx';
+import JoinGate from './screens/JoinGate.jsx';
 
 /**
  * Design §4.2: `App.jsx` — «Маршрут Start/Room по URL; preflight-проверка
@@ -20,8 +21,9 @@ import StartScreen from './screens/StartScreen.jsx';
  * `/` → StartScreen, `/room/:roomId` → комната. Любой прочий путь трактуется
  * как StartScreen (нет отдельного 404-экрана — вне скоупа задачи 19).
  *
- * `/room/:roomId` пока рендерит временный плейсхолдер — полноценный
- * `RoomScreen` (JoinGate/участники/mesh) — задача 20/24, не эта.
+ * `/room/:roomId` рендерит `JoinGate` (задача 20) — экран запроса имени +
+ * первичный `getUserMedia` по клику «Войти» (user-gesture, F-37). Полноценный
+ * `RoomScreen` (участники/mesh/чат после входа) — задача 24, вне скоупа.
  */
 
 /** Design §6.4: `/room/:roomId` — извлечение `roomId` из пути. */
@@ -59,6 +61,17 @@ function App() {
     setPathname(nextPath);
   }, []);
 
+  /**
+   * Design §4.2/§7.1: `JoinGate.onJoin(name)` сигнализирует, что первичный
+   * `getUserMedia` отработан (успешно или нет — JoinGate сама не роняет
+   * приложение, Design §8) и пользователь готов войти. Собственно вход в
+   * комнату по сети (signaling `join {roomId, name}`) и дальнейшая
+   * оркестрация media→mesh — обязанность `RoomScreen` (задача 24, вне
+   * скоупа задачи 20); `name` здесь намеренно не используется, как и `name`
+   * в `handleCreate` выше (задача 19).
+   */
+  const handleJoin = useCallback((_name) => {}, []);
+
   if (!supported) {
     return <NoWebRtcBanner />;
   }
@@ -68,7 +81,7 @@ function App() {
   return (
     <div id="app">
       {roomMatch ? (
-        <div>Room {roomMatch[1]}</div>
+        <JoinGate roomId={roomMatch[1]} onJoin={handleJoin} />
       ) : (
         <StartScreen onCreate={handleCreate} />
       )}
