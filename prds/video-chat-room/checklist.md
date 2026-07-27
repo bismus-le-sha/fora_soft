@@ -159,12 +159,13 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/27
 
 ### [ ] Задача 19 — Энтропия room-id и StartScreen (SEC-14) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Тесты написаны и падают (red) — `test-author` — `tests/lib/roomId.test.js` + `tests/screens/StartScreen.test.jsx`; red: import unresolved (модули ещё не созданы)
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снят явным поручением реализовать подзадачу 19.2
+- [x] Код написан, тесты зелёные — `implementer` — `src/lib/roomId.js` + `src/screens/StartScreen.jsx`; 75/75 тестов, lint чист
+- [x] Фикс по замечанию code-review (навигация не была смонтирована) — `implementer` — `App.jsx` теперь реализует self-made роутинг `/` ↔ `/room/:id` (History API, без библиотеки): монтирует `StartScreen`, `onCreate` вызывает `generateRoomId()` + `history.pushState`, `/room/:id` рендерит временный плейсхолдер (RoomScreen — задача 24); добавлен `tests/App.navigation.test.jsx` (4 кейса) на связку onCreate → generateRoomId → навигация. 79/79 тестов, lint чист
+- [x] Code review пройден — `code-reviewer` (повторный проход, PASS; major-замечание закрыто — App.jsx монтирует StartScreen, onCreate→generateRoomId→pushState на /room/:id без reload, preflight-гейт цел; 79/79, lint чист)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (PASS: CSPRNG без фолбэков, roomId не логируется/не утекает, клиентская валидация имени явно помечена как UX, без опасных DOM-паттернов)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 20 — JoinGate — вход по ссылке (имя + user-gesture) — critical: NO
