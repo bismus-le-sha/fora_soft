@@ -163,6 +163,7 @@
 - [x] Отчёт по тестам предоставлен пользователю
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снят явным поручением реализовать подзадачу 19.2
 - [x] Код написан, тесты зелёные — `implementer` — `src/lib/roomId.js` + `src/screens/StartScreen.jsx`; 75/75 тестов, lint чист
+- [x] Фикс по замечанию code-review (навигация не была смонтирована) — `implementer` — `App.jsx` теперь реализует self-made роутинг `/` ↔ `/room/:id` (History API, без библиотеки): монтирует `StartScreen`, `onCreate` вызывает `generateRoomId()` + `history.pushState`, `/room/:id` рендерит временный плейсхолдер (RoomScreen — задача 24); добавлен `tests/App.navigation.test.jsx` (4 кейса) на связку onCreate → generateRoomId → навигация. 79/79 тестов, lint чист
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
