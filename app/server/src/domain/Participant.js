@@ -25,6 +25,16 @@ export class Participant {
   toSnapshot() {
     return { id: this.id, name: this.name, media: { ...this.media } };
   }
+
+  /**
+   * Обновляет статус mic/cam (задача 13, `media:state`). Значения обязаны
+   * быть уже валидированным `boolean` (см. `lib/validate.validateMedia`) —
+   * этот метод не валидирует вход повторно.
+   * @param {{audio: boolean, video: boolean}} media
+   */
+  setMedia({ audio, video }) {
+    this.media = { audio, video };
+  }
 }
 
 export default Participant;

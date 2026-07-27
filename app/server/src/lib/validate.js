@@ -1,5 +1,6 @@
 /**
- * Серверная валидация ввода: имя участника и текст чат-сообщения.
+ * Серверная валидация ввода: имя участника, текст чат-сообщения, статус
+ * mic/cam (`media:state`).
  *
  * Валидация — единственная линия защиты от структурно некорректного/опасного
  * ввода ДО санитизации (`lib/sanitize.js`) и сохранения/ретрансляции.
@@ -16,11 +17,17 @@
  * пунктуация/спецсимволы разрешены; безопасность текста обеспечивает
  * `sanitize` (SEC-03), а не отклонение валидатором (SEC-02).
  *
+ * `validateMedia`: `audio`/`video` обязаны быть примитивным `boolean` —
+ * никакого приведения типов (`!!value`), иначе структурно некорректный
+ * payload (например, строка/число/объект) молча превратился бы в валидный
+ * статус тумблера. Design §6.1 `media:state`: `{ audio: boolean, video: boolean }`.
+ *
  * Соглашение результата (как у `RoomRegistry.getOrCreate`):
  *   успех — `{ ok: true, value }`; отказ — `{ ok: false, code }`.
  *
- * Requirements: F-38, F-39, US-1, US-8, SEC-01, SEC-02, SEC-03.
- * Design: §4.1, §7.4, §10.1.
+ * Requirements: F-09, F-16, F-18, F-38, F-39, US-1, US-7, US-8, US-12,
+ * SEC-01, SEC-02, SEC-03.
+ * Design: §4.1, §6.1, §7.2, §7.4, §10.1.
  */
 
 import { NAME_MAX, MESSAGE_MAX } from '../config.js';
@@ -83,4 +90,24 @@ export function validateText(raw) {
   return { ok: true, value: trimmed };
 }
 
-export default { validateName, validateText };
+/**
+ * Валидирует payload `media:state` — оба поля обязаны быть примитивным
+ * `boolean` (без приведения типов, SEC-08 defense-in-depth: структурно
+ * некорректный payload не должен молча стать валидным статусом).
+ * @param {unknown} raw
+ * @returns {{ok: true, value: {audio: boolean, video: boolean}} | {ok: false, code: string}}
+ */
+export function validateMedia(raw) {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return { ok: false, code: 'invalid-type' };
+  }
+
+  const { audio, video } = raw;
+  if (typeof audio !== 'boolean' || typeof video !== 'boolean') {
+    return { ok: false, code: 'invalid-type' };
+  }
+
+  return { ok: true, value: { audio, video } };
+}
+
+export default { validateName, validateText, validateMedia };

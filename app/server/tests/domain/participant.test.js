@@ -34,4 +34,11 @@ describe('domain/Participant (F-05, F-09, F-16, F-30, SEC-06, Design §5.1)', ()
     snapshot.media.audio = false;
     expect(p.media.audio).toBe(true);
   });
+
+  it('setMedia() обновляет media.audio/video (задача 13, media:state)', () => {
+    const p = new Participant({ id: 'sock_5', name: 'Дана' });
+    p.setMedia({ audio: false, video: false });
+    expect(p.media).toEqual({ audio: false, video: false });
+    expect(p.toSnapshot().media).toEqual({ audio: false, video: false });
+  });
 });
