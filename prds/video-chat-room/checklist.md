@@ -154,8 +154,8 @@
 
 ### [ ] Задача 18 — signalingClient.js (обёртка socket.io-client) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/signalingClient.js` — `createSignalingClient(deps)` → `{connect,emit,on,onError,disconnect}` строго по Design §4.2; `emit`/`on` типобезопасны по контракту §6.1/§6.2 — неизвестное/чужого направления событие бросает `TypeError`; `connect_error` реэмитится подписчикам `onError(cb)` (US-13 «сервер недоступен»); пустой `SIGNALING_URL` корректно транслируется в `undefined` перед `io()` (иначе `socket.io-client` парсит пустую строку в битый URL с пустым host — проверено эмпирически). Баннер «Ошибка сервера» НЕ реализован — это задача 30, вне скоупа. `app/client/tests/signalingClient.test.js` — 33 кейса (идемпотентность connect/пустой url→undefined/connect_error→onError, включая множественных подписчиков и отписку/типобезопасность emit и on по всем событиям контракта/disconnect+повторный connect). Монорепо `npm run test --workspaces`: 225 server + 58 client зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (PASS, 3 находки: `notifyError` захардён try/catch на подписчика — падение одного handler больше не блокирует рассылку остальным; stale-формулировка security-review-строки исправлена на конвенцию задач 14-17; дублирование имён событий client/server — принятый trade-off по прецеденту ICE_SERVERS (задача 16), без изменений)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 19 — Энтропия room-id и StartScreen (SEC-14) — critical: YES

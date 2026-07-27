@@ -83,10 +83,21 @@ export function createSignalingClient(deps = {}) {
   let socket = null;
   const errorHandlers = new Set();
 
-  /** @param {Error} reason */
+  /**
+   * @param {Error} reason
+   *
+   * Каждый handler изолирован try/catch: падение одного подписчика не
+   * должно останавливать доставку `connect_error` остальным (иначе один
+   * упавший потребитель тихо гасит уведомление, например, о баннере
+   * «Ошибка сервера» для всех остальных).
+   */
   function notifyError(reason) {
     for (const handler of errorHandlers) {
-      handler(reason);
+      try {
+        handler(reason);
+      } catch {
+        // Ошибка подписчика не должна прерывать рассылку остальным (см. выше).
+      }
     }
   }
 
