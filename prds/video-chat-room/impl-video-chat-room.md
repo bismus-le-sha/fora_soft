@@ -189,7 +189,7 @@
 
 ## Область 6 — Клиент: медиа и WebRTC mesh
 
-- [ ] **21. `mediaController.js` — getUserMedia и тумблеры**
+- [x] **21. `mediaController.js` — getUserMedia и тумблеры**
   - `init()` (audio+video по умолчанию), `toggleAudio()` (`track.enabled`), `toggleVideo()` (`track.stop()` + `replaceTrack(null)` на всех sender; включение — `getUserMedia`+`replaceTrack`); обработка отказа/отсутствия устройств (остаётся в комнате с off).
   - _Требования: F-09, F-10, F-14, F-19, F-33, US-6, US-7, US-12. Design: §3.3, §4.2, §7.2, §8_
   - **Критерии приёмки:** юнит-тест (моки MediaStream) — выключение камеры вызывает `track.stop()` + `replaceTrack(null)` на всех sender; отказ `getUserMedia` не роняет приложение.

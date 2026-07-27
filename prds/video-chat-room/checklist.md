@@ -175,7 +175,7 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/29
 
 ### [ ] Задача 21 — mediaController.js — getUserMedia и тумблеры — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/media/mediaController.js` — `createMediaController(deps)`: `init()` audio+video по умолчанию, `toggleAudio()` через `track.enabled`, `toggleVideo()` — off: `track.stop()`+`replaceTrack(null)` на всех `deps.getVideoSenders()`; on: повторный `getUserMedia({video})`+`replaceTrack(newTrack)`; отказ `getUserMedia` в любом из путей перехватывается, не бросает (Design §8); DI `deps.getUserMedia`/`deps.getVideoSenders` по прецеденту `JoinGate`/`signalingClient` — MeshManager (задача 23) ещё не существует; 12 новых тестов `tests/media/mediaController.test.js`; монорепо 225 server + 101 client зелёные, lint чист (1 pre-existing warning в server вне скоупа))
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
