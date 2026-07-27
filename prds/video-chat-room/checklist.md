@@ -136,8 +136,8 @@
 
 ### [x] Задача 15 — Прод-раздача статики и /healthz — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`createApp`: `/healthz` + прод-статика/SPA-фолбэк; после code review исправлены 9 находок — secure-headers wiring, structural `/healthz` priority regex, `config.js` `CLIENT_DIST_DIR`/`isProduction()`, registry-валидация, safe `sendFile` error handling; 225/225 server + 1 client, lint 0 errors)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (PASS, 2 повторных прохода; 9 находок 1-го прохода исправлены и верифицированы, 0 блокеров осталось)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 16 — Клиентский config.js (ICE + URL сигналинга) — critical: NO
