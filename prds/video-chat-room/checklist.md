@@ -141,9 +141,9 @@
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/24
 
 ### [ ] Задача 16 — Клиентский config.js (ICE + URL сигналинга) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/config.js` — `ICE_SERVERS`/`SIGNALING_URL`; `app/client/tests/config.test.js` 5/5; монорепо 225 server + 6 client зелёные, lint чист)
 - [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 17 — Детект WebRTC и preflight-баннеры окружения — critical: NO
