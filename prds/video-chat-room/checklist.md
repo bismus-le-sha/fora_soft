@@ -150,7 +150,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/lib/compat.js` — `hasRTCPeerConnection`/`hasGetUserMedia`/`isSecureContext`/`checkWebrtcSupport`; `App.jsx` preflight-гейт → `components/errors/NoWebRtcBanner.jsx`; монорепо 225 server + 25 client зелёные, lint чист)
 - [x] Code review пройден — `code-reviewer` (PASS, 3 находки: checklist header был преждевременно отмечен `[x]` — исправлено; default-параметр `target` в `compat.js` захардён против `null` через `??=`; стилевая нестыковка DI-паттерна между `compat.test.js` и `App.test.jsx` — отмечена, без изменений)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/26
 
 ### [ ] Задача 18 — signalingClient.js (обёртка socket.io-client) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
