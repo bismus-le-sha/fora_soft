@@ -4,6 +4,7 @@ import { generateRoomId } from './lib/roomId.js';
 import NoWebRtcBanner from './components/errors/NoWebRtcBanner.jsx';
 import StartScreen from './screens/StartScreen.jsx';
 import JoinGate from './screens/JoinGate.jsx';
+import RoomScreen from './screens/RoomScreen.jsx';
 
 /**
  * Design §4.2: `App.jsx` — «Маршрут Start/Room по URL; preflight-проверка
@@ -22,23 +23,41 @@ import JoinGate from './screens/JoinGate.jsx';
  * как StartScreen (нет отдельного 404-экрана — вне скоупа задачи 19).
  *
  * `/room/:roomId` рендерит `JoinGate` (задача 20) — экран запроса имени +
- * первичный `getUserMedia` по клику «Войти» (user-gesture, F-37). Полноценный
- * `RoomScreen` (участники/mesh/чат после входа) — задача 24, вне скоупа.
+ * первичный `getUserMedia` по клику «Войти» (user-gesture, F-37). После
+ * успешного `onJoin(name)` рендерится `RoomScreen` (задача 24) — полноценная
+ * оркестрация media → mesh → signaling.
  */
 
 /** Design §6.4: `/room/:roomId` — извлечение `roomId` из пути. */
 const ROOM_PATH = /^\/room\/([^/]+)\/?$/;
 
-function App() {
+/* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
+   (см. JoinGate.jsx/StartScreen.jsx), PropTypes не подключена (Design §3.2/§10.5 SEC-19). */
+
+/**
+ * @param {object} [props]
+ * @param {object} [props.deps] — DI для `RoomScreen` (только тестируемость,
+ *   тот же приём, что `deps` в `JoinGate.jsx`/`RoomScreen.jsx`); по умолчанию
+ *   `RoomScreen` использует реальные `signalingClient`/`MeshManager`/
+ *   `mediaController`.
+ * @param {object} [props.deps.room] — форвардится в `RoomScreen` как `deps`.
+ */
+function App({ deps = {} } = {}) {
   const { supported } = checkWebrtcSupport();
 
   const [pathname, setPathname] = useState(
     () => globalThis.location?.pathname ?? '/',
   );
+  /** Имя, введённое в `JoinGate` — прокидывается в `RoomScreen` (Design §7.1). */
+  const [joinedName, setJoinedName] = useState(null);
 
   useEffect(() => {
     function handlePopState() {
       setPathname(globalThis.location.pathname);
+      // Навигация назад/вперёд покидает текущий вход в комнату — сброс
+      // `joinedName` гарантирует, что повторный заход на `/room/:id`
+      // снова начинается с JoinGate, а не «протухшего» RoomScreen.
+      setJoinedName(null);
     }
     globalThis.addEventListener('popstate', handlePopState);
     return () => globalThis.removeEventListener('popstate', handlePopState);
@@ -64,13 +83,14 @@ function App() {
   /**
    * Design §4.2/§7.1: `JoinGate.onJoin(name)` сигнализирует, что первичный
    * `getUserMedia` отработан (успешно или нет — JoinGate сама не роняет
-   * приложение, Design §8) и пользователь готов войти. Собственно вход в
-   * комнату по сети (signaling `join {roomId, name}`) и дальнейшая
-   * оркестрация media→mesh — обязанность `RoomScreen` (задача 24, вне
-   * скоупа задачи 20); `name` здесь намеренно не используется, как и `name`
-   * в `handleCreate` выше (задача 19).
+   * приложение, Design §8) и пользователь готов войти. Сохраняем имя в
+   * state — это переключает рендер с `JoinGate` на `RoomScreen`, который
+   * берёт на себя собственно вход в комнату по сети (`join {roomId, name}`)
+   * и дальнейшую оркестрацию media → mesh → signaling (задача 24).
    */
-  const handleJoin = useCallback((_name) => {}, []);
+  const handleJoin = useCallback((joinName) => {
+    setJoinedName(joinName);
+  }, []);
 
   if (!supported) {
     return <NoWebRtcBanner />;
@@ -81,12 +101,18 @@ function App() {
   return (
     <div id="app">
       {roomMatch ? (
-        <JoinGate roomId={roomMatch[1]} onJoin={handleJoin} />
+        joinedName === null ? (
+          <JoinGate roomId={roomMatch[1]} onJoin={handleJoin} />
+        ) : (
+          <RoomScreen roomId={roomMatch[1]} name={joinedName} deps={deps.room} />
+        )
       ) : (
         <StartScreen onCreate={handleCreate} />
       )}
     </div>
   );
 }
+
+/* eslint-enable react/prop-types */
 
 export default App;

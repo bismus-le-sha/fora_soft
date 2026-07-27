@@ -207,7 +207,7 @@
   - **Критерии приёмки:** тест — новичок НЕ инициирует оферы, старожил инициирует ровно один offer на пару; при уходе пира соединение закрывается.
   - **Оценка:** 1.0 ч-д. **Зависимости:** после 22.
 
-- [ ] **24. `RoomScreen` + хуки оркестрации**
+- [x] **24. `RoomScreen` + хуки оркестрации**
   - `useSignaling/useMesh/useMedia`; оркестрация media → mesh → signaling; раскладка (VideoGrid + ControlBar + ChatPanel + ParticipantList); управление React-state (selfId, participants, messages, peers).
   - _Требования: F-07, F-16, US-6, US-9. Design: §4.2, §5.3, §7.1_
   - **Критерии приёмки:** RTL/интеграционный тест — при `join:ok` рендерится сетка+чат+список; `participant:joined/left` обновляют состав.
