@@ -138,7 +138,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`createApp`: `/healthz` + прод-статика/SPA-фолбэк; после code review исправлены 9 находок — secure-headers wiring, structural `/healthz` priority regex, `config.js` `CLIENT_DIST_DIR`/`isProduction()`, registry-валидация, safe `sendFile` error handling; 225/225 server + 1 client, lint 0 errors)
 - [x] Code review пройден — `code-reviewer` (PASS, 2 повторных прохода; 9 находок 1-го прохода исправлены и верифицированы, 0 блокеров осталось)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/24
 
 ### [ ] Задача 16 — Клиентский config.js (ICE + URL сигналинга) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
