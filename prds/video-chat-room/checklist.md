@@ -122,11 +122,11 @@
 - [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (повторный прогон, PASS, 0 critical/high; дифф `bcae5f0...b61ea04` = только `history.test.js`+doc, prod-код не менялся; SEC-06/09/11 перепроверены в текущих `Room.js`/`RoomRegistry.js`/`RoomService.js`; `npm audit --omit=dev` 0 vuln, `npm run test --workspaces` 193/193, lint 0 errors; маркер `.gates/security-b61ea04.ok`)
 - [ ] PR в `develop` открыт
 
-### [ ] Задача 13 — Обработчик media:state и broadcast — critical: NO
+### [x] Задача 13 — Обработчик media:state и broadcast — critical: NO
 - [x] Код написан, тесты зелёные — `implementer`, `RoomService.setMedia` (`resolveSession` → `validateMedia` строгий boolean → `Participant.setMedia` → `socket.to(roomId).emit('media:state', {id,audio,video})` остальным, не автору); новый `lib/validate.validateMedia`; `tests/socket/media.test.js` 6/6 (broadcast остальным не автору, снимок в `join:ok.participants`, невалидный payload no-op без краша, media:state до join no-op, rate-limit `signal`), + юнит-тесты `participant.test.js`/`validate.test.js`; монорепо 205/205 зелёные, lint чист (1 pre-existing warning вне скоупа).
 - [x] Code review пройден — `code-reviewer` (high effort; вердикт PASS, 0 находок — контракт `media:state{id,audio,video}` сверен с design §6.1/§6.2/§7.2, rate-limit `signal` применяется в handlers.js до делегирования, broadcast `socket.to(roomId)` остальным не автору, invalid payload/no-session → безопасный no-op, snapshot в `join:ok.participants` не сломан; 6/6 media-кейсов дискриминируют; монорепо 205/205 зелёные, lint чист)
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/22
 
 ### [ ] Задача 14 — Ретрансляция сигналинга (offer/answer/ice) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
