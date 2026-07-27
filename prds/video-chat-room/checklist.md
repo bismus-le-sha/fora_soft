@@ -123,7 +123,7 @@
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 13 — Обработчик media:state и broadcast — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer`, `RoomService.setMedia` (`resolveSession` → `validateMedia` строгий boolean → `Participant.setMedia` → `socket.to(roomId).emit('media:state', {id,audio,video})` остальным, не автору); новый `lib/validate.validateMedia`; `tests/socket/media.test.js` 6/6 (broadcast остальным не автору, снимок в `join:ok.participants`, невалидный payload no-op без краша, media:state до join no-op, rate-limit `signal`), + юнит-тесты `participant.test.js`/`validate.test.js`; монорепо 205/205 зелёные, lint чист (1 pre-existing warning вне скоупа).
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт

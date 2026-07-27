@@ -2,15 +2,16 @@
  * RoomService — бизнес-логика комнаты: join/leave/chat/media/signal.
  *
  * ЗАДАЧА 8 (каркас) наполняется реальным поведением задачами 9–14
- * (join/leave/chat — [critical], test-first). `join` реализован задачей 9
- * (SEC-07); остальные методы остаются СТАБАМИ (см. TODO ниже) до своих задач.
+ * (join/leave/chat — [critical], test-first). `join`/`leave`/`postChat`/
+ * `setMedia` реализованы задачами 9/10/11/13; `relaySignal` остаётся СТАБОМ
+ * (см. TODO ниже) до задачи 14.
  *
  * Requirements: F-40, SEC-05, SEC-15 (каркас). Полные требования по методам —
  * см. задачи 9–14 в `impl-video-chat-room.md`.
  * Design: §4.1 (таблица `services/RoomService.js`), §5.1, §5.2, §6.1, §7.
  */
 
-import { validateName, validateText } from '../lib/validate.js';
+import { validateName, validateText, validateMedia } from '../lib/validate.js';
 import { sanitize } from '../lib/sanitize.js';
 import { Participant } from '../domain/Participant.js';
 import { createSystemMessage, createChatMessage } from '../domain/Message.js';
@@ -321,15 +322,52 @@ export function postChat(socket, payload, ctx) {
 }
 
 /**
- * Обновление статуса mic/cam участника и broadcast. Задача 13.
+ * Обновление статуса mic/cam участника и broadcast остальным. Задача 13
+ * (F-09/16/18, US-7/12).
+ *
+ * Rate-limit(signal) уже применён вызывающим `socket/handlers.js` до вызова
+ * этой функции (Design §6.1, общий бюджет категории `signal` с
+ * `signal:offer/answer/ice`). Пайплайн здесь: сессия сокета (`resolveSession`)
+ * → `validateMedia` (оба поля строго `boolean`) → обновить
+ * `participant.media` → broadcast `media:state{id,audio,video}` ОСТАЛЬНЫМ
+ * участникам комнаты (не автору — Plan §13 «broadcast остальным»,
+ * симметрично `participant:joined`/`participant:left`; автор уже знает
+ * собственный статус локально, F-18/§7.2).
+ *
+ * Без валидной сессии (сокет не состоит в комнате либо уже не числится
+ * участником — race с `leave`/`disconnect`) либо при структурно некорректном
+ * payload (не оба поля `boolean`) — безопасный no-op, без ошибки клиенту и
+ * без падения процесса (F-40).
+ *
  * @param {import('socket.io').Socket} socket
- * @param {{audio?: boolean, video?: boolean}} payload
+ * @param {{audio?: unknown, video?: unknown}} payload
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
  * @returns {void}
  */
-export function setMedia(_socket, _payload, _ctx) {
-  // TODO(задача 13): обновить participant.media{audio,video} → broadcast
-  // media:state{id,audio,video} остальным участникам комнаты.
+export function setMedia(socket, payload, ctx) {
+  const { registry } = ctx;
+
+  const session = resolveSession(socket, registry);
+  if (!session) {
+    // Нет валидной серверной сессии — безопасный no-op (симметрично postChat).
+    return;
+  }
+  const { roomId, participant } = session;
+
+  const mediaResult = validateMedia(payload);
+  if (!mediaResult.ok) {
+    // Структурно некорректный payload (не оба поля boolean) — отклоняется
+    // молча, без broadcast и без ошибки клиенту.
+    return;
+  }
+
+  participant.setMedia(mediaResult.value);
+
+  socket.to(roomId).emit('media:state', {
+    id: socket.id,
+    audio: mediaResult.value.audio,
+    video: mediaResult.value.video,
+  });
 }
 
 /**

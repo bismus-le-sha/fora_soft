@@ -18,7 +18,7 @@
  * Design: §4.1, §7.4, §8, §10.1. Plan: задача 4.1.
  */
 import { describe, it, expect } from 'vitest';
-import { validateName, validateText } from '../../src/lib/validate.js';
+import { validateName, validateText, validateMedia } from '../../src/lib/validate.js';
 import { NAME_MAX, MESSAGE_MAX } from '../../src/config.js';
 
 /** Причина отказа: поддерживаем оба возможных имени поля (`error`/`code`). */
@@ -161,5 +161,33 @@ describe('validateText (SEC-02, F-12/24, US-8; Design §7.4, §10.1)', () => {
       expect(validateText(42).ok).toBe(false);
       expect(validateText({ text: 'hi' }).ok).toBe(false);
     });
+  });
+});
+
+describe('validateMedia (F-09/16/18, US-7/12; Design §6.1 media:state, задача 13)', () => {
+  it('принимает { audio: boolean, video: boolean } и возвращает их в value', () => {
+    const result = validateMedia({ audio: true, video: false });
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ audio: true, video: false });
+  });
+
+  it('отклоняет payload без обязательных полей', () => {
+    expect(validateMedia({}).ok).toBe(false);
+    expect(validateMedia({ audio: true }).ok).toBe(false);
+    expect(validateMedia({ video: true }).ok).toBe(false);
+  });
+
+  it('отклоняет не-boolean значения (без приведения типов)', () => {
+    expect(validateMedia({ audio: 'true', video: false }).ok).toBe(false);
+    expect(validateMedia({ audio: 1, video: 0 }).ok).toBe(false);
+    expect(validateMedia({ audio: true, video: null }).ok).toBe(false);
+    expect(validateMedia({ audio: true, video: undefined }).ok).toBe(false);
+  });
+
+  it('отклоняет структурно некорректный payload (не объект/массив/null)', () => {
+    expect(validateMedia(undefined).ok).toBe(false);
+    expect(validateMedia(null).ok).toBe(false);
+    expect(validateMedia('audio').ok).toBe(false);
+    expect(validateMedia([true, false]).ok).toBe(false);
   });
 });
