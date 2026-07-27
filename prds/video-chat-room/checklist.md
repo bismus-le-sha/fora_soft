@@ -169,7 +169,7 @@
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 20 — JoinGate — вход по ссылке (имя + user-gesture) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/screens/JoinGate.jsx` — форма имени + UX-валидация + первичный `getUserMedia` внутри клика «Войти» (DI через `deps.getUserMedia`, отказ не роняет — Design §8), контрактный `onJoin(name)` по прецеденту `StartScreen.onCreate`; подключён в `App.jsx` на место плейсхолдера `/room/:id` (preflight задачи 17 сохранён); 10 новых тестов (`tests/screens/JoinGate.test.jsx` — 8, `tests/App.joinGate.test.jsx` — 2); монорепо 225 server + 89 client зелёные, lint чист (1 pre-existing warning в server вне скоупа))
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
