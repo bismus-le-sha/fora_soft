@@ -129,6 +129,7 @@ PRD ─► TDD ─► Plan ─► [тесты(крит.) ─► код] ─► �
 - `rules/prd-tasks.mdc` — правила составления Implementation Plan.
 - `prds/<feature>/prd-<feature>.md` — PRD фичи (первая: `video-chat-room`).
 - `prds/<feature>/` — все артефакты фичи: PRD, дизайн, план.
+- `.claude/commands/graphify.md` — запуск `graphify` для построения графа связей по текущему workspace.
 - `security/security-baseline.md` — продуктовая модель угроз и чек-лист.
 - `.github/pull_request_template.md` — шаблон PR.
 - `.claude/agents/` — специализированные агенты стадий.
