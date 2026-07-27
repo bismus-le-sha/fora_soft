@@ -146,10 +146,10 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/25
 
-### [ ] Задача 17 — Детект WebRTC и preflight-баннеры окружения — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+### [x] Задача 17 — Детект WebRTC и preflight-баннеры окружения — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/lib/compat.js` — `hasRTCPeerConnection`/`hasGetUserMedia`/`isSecureContext`/`checkWebrtcSupport`; `App.jsx` preflight-гейт → `components/errors/NoWebRtcBanner.jsx`; монорепо 225 server + 25 client зелёные, lint чист)
 - [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 18 — signalingClient.js (обёртка socket.io-client) — critical: NO
