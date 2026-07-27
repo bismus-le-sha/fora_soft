@@ -214,7 +214,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`ControlBar.jsx` — тумблеры mic/cam, «Выйти», «Копировать ссылку»; проводка в `RoomScreen.jsx`; клиент 198/198, сервер 225/225, lint чист; коммит `a0a76cf`)
 - [x] Code review пройден — `code-reviewer` (вердикт **PASS**, 0 находок; критерии приёмки и проводка в `RoomScreen.jsx` проверены построчно, тесты/lint перепрогнаны самостоятельно)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#36](https://github.com/bismus-le-sha/fora_soft/pull/36)
 
 ### [ ] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`
