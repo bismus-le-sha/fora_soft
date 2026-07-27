@@ -172,7 +172,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/screens/JoinGate.jsx` — форма имени + UX-валидация + первичный `getUserMedia` внутри клика «Войти» (DI через `deps.getUserMedia`, отказ не роняет — Design §8), контрактный `onJoin(name)` по прецеденту `StartScreen.onCreate`; подключён в `App.jsx` на место плейсхолдера `/room/:id` (preflight задачи 17 сохранён); 10 новых тестов (`tests/screens/JoinGate.test.jsx` — 8, `tests/App.joinGate.test.jsx` — 2); монорепо 225 server + 89 client зелёные, lint чист (1 pre-existing warning в server вне скоупа))
 - [x] Code review пройден — `code-reviewer` (вердикт PASS; тесты 225 server + 89 client зелёные, lint чист; user-gesture/F-37 и обработка отказа getUserMedia соответствуют §8; 2 minor не блокируют — сетевой join отложен в задачу 24 (RoomScreen, по контракту `onJoin(name)`), pre-existing lint-warning в server вне скоупа)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/29
 
 ### [ ] Задача 21 — mediaController.js — getUserMedia и тумблеры — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
