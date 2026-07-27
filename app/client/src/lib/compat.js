@@ -23,7 +23,8 @@
  *   вызывается с дефолтом.
  * @returns {boolean} true, если конструктор `RTCPeerConnection` доступен.
  */
-export function hasRTCPeerConnection(target = globalThis) {
+export function hasRTCPeerConnection(target) {
+  target ??= globalThis;
   return typeof target.RTCPeerConnection === 'function';
 }
 
@@ -35,7 +36,8 @@ export function hasRTCPeerConnection(target = globalThis) {
  *   зафиксированную матрицу поддерживаемых браузеров, Design §7 «Chrome
  *   100+, Firefox 100+, Edge 100+»).
  */
-export function hasGetUserMedia(target = globalThis) {
+export function hasGetUserMedia(target) {
+  target ??= globalThis;
   const mediaDevices = target.navigator && target.navigator.mediaDevices;
   return !!mediaDevices && typeof mediaDevices.getUserMedia === 'function';
 }
@@ -47,7 +49,8 @@ export function hasGetUserMedia(target = globalThis) {
  *   по алгоритму Secure Contexts; при отсутствии свойства (очень старый
  *   браузер) считаем контекст незащищённым — fail-closed.
  */
-export function isSecureContext(target = globalThis) {
+export function isSecureContext(target) {
+  target ??= globalThis;
   return target.isSecureContext === true;
 }
 
@@ -60,7 +63,8 @@ export function isSecureContext(target = globalThis) {
  *   `supported === false` — сигнал для `App.jsx` показать фатальный экран
  *   «WebRTC не поддерживается» вместо загрузки комнаты.
  */
-export function checkWebrtcSupport(target = globalThis) {
+export function checkWebrtcSupport(target) {
+  target ??= globalThis;
   const webrtc = hasRTCPeerConnection(target);
   const getUserMedia = hasGetUserMedia(target);
   const secureContext = isSecureContext(target);

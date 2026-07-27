@@ -148,7 +148,7 @@
 
 ### [x] Задача 17 — Детект WebRTC и preflight-баннеры окружения — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/lib/compat.js` — `hasRTCPeerConnection`/`hasGetUserMedia`/`isSecureContext`/`checkWebrtcSupport`; `App.jsx` preflight-гейт → `components/errors/NoWebRtcBanner.jsx`; монорепо 225 server + 25 client зелёные, lint чист)
-- [ ] Code review пройден — `code-reviewer`
+- [x] Code review пройден — `code-reviewer` (PASS, 3 находки: checklist header был преждевременно отмечен `[x]` — исправлено; default-параметр `target` в `compat.js` захардён против `null` через `??=`; стилевая нестыковка DI-паттерна между `compat.test.js` и `App.test.jsx` — отмечена, без изменений)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [ ] PR в `develop` открыт
 
