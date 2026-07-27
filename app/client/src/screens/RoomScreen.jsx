@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSignaling } from '../hooks/useSignaling.js';
 import { useMesh } from '../hooks/useMesh.js';
 import { useMedia } from '../hooks/useMedia.js';
+import VideoGrid from '../components/VideoGrid.jsx';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -30,11 +31,12 @@ import { useMedia } from '../hooks/useMedia.js';
  * локальные треки прикрепляются к уже созданным `PeerConnection`
  * (`attachLocalTrack`).
  *
- * `VideoGrid`/`ControlBar`/`ChatPanel`/`ParticipantList` — отдельные будущие
- * задачи 25-29 (ещё не существуют). Здесь — минимальная инлайн-разметка,
+ * `VideoGrid` (задача 25) уже выделена в `components/VideoGrid.jsx`.
+ * `ControlBar`/`ChatPanel`/`ParticipantList` — отдельные будущие задачи 27-29
+ * (ещё не существуют), для них здесь пока минимальная инлайн-разметка,
  * достаточная для критерия приёмки задачи 24 («при `join:ok` рендерится
  * сетка+чат+список; `participant:joined/left` обновляют состав»); задачи
- * 25-29 заменят эту разметку на выделенные компоненты без изменения
+ * 27-29 заменят эту разметку на выделенные компоненты без изменения
  * оркестрации в этом файле.
  *
  * Requirements: F-07, F-16, US-6, US-9. Design: §4.2, §5.3, §7.1.
@@ -194,15 +196,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
       ) : null}
       {connectionError ? <p role="alert">Ошибка соединения с сервером</p> : null}
 
-      <div data-testid="video-grid">
-        {participants.map((participant) => (
-          <div key={participant.id} data-testid="video-tile" data-participant-id={participant.id}>
-            {participant.name}
-            {participant.id === selfId ? ' (я)' : ''}
-            {participant.media && participant.media.audio === false ? ' 🔇' : ''}
-          </div>
-        ))}
-      </div>
+      <VideoGrid participants={participants} selfId={selfId} />
 
       <ul data-testid="participant-list">
         {participants.map((participant) => (

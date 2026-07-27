@@ -198,11 +198,11 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/33
 
-### [ ] Задача 25 — VideoGrid — адаптивная сетка 1–4 плитки — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 25 — VideoGrid — адаптивная сетка 1–4 плитки — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/components/VideoGrid.jsx` — презентационный компонент `VideoGrid({participants, selfId})`: класс `grid-count-{1..4}` на контейнере `.video-grid` (`ROOM_CAPACITY=4`, Design §9) + `data-count`; плитка на участника (`video-tile`, `data-participant-id`, `data-self`), self помечен `(я)`, `media.audio===false` → 🔇 — та же семантика, что была в инлайн-вёрстке `RoomScreen.jsx` (задача 24). `RoomScreen.jsx` теперь использует `<VideoGrid participants={participants} selfId={selfId} />` вместо инлайн-блока, остальная оркестрация не тронута. Тесты `app/client/tests/components/VideoGrid.test.jsx` — 7 кейсов (1/2/3/4 участника → соответствующее число плиток + класс/`data-count`, self-view присутствует и помечен, mic-off иконка, пустой список). Монорепо `npm run test --workspaces`: 225 server + 183 client (7 новых) зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
+- [x] Code review пройден — `code-reviewer` (вердикт **PASS**, 0 находок; 183 client тестов зелёные включая `VideoGrid.test.jsx` 7/7 и `RoomScreen.test.jsx` без регрессии, lint 0 errors; раскладка 1/2/3/4 проверена `it.each`, self-view/SEC-04 подтверждены)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — [#34](https://github.com/bismus-le-sha/fora_soft/pull/34)
 
 ### [ ] Задача 26 — VideoTile — self/remote плитка — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
