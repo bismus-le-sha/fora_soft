@@ -140,11 +140,11 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/24
 
-### [ ] Задача 16 — Клиентский config.js (ICE + URL сигналинга) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 16 — Клиентский config.js (ICE + URL сигналинга) — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/config.js` — `ICE_SERVERS`/`SIGNALING_URL`; `app/client/tests/config.test.js` 5/5; монорепо 225 server + 6 client зелёные, lint чист)
+- [x] Code review пройден — `code-reviewer` (PASS, 2 находки: dead `typeof import.meta` guard исправлен; ICE_SERVERS-дублирование client/server — принятый trade-off, без изменений)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/25
 
 ### [ ] Задача 17 — Детект WebRTC и preflight-баннеры окружения — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
