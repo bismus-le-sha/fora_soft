@@ -114,12 +114,12 @@
 - [x] PR в `develop` открыт — #19
 
 ### [ ] Задача 12 — История чата при позднем входе (F-14/23) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [ ] Тесты написаны и падают (red) — `test-author` — ⚠️ **RED НЕ ДОСТИГНУТ**: 7 интеграционных кейсов написаны в `app/server/tests/socket/history.test.js` (happy-path позднего входа с порядком/авторами/`ts`; пустая история; поздний вход посреди диалога нескольких участников; ring-buffer `HISTORY_MAX`/SEC-09; серверное авторство истории/SEC-06; изоляция комнат; стирание истории после удаления комнаты/SEC-11+задача 10). Прогон `npx vitest run tests/socket/history.test.js`: **7/7 ЗЕЛЁНЫЕ** — не red. Причина: функционал задачи 12 УЖЕ реализован смежными задачами — `RoomService.join` включает `history: room.snapshot().history` в `join:ok` (задача 9), `postChat` вызывает `room.pushMessage` (задача 11), `Room.pushMessage` — ring-buffer с cap `HISTORY_MAX` (задача 3), `RoomService.leave` удаляет комнату/историю при size==0 (задача 10). Для `implementer` (12.2) не осталось кода — критерий приёмки задачи 12 фактически выполнен. Тесты оставлены как исполняемая спецификация/регресс F-14. **Решение пользователя: закрыть задачу 12 как уже реализованную** — тесты `history.test.js` зачтены регрессом F-14, кода писать не нужно (функционал закрыт задачами 3/9/10/11).
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — команда получена явно: пользователь выбрал «закрыть задачу 12 как уже реализованную».
+- [x] Код написан, тесты зелёные — `implementer` (нового production-кода не потребовалось — критерий приёмки задачи 12 уже выполнен кодом задач 3/9/10/11: `Room.pushMessage` ring-buffer `HISTORY_MAX`, `RoomService.join` кладёт `history` в `join:ok`, `RoomService.leave` стирает историю при `size()==0`; проверено чтением `app/server/src/domain/Room.js`/`app/server/src/services/RoomService.js` и PRD F-14/design §11.2. `npx vitest run tests/socket/history.test.js`: 7/7 зелёные; `npm run test --workspaces`: 193/193 зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в `join.test.js`, вне скоупа задачи 12).)
+- [x] Code review пройден — `code-reviewer` (high effort, 8 углов; вердикт **PASS**, 0 находок — дифф только тесты `history.test.js`+doc, сверен построчно с текущими `Room.js`/`RoomService.js`/`RoomRegistry.js`, расхождений нет)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (повторный прогон, PASS, 0 critical/high; дифф `bcae5f0...b61ea04` = только `history.test.js`+doc, prod-код не менялся; SEC-06/09/11 перепроверены в текущих `Room.js`/`RoomRegistry.js`/`RoomService.js`; `npm audit --omit=dev` 0 vuln, `npm run test --workspaces` 193/193, lint 0 errors; маркер `.gates/security-b61ea04.ok`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 13 — Обработчик media:state и broadcast — critical: NO
