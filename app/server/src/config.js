@@ -8,9 +8,33 @@
  * Requirements: F-05, F-38, F-40, SEC-01, SEC-02, SEC-05, SEC-08, SEC-09,
  * SEC-10, SEC-14, SEC-15, SEC-17. Design: §9.3.
  */
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** Порт HTTP/Socket.io сервера. */
 export const PORT = Number(process.env.PORT) || 3001;
+
+/**
+ * Прод-сборка клиента (Vite `vite build` → app/client/dist, Design §3.2/§12.2).
+ * Переопределяется через env для нестандартных layout'ов деплоя.
+ */
+export const CLIENT_DIST_DIR =
+  process.env.CLIENT_DIST_DIR || path.join(__dirname, '../../client/dist');
+
+/**
+ * Признак production-окружения (`NODE_ENV === 'production'`). Единая точка
+ * чтения `process.env.NODE_ENV` для этого флага (было продублировано буквально
+ * в `index.js`, `security/headers.js`, `socket/gateway.js`). Функция, а не
+ * статическая константа, вычисленная один раз при импорте: тесты этих трёх
+ * модулей переключают `process.env.NODE_ENV` по ходу выполнения в рамках
+ * одного процесса (см. `socket/gateway.test.js`, `security/headers.test.js`)
+ * и ожидают, что проверка увидит актуальное значение на момент вызова.
+ */
+export function isProduction() {
+  return process.env.NODE_ENV === 'production';
+}
 
 /** Макс. длина имени участника, символов. SEC-01, F-38. */
 export const NAME_MAX = 30;

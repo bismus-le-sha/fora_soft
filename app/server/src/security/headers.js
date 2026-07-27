@@ -26,17 +26,14 @@
  * `<PROD_DOMAIN>` — плейсхолдер, читается из `config.js` (`PROD_DOMAIN`,
  * env при деплое), по той же схеме, что `ALLOWED_ORIGIN` (SEC-15).
  *
- * Wiring (НЕ входит в объём задачи 7): сервер сейчас — голый `http.Server`
- * (`index.js`) + Express-инстанс, используемый только под `/healthz`, и
- * Socket.io gateway (`socket/gateway.js`, задача 6), который сам заголовки
- * не выставляет. Подключение `createSecurityHeadersMiddleware(config)` через
- * `app.use(...)` в `index.js` — самостоятельный шаг вне критериев приёмки
- * этой задачи (план явно ограничивает задачу 7 модулями `security/headers.js`
- * и `logger.js`); выполняется отдельно (wiring вместе с задачей 8 либо
- * отдельным шагом).
+ * Wiring: подключено через `app.use(createSecurityHeadersMiddleware(config))`
+ * в `createApp` (`index.js`, задача 15) — глобально, до раздачи статики и
+ * `/healthz`, т.к. это первая точка, реально отдающая ответы браузерам с
+ * этого origin.
  *
  * Requirements: SEC-04, SEC-13, SEC-14/21. Design: §10.4, §14.
  */
+import { isProduction as isProductionEnv } from '../config.js';
 
 /**
  * Собирает значение заголовка `Content-Security-Policy` под модель
@@ -66,14 +63,11 @@ export function buildContentSecurityPolicy(config) {
  * для юнит-тестов и для установки через `res.setHeader` в любом окружении.
  *
  * @param {{PROD_DOMAIN: string}} config — обычно весь модуль `config.js`.
- * @param {boolean} [isProduction] — включает HSTS; по умолчанию
- *   `process.env.NODE_ENV === 'production'` (передаётся явно тестами).
+ * @param {boolean} [isProduction] — включает HSTS; по умолчанию читается из
+ *   единого геттера `config.js` (`isProduction()`), передаётся явно тестами.
  * @returns {Record<string, string>}
  */
-export function buildSecurityHeaders(
-  config,
-  isProduction = process.env.NODE_ENV === 'production',
-) {
+export function buildSecurityHeaders(config, isProduction = isProductionEnv()) {
   const headers = {
     'Content-Security-Policy': buildContentSecurityPolicy(config),
     'X-Content-Type-Options': 'nosniff',
