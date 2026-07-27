@@ -39,6 +39,4 @@ export const ICE_SERVERS = Object.freeze([
  * задел на нестандартные деплой-топологии, где сигналинг живёт на другом
  * origin; в норме не задаётся.
  */
-export const SIGNALING_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SIGNALING_URL) ||
-  '';
+export const SIGNALING_URL = (import.meta.env && import.meta.env.VITE_SIGNALING_URL) || '';
