@@ -195,7 +195,7 @@
   - **Критерии приёмки:** юнит-тест (моки MediaStream) — выключение камеры вызывает `track.stop()` + `replaceTrack(null)` на всех sender; отказ `getUserMedia` не роняет приложение.
   - **Оценка:** 1.0 ч-д. **Зависимости:** после 18.
 
-- [ ] **22. `PeerConnection.js` — обёртка одного RTCPeerConnection**
+- [x] **22. `PeerConnection.js` — обёртка одного RTCPeerConnection**
   - `createOffer/acceptOffer/acceptAnswer/addIce/close`, `ontrack`, `replaceTrack`; `setRemoteDescription`/`addIceCandidate` в try/catch (некорректный SDP/ICE не роняет клиент, SEC-18).
   - _Требования: F-06, US-6, SEC-18. Design: §4.2, §7.1, §8_
   - **Критерии приёмки:** юнит-тест — битый SDP/ICE перехватывается; своего парсинга SDP нет.
