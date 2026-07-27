@@ -205,7 +205,7 @@
 - [x] PR в `develop` открыт — [#34](https://github.com/bismus-le-sha/fora_soft/pull/34)
 
 ### [ ] Задача 26 — VideoTile — self/remote плитка — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`app/client/src/components/VideoTile.jsx` — презентационный компонент `VideoTile({participant, stream, mediaState, isSelf})` (Design §4.2 контракт): `<video>`+`ref`/`useEffect` (`srcObject`) при наличии `stream` и `mediaState.video !== false`, иначе заглушка-силуэт `video-tile-placeholder`; оверлей имени — текстовый узел `{participant.name}` (SEC-04, без `dangerouslySetInnerHTML`/innerHTML); иконка mic-off при `mediaState.audio === false`; `isSelf` → `(я)` + `data-self`/`muted`. `VideoGrid.jsx` теперь рендерит `VideoTile` на плитку (`mediaState={participant.media}`, `stream` пока не подключён — вне контракта `VideoGrid`, задача 25/31) вместо инлайн-разметки; поведенческий контракт `VideoGrid.test.jsx` (7 кейсов, задача 25) не менялся и остался зелёным. Новые тесты `app/client/tests/components/VideoTile.test.jsx` — 8 кейсов (video:false → силуэт+имя; нет stream → силуэт; есть stream+video:true → `<video>`; audio:false → mic-off; audio!==false → без иконки; isSelf → `(я)`+`data-self`; XSS-payload в имени рендерится как текст, без `<img>`/`<script>` в DOM). Монорепо `npm run test --workspaces`: 225 server + 191 client (8 новых) зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт

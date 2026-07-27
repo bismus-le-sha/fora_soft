@@ -1,11 +1,20 @@
+import VideoTile from './VideoTile.jsx';
+
 /**
  * VideoGrid — адаптивная сетка 1–4 плитки участников (задача 25).
  *
  * Design §4.2 (дерево компонентов клиента): `VideoGrid.jsx` рендерит раскладку
- * участников; сосед по дереву — `VideoTile.jsx` (задача 26, ещё не существует
- * — здесь плитка временно инлайновая, как раньше в `RoomScreen.jsx`, задача 26
- * заменит содержимое плитки на реальный рендер видео/заглушки без изменения
- * контракта пропсов `VideoGrid`).
+ * участников; каждая ячейка — `VideoTile.jsx` (задача 26): единица рендера
+ * видео/заглушки/оверлея имени/mic-off вынесена в отдельный переиспользуемый
+ * компонент, `VideoGrid` отвечает только за раскладку и не знает о деталях
+ * содержимого плитки.
+ *
+ * `stream` в `VideoTile` здесь не передаётся (`undefined`) — `VideoGrid`
+ * получает только `participants`/`selfId` (Design §5.3 снимок состава), без
+ * `MediaStream`; подключение реальных потоков (`useMedia().localStream`/
+ * `useMesh().remoteStreams`) к плиткам — вне контракта этого компонента,
+ * `VideoTile` при отсутствии `stream` корректно показывает заглушку-силуэт
+ * (F-14/F-18, см. JSDoc `VideoTile.jsx`).
  *
  * Requirements: F-07, US-6.
  *
@@ -40,22 +49,14 @@ function VideoGrid({ participants, selfId }) {
 
   return (
     <div className={`video-grid ${gridCountClass}`} data-testid="video-grid" data-count={count}>
-      {participants.map((participant) => {
-        const isSelf = participant.id === selfId;
-        return (
-          <div
-            key={participant.id}
-            className="video-tile"
-            data-testid="video-tile"
-            data-participant-id={participant.id}
-            data-self={isSelf ? 'true' : 'false'}
-          >
-            {participant.name}
-            {isSelf ? ' (я)' : ''}
-            {participant.media && participant.media.audio === false ? ' 🔇' : ''}
-          </div>
-        );
-      })}
+      {participants.map((participant) => (
+        <VideoTile
+          key={participant.id}
+          participant={participant}
+          mediaState={participant.media ?? {}}
+          isSelf={participant.id === selfId}
+        />
+      ))}
     </div>
   );
 }
