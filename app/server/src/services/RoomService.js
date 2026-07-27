@@ -3,8 +3,7 @@
  *
  * ЗАДАЧА 8 (каркас) наполняется реальным поведением задачами 9–14
  * (join/leave/chat — [critical], test-first). `join`/`leave`/`postChat`/
- * `setMedia` реализованы задачами 9/10/11/13; `relaySignal` остаётся СТАБОМ
- * (см. TODO ниже) до задачи 14.
+ * `setMedia`/`relaySignal` реализованы задачами 9/10/11/13/14.
  *
  * Requirements: F-40, SEC-05, SEC-15 (каркас). Полные требования по методам —
  * см. задачи 9–14 в `impl-video-chat-room.md`.
@@ -373,17 +372,61 @@ export function setMedia(socket, payload, ctx) {
 /**
  * Ретрансляция сигналинга (offer/answer/ice) только адресату внутри той же
  * комнаты; сервер не парсит SDP (SEC-18). Задача 14.
+ *
+ * Rate-limit(signal) уже применён вызывающим `socket/handlers.js` до вызова
+ * этой функции (Design §6.1, общий бюджет категории `signal` с
+ * `media:state`). Пайплайн здесь: сессия отправителя (`resolveSession`) →
+ * `payload.to` — строковый id участника ТОЙ ЖЕ комнаты → relay
+ * `signal:<kind>{from:socket.id, sdp|candidate}` ТОЛЬКО адресату (через
+ * персональную комнату Socket.io `to`, которую движок создаёт автоматически
+ * на каждый socket.id — доставка не зависит от того, в каком room-объекте
+ * состоит адресат физически).
+ *
+ * Design §6.1 (примечание после таблицы событий): «Сервер не парсит SDP —
+ * ретранслирует строку как есть только адресату `to` внутри той же комнаты
+ * (SEC-18). Валидируется лишь принадлежность `to` комнате и размер payload
+ * (SEC-08)» — `sdp`/`candidate` передаются дальше как непрозрачные данные,
+ * без структурной проверки/парсинга их содержимого сервером.
+ *
+ * Без валидной сессии отправителя, без строкового `to`, либо когда `to` не
+ * состоит в ТОЙ ЖЕ комнате (включая случай, когда комната отправителя уже не
+ * существует, или адресат — сам отправитель без каких-либо последствий,
+ * или произвольный посторонний socket.id) — безопасный no-op, без ошибки
+ * клиенту и без падения процесса (F-40); событие никому не доставляется.
+ *
  * @param {import('socket.io').Socket} socket
  * @param {'offer' | 'answer' | 'ice'} kind
- * @param {{to?: string, sdp?: string, candidate?: object}} payload
+ * @param {{to?: unknown, sdp?: unknown, candidate?: unknown}} payload
  * @param {{io: import('socket.io').Server, config: object, registry: import('../domain/RoomRegistry.js').RoomRegistry}} ctx
  * @returns {void}
  */
-export function relaySignal(_socket, _kind, _payload, _ctx) {
-  // TODO(задача 14, SEC-18): проверить, что `payload.to` — участник той же
-  // комнаты → relay `signal:<kind>{from:socket.id, sdp|candidate}` только
-  // адресату; `to` вне комнаты — игнорировать. Payload ретранслируется как
-  // непрозрачные данные, без парсинга SDP/ICE сервером.
+export function relaySignal(socket, kind, payload, ctx) {
+  const { registry, io } = ctx;
+
+  const session = resolveSession(socket, registry);
+  if (!session) {
+    // Нет валидной серверной сессии отправителя (нет успешного join, комната
+    // уже удалена, либо сокет более не числится участником — race с
+    // leave/disconnect) — безопасный no-op (симметрично postChat/setMedia).
+    return;
+  }
+  const { room } = session;
+
+  const to = typeof payload?.to === 'string' ? payload.to : '';
+  if (to.length === 0 || !room.get(to)) {
+    // Структурно некорректный/отсутствующий `to`, либо адресат не состоит в
+    // ТОЙ ЖЕ комнате, что и отправитель (в т.ч. если `to` вообще не
+    // существующий socket.id) — событие молча игнорируется, никому не
+    // доставляется (Design §6.1 примечание, SEC-18).
+    return;
+  }
+
+  const relayPayload =
+    kind === 'ice' ? { from: socket.id, candidate: payload.candidate } : { from: socket.id, sdp: payload.sdp };
+
+  // Персональная комната адресата (Socket.io создаёт `room === socket.id`
+  // автоматически) — доставка строго одному сокету, не broadcast всей комнате.
+  io.to(to).emit(`signal:${kind}`, relayPayload);
 }
 
 export default { join, leave, postChat, setMedia, relaySignal };
