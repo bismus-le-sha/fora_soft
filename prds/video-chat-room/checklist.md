@@ -211,7 +211,7 @@
 - [x] PR в `develop` открыт — [#35](https://github.com/bismus-le-sha/fora_soft/pull/35)
 
 ### [ ] Задача 27 — ControlBar — управление и копирование ссылки — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (Код написан, тесты зелёные)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
