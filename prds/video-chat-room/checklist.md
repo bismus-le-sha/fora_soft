@@ -134,8 +134,8 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — https://github.com/bismus-le-sha/fora_soft/pull/23
 
-### [ ] Задача 15 — Прод-раздача статики и /healthz — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+### [x] Задача 15 — Прод-раздача статики и /healthz — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`app/server/src/index.js`: вынесен `createApp({registry, clientDistDir, isProduction})` — `/healthz` теперь возвращает `{status:'ok', rooms: registry.count()}`; при `isProduction` (`NODE_ENV==='production'`) добавлены `express.static(app/client/dist)` + SPA-фолбэк `index.html` для клиентского роутинга; вне прода статика не регистрируется — не мешает Vite dev-серверу. Общий `RoomRegistry` теперь создаётся в `index.js` и передаётся и в `/healthz`, и в `registerHandlers`. Тесты `tests/index.test.js` дополнены 8 кейсами (healthz возвращает live rooms count/без лишних полей; static отдаётся только в проде; SPA-фолбэк; /healthz приоритетнее фолбэка). Монорепо `npm run test --workspaces`: 222/222 зелёные (server 221, client 1); `npm run lint --workspaces`: 0 errors (1 pre-existing warning в `join.test.js`, вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
