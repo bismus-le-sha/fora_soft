@@ -40,7 +40,49 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
     const getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [] });
     globalThis.navigator.mediaDevices = { getUserMedia };
 
-    const { container, getByRole } = render(<App />);
+    // Задача 24: после `onJoin(name)` App рендерит `RoomScreen`, который сам
+    // владеет отдельным (заново запрошенным) медиа-потоком и сетевым
+    // сигналингом (JSDoc `JoinGate.jsx`/`mediaController.js`) — здесь это
+    // намеренно изолируется через DI (`App({ deps })`, форвардится в
+    // `RoomScreen`), чтобы: (а) не открывать настоящее сетевое соединение
+    // socket.io в тесте; (б) не путать счётчик вызовов `getUserMedia` с
+    // отдельным, не проверяемым здесь запросом `RoomScreen`
+    // (`tests/screens/RoomScreen.test.jsx` покрывает это отдельно).
+    const roomDeps = {
+      signaling: {
+        createSignalingClient: () => ({
+          connect: vi.fn(),
+          emit: vi.fn(),
+          on: vi.fn(),
+          onError: vi.fn(() => () => {}),
+          disconnect: vi.fn(),
+        }),
+      },
+      mesh: {
+        createMeshManager: () => ({
+          onParticipantJoined: vi.fn(),
+          addExistingParticipant: vi.fn(),
+          onParticipantLeft: vi.fn(),
+          handleSignal: vi.fn(),
+          attachLocalTrack: vi.fn(),
+          getVideoSenders: vi.fn(() => []),
+          getRemoteStream: vi.fn(() => null),
+          getPeerIds: vi.fn(() => []),
+          onRemoteStream: vi.fn(() => () => {}),
+          closeAll: vi.fn(),
+        }),
+      },
+      media: {
+        createMediaController: () => ({
+          init: vi.fn().mockResolvedValue({ audio: false, video: false }),
+          toggleAudio: vi.fn(),
+          toggleVideo: vi.fn(),
+          getLocalStream: vi.fn(() => null),
+        }),
+      },
+    };
+
+    const { container, getByRole } = render(<App deps={{ room: roomDeps }} />);
 
     fireEvent.change(container.querySelector('input'), {
       target: { value: 'Алекс' },
@@ -49,5 +91,53 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
 
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true, video: true });
+  });
+
+  it('клик «Войти» переключает рендер с JoinGate на RoomScreen (Design §4.2/§7.1, задача 24)', async () => {
+    globalThis.navigator.mediaDevices = { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) };
+
+    const roomDeps = {
+      signaling: {
+        createSignalingClient: () => ({
+          connect: vi.fn(),
+          emit: vi.fn(),
+          on: vi.fn(),
+          onError: vi.fn(() => () => {}),
+          disconnect: vi.fn(),
+        }),
+      },
+      mesh: {
+        createMeshManager: () => ({
+          onParticipantJoined: vi.fn(),
+          addExistingParticipant: vi.fn(),
+          onParticipantLeft: vi.fn(),
+          handleSignal: vi.fn(),
+          attachLocalTrack: vi.fn(),
+          getVideoSenders: vi.fn(() => []),
+          getRemoteStream: vi.fn(() => null),
+          getPeerIds: vi.fn(() => []),
+          onRemoteStream: vi.fn(() => () => {}),
+          closeAll: vi.fn(),
+        }),
+      },
+      media: {
+        createMediaController: () => ({
+          init: vi.fn().mockResolvedValue({ audio: false, video: false }),
+          toggleAudio: vi.fn(),
+          toggleVideo: vi.fn(),
+          getLocalStream: vi.fn(() => null),
+        }),
+      },
+    };
+
+    const { container, getByRole, queryByRole, findByTestId } = render(<App deps={{ room: roomDeps }} />);
+
+    fireEvent.change(container.querySelector('input'), {
+      target: { value: 'Алекс' },
+    });
+    fireEvent.click(getByRole('button', { name: /войти/i }));
+
+    expect(await findByTestId('room-screen')).not.toBeNull();
+    expect(queryByRole('button', { name: /войти/i })).toBeNull();
   });
 });
