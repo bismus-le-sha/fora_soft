@@ -210,11 +210,11 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — [#35](https://github.com/bismus-le-sha/fora_soft/pull/35)
 
-### [ ] Задача 27 — ControlBar — управление и копирование ссылки — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 27 — ControlBar — управление и копирование ссылки — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`ControlBar.jsx` — тумблеры mic/cam, «Выйти», «Копировать ссылку»; проводка в `RoomScreen.jsx`; клиент 198/198, сервер 225/225, lint чист; коммит `a0a76cf`)
+- [x] Code review пройден — `code-reviewer` (вердикт **PASS**, 0 находок; критерии приёмки и проводка в `RoomScreen.jsx` проверены построчно, тесты/lint перепрогнаны самостоятельно)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
+- [x] PR в `develop` открыт — [#36](https://github.com/bismus-le-sha/fora_soft/pull/36)
 
 ### [ ] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
 - [ ] Тесты написаны и падают (red) — `test-author`

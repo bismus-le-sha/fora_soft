@@ -3,6 +3,7 @@ import { useSignaling } from '../hooks/useSignaling.js';
 import { useMesh } from '../hooks/useMesh.js';
 import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
+import ControlBar from '../components/ControlBar.jsx';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -32,12 +33,17 @@ import VideoGrid from '../components/VideoGrid.jsx';
  * (`attachLocalTrack`).
  *
  * `VideoGrid` (задача 25) уже выделена в `components/VideoGrid.jsx`.
- * `ControlBar`/`ChatPanel`/`ParticipantList` — отдельные будущие задачи 27-29
- * (ещё не существуют), для них здесь пока минимальная инлайн-разметка,
- * достаточная для критерия приёмки задачи 24 («при `join:ok` рендерится
- * сетка+чат+список; `participant:joined/left` обновляют состав»); задачи
- * 27-29 заменят эту разметку на выделенные компоненты без изменения
- * оркестрации в этом файле.
+ * `ControlBar` (задача 27) подключена ниже — тумблеры mic/cam вызывают
+ * `media.toggleAudio`/`media.toggleVideo` (сами эмитят `media:state`, Design
+ * §7.2, см. JSDoc `useMedia.js`), «Выйти» эмитит `signaling.emit('leave')`
+ * (Design §7.3 `leave {}`, без payload), «Копировать ссылку» получает
+ * `roomUrl` в формате `${window.location.origin}/room/${roomId}` (тот же
+ * маршрут, что разбирает `App.jsx` `ROOM_PATH`).
+ * `ChatPanel`/`ParticipantList` — отдельные будущие задачи 28-29 (ещё не
+ * существуют), для них здесь пока минимальная инлайн-разметка, достаточная
+ * для критерия приёмки задачи 24 («при `join:ok` рендерится сетка+чат+список;
+ * `participant:joined/left` обновляют состав»); задачи 28-29 заменят эту
+ * разметку на выделенные компоненты без изменения оркестрации в этом файле.
  *
  * Requirements: F-07, F-16, US-6, US-9. Design: §4.2, §5.3, §7.1.
  */
@@ -186,6 +192,20 @@ function RoomScreen({ roomId, name, deps = {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * US-3/US-10 «Копировать ссылку»: тот же маршрут, что разбирает `App.jsx`
+   * (`ROOM_PATH = /^\/room\/([^/]+)\/?$/`) — `${origin}/room/${roomId}`.
+   */
+  const roomUrl = useMemo(
+    () => `${globalThis.location?.origin ?? ''}/room/${roomId}`,
+    [roomId],
+  );
+
+  /** Design §7.3 `leave {}` — без payload, клиент явно эмитит выход. */
+  const handleLeave = useCallback(() => {
+    emit('leave');
+  }, [emit]);
+
   return (
     <div className="room-screen" data-testid="room-screen">
       <p>Комната: {roomId}</p>
@@ -197,6 +217,14 @@ function RoomScreen({ roomId, name, deps = {} }) {
       {connectionError ? <p role="alert">Ошибка соединения с сервером</p> : null}
 
       <VideoGrid participants={participants} selfId={selfId} />
+
+      <ControlBar
+        mediaState={media.mediaState}
+        onToggleAudio={media.toggleAudio}
+        onToggleVideo={media.toggleVideo}
+        onLeave={handleLeave}
+        roomUrl={roomUrl}
+      />
 
       <ul data-testid="participant-list">
         {participants.map((participant) => (
