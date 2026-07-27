@@ -124,7 +124,7 @@
 
 ### [ ] Задача 13 — Обработчик media:state и broadcast — critical: NO
 - [x] Код написан, тесты зелёные — `implementer`, `RoomService.setMedia` (`resolveSession` → `validateMedia` строгий boolean → `Participant.setMedia` → `socket.to(roomId).emit('media:state', {id,audio,video})` остальным, не автору); новый `lib/validate.validateMedia`; `tests/socket/media.test.js` 6/6 (broadcast остальным не автору, снимок в `join:ok.participants`, невалидный payload no-op без краша, media:state до join no-op, rate-limit `signal`), + юнит-тесты `participant.test.js`/`validate.test.js`; монорепо 205/205 зелёные, lint чист (1 pre-existing warning вне скоупа).
-- [ ] Code review пройден — `code-reviewer`
+- [x] Code review пройден — `code-reviewer` (high effort; вердикт PASS, 0 находок — контракт `media:state{id,audio,video}` сверен с design §6.1/§6.2/§7.2, rate-limit `signal` применяется в handlers.js до делегирования, broadcast `socket.to(roomId)` остальным не автору, invalid payload/no-session → безопасный no-op, snapshot в `join:ok.participants` не сломан; 6/6 media-кейсов дискриминируют; монорепо 205/205 зелёные, lint чист)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
 
