@@ -199,6 +199,23 @@ describe('signalingClient (Design §4.2/§6/§8, F-35, US-13)', () => {
 
       expect(() => client.on('join:ok', vi.fn())).toThrow();
     });
+
+    it('подписка через on() до disconnect() всё равно срабатывает после повторного (пере)подключения на новом сокете', () => {
+      const sockets = [createFakeSocket(), createFakeSocket()];
+      let call = 0;
+      const ioFactory = vi.fn(() => sockets[call++]);
+      const client = createSignalingClient({ io: ioFactory, url: 'https://example.test' });
+      const cb = vi.fn();
+
+      client.connect();
+      client.on('chat:message', cb);
+      client.disconnect();
+      client.connect();
+      sockets[1].__trigger('chat:message', { text: 'hi' });
+
+      expect(cb).toHaveBeenCalledTimes(1);
+      expect(cb).toHaveBeenCalledWith({ text: 'hi' });
+    });
   });
 
   describe('disconnect()', () => {

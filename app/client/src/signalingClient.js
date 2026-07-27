@@ -82,6 +82,18 @@ export function createSignalingClient(deps = {}) {
   /** @type {import('socket.io-client').Socket | null} */
   let socket = null;
   const errorHandlers = new Set();
+  /**
+   * Подписки, зарегистрированные через `on(event, cb)`. Хранятся в замкнутом
+   * состоянии (не только на текущем `socket`-инстансе) по той же причине,
+   * что и `errorHandlers` выше: `disconnect()` → `connect()` создаёт новый
+   * сокет через `ioFactory()` без каких-либо слушателей — без этого списка
+   * все `on()`-подписки предыдущего сокета молча терялись бы при
+   * переподключении (например, `chat:message` переставал бы доходить после
+   * обрыва связи и восстановления, без единой ошибки-сигнала об этом).
+   *
+   * @type {Array<{ event: string, cb: (payload: object) => void }>}
+   */
+  const eventSubscriptions = [];
 
   /**
    * @param {Error} reason
@@ -128,6 +140,9 @@ export function createSignalingClient(deps = {}) {
 
     socket = ioFactory(configuredUrl || undefined, {});
     socket.on('connect_error', notifyError);
+    for (const { event, cb } of eventSubscriptions) {
+      socket.on(event, cb);
+    }
 
     return socket;
   }
@@ -149,6 +164,10 @@ export function createSignalingClient(deps = {}) {
   }
 
   /**
+   * Подписка запоминается в `eventSubscriptions` и переустанавливается на
+   * новый сокет при каждом следующем `connect()` — переживает цикл
+   * `disconnect()` → `connect()` симметрично с `onError()` (см. выше).
+   *
    * @param {string} event — имя события из Design §6.2 (Server→Client).
    * @param {(payload: object) => void} cb
    */
@@ -161,6 +180,7 @@ export function createSignalingClient(deps = {}) {
     if (!socket) {
       throw new Error('signalingClient.on: соединение не установлено — сначала вызовите connect()');
     }
+    eventSubscriptions.push({ event, cb });
     socket.on(event, cb);
   }
 
@@ -178,7 +198,12 @@ export function createSignalingClient(deps = {}) {
     return () => errorHandlers.delete(cb);
   }
 
-  /** Закрывает текущее соединение и сбрасывает внутреннее состояние (cleanup). */
+  /**
+   * Закрывает текущее соединение и сбрасывает ссылку на сокет (cleanup).
+   * `errorHandlers`/`eventSubscriptions` намеренно не очищаются — они живут
+   * в замкнутом состоянии обёртки, а не на сокете, и должны пережить цикл
+   * `disconnect()` → `connect()` (см. `onError`/`on` выше).
+   */
   function disconnect() {
     if (!socket) {
       return;
