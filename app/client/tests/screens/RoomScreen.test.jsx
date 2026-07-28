@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import RoomScreen from '../../src/screens/RoomScreen.jsx';
 
 /**
@@ -38,6 +38,17 @@ function makeFakeSignaling() {
         cb(payload);
       }
     },
+    /**
+     * Задача 30 (Design §8 «Сигнальный сервер недоступен», F-35): вызывает
+     * все колбэки, зарегистрированные через `onError(cb)` — симулирует
+     * `connect_error`/timeout socket.io, недоступные через обычный `trigger`
+     * (тот работает только с `listeners`, заполняемым через `on()`).
+     */
+    triggerError(reason) {
+      for (const cb of errorListeners) {
+        cb(reason);
+      }
+    },
   };
 }
 
@@ -67,10 +78,18 @@ function makeFakeMedia(state = { audio: true, video: true }) {
   };
 }
 
-function renderRoomScreen({ roomId = 'room-1', name = 'Алекс' } = {}) {
+/**
+ * @param {object} [options]
+ * @param {(mediaDeps: object) => void} [options.onMediaDeps] — задача 30:
+ *   позволяет тесту перехватить `deps` (в т.ч. `onDeviceDenied`), с которыми
+ *   `useMedia` вызывает `createMediaController` — так тест может симулировать
+ *   отказ устройства, не завязываясь на реальный `getUserMedia`
+ *   (тот же DI-приём, что и остальные фейки в этом файле).
+ */
+function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, onMediaDeps } = {}) {
   const signaling = makeFakeSignaling();
   const mesh = makeFakeMesh();
-  const media = makeFakeMedia();
+  const media = makeFakeMedia(mediaState);
 
   const utils = render(
     <RoomScreen
@@ -79,7 +98,12 @@ function renderRoomScreen({ roomId = 'room-1', name = 'Алекс' } = {}) {
       deps={{
         signaling: { createSignalingClient: () => signaling.api },
         mesh: { createMeshManager: () => mesh },
-        media: { createMediaController: () => media },
+        media: {
+          createMediaController: (mediaDeps) => {
+            onMediaDeps?.(mediaDeps);
+            return media;
+          },
+        },
       }}
     />,
   );
@@ -207,6 +231,60 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
       type: 'signal:ice',
       from: 'peer-1',
       candidate: { candidate: 'c' },
+    });
+  });
+
+  describe('Задача 30 — баннеры ошибок и состояний (Design §8, F-33/F-35/F-36, US-5/US-12/US-13, SEC-15)', () => {
+    it('join:rejected{room-full} → RoomFullBanner с кнопкой «Повторить вход», повторный клик повторно эмитит join', async () => {
+      const { getByTestId, getByRole, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+      signaling.api.emit.mockClear();
+
+      act(() => {
+        signaling.trigger('join:rejected', { code: 'room-full', message: 'Комната заполнена.' });
+      });
+
+      const banner = getByTestId('room-full-banner');
+      expect(banner.textContent).toContain('Комната заполнена');
+
+      fireEvent.click(getByRole('button', { name: 'Повторить вход' }));
+
+      expect(signaling.api.emit).toHaveBeenCalledWith('join', { roomId: 'room-1', name: 'Алекс' });
+    });
+
+    it('отказ устройств (getUserMedia denied) → DeviceDeniedBanner, пользователь остаётся в комнате', async () => {
+      let capturedMediaDeps;
+      const { getByTestId, signaling } = renderRoomScreen({
+        onMediaDeps: (mediaDeps) => {
+          capturedMediaDeps = mediaDeps;
+        },
+      });
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+      await waitFor(() => expect(getByTestId('room-screen')).toBeTruthy());
+
+      act(() => {
+        capturedMediaDeps.onDeviceDenied();
+      });
+
+      await waitFor(() => expect(getByTestId('device-denied-banner')).toBeTruthy());
+      // пользователь остаётся в комнате — раскладка продолжает рендериться.
+      expect(getByTestId('room-screen')).toBeTruthy();
+      expect(getByTestId('participant-list')).toBeTruthy();
+    });
+
+    it('недоступность сервера (connect_error) → ServerDownBanner', async () => {
+      const { getByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.triggerError(new Error('connect_error'));
+      });
+
+      await waitFor(() => expect(getByTestId('server-down-banner')).toBeTruthy());
     });
   });
 });

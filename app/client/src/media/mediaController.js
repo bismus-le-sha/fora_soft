@@ -46,6 +46,16 @@
  * достаточно — WebRTC продолжает слать ту же дорожку (просто «тишину»),
  * m-line/renegotiation не затрагиваются, поэтому `toggleAudio()` не требует
  * DI-доступа к sender'ам.
+ *
+ * Задача 30 («Баннеры ошибок и состояний», Design §8 «Отказ в доступе к
+ * камере/микрофону» → баннер «нет доступа», F-33/US-12/SEC-15): опциональный
+ * `deps.onDeviceDenied()` — callback, вызываемый КАЖДЫЙ раз, когда
+ * `getUserMedia` реджектится (в `init()` и при включении видео в
+ * `toggleVideo()`). Не меняет форму резолвящегося состояния
+ * `{audio, video}` (существующие тесты `mediaController.test.js` полагаются
+ * на `toEqual` со строгой формой) — сигнал «отказ устройства» идёт отдельным
+ * каналом, а не полем возвращаемого объекта. Вызывающая сторона
+ * (`useMedia.js`) решает, как отразить это в UI (баннер).
  */
 
 /**
@@ -82,6 +92,9 @@ function defaultGetVideoSenders() {
  *   (Design §3.3 п.2/§7.2 «на всех PeerConnection»/«на всех sender»); в
  *   рантайме — `MeshManager.getVideoSenders()` (задача 23), здесь — только
  *   инъекция для тестируемости и развязки от ещё не написанного модуля.
+ * @param {() => void} [deps.onDeviceDenied] — задача 30: вызывается при
+ *   каждом отказе `getUserMedia` (см. JSDoc модуля выше); необязателен —
+ *   без него контроллер ведёт себя как раньше (задача 21).
  * @returns {{
  *   init: () => Promise<{audio: boolean, video: boolean}>,
  *   toggleAudio: () => {audio: boolean, video: boolean},
@@ -92,6 +105,7 @@ function defaultGetVideoSenders() {
 export function createMediaController(deps = {}) {
   const getUserMedia = deps.getUserMedia ?? defaultGetUserMedia;
   const getVideoSenders = deps.getVideoSenders ?? defaultGetVideoSenders;
+  const onDeviceDenied = deps.onDeviceDenied;
 
   /** @type {MediaStream | null} */
   let localStream = null;
@@ -129,6 +143,7 @@ export function createMediaController(deps = {}) {
       localStream = null;
       audioTrack = null;
       videoTrack = null;
+      onDeviceDenied?.();
     }
     return getMediaState();
   }
@@ -188,6 +203,7 @@ export function createMediaController(deps = {}) {
       }
     } catch {
       // Design §8 «Отказ в доступе»: остаться off, не бросать наружу.
+      onDeviceDenied?.();
     }
     return getMediaState();
   }

@@ -16,6 +16,13 @@ import { createMediaController } from '../media/mediaController.js';
  *
  * Requirements: F-09, F-10, F-14, F-16, F-18, F-19, F-33, US-6, US-7, US-12.
  * Design: §3.3, §4.2, §7.2, §8.
+ *
+ * Задача 30 («Баннеры ошибок и состояний», Design §8 «Отказ в доступе» →
+ * баннер «нет доступа», SEC-15): хук подписывается на
+ * `mediaController.deps.onDeviceDenied` (см. JSDoc `mediaController.js`) и
+ * отражает факт отказа в `deviceDenied` — `RoomScreen.jsx` рендерит по нему
+ * `DeviceDeniedBanner`. Состояние держится здесь, а не в самом контроллере,
+ * по тому же прецеденту, что и `mediaState`/`localStream` выше.
  */
 
 /**
@@ -41,15 +48,19 @@ import { createMediaController } from '../media/mediaController.js';
  *   getLocalStream: () => MediaStream | null,
  *   localStream: MediaStream | null,
  *   mediaState: {audio: boolean, video: boolean},
+ *   deviceDenied: boolean,
  * }}
  */
 export function useMedia({ getVideoSenders, emit, deps } = {}) {
+  const [deviceDenied, setDeviceDenied] = useState(false);
+
   const controllerRef = useRef(null);
   if (!controllerRef.current) {
     const createController = deps?.createMediaController ?? createMediaController;
     controllerRef.current = createController({
       getUserMedia: deps?.getUserMedia,
       getVideoSenders,
+      onDeviceDenied: () => setDeviceDenied(true),
     });
   }
 
@@ -80,5 +91,5 @@ export function useMedia({ getVideoSenders, emit, deps } = {}) {
 
   const getLocalStream = useCallback(() => controllerRef.current.getLocalStream(), []);
 
-  return { init, toggleAudio, toggleVideo, getLocalStream, localStream, mediaState };
+  return { init, toggleAudio, toggleVideo, getLocalStream, localStream, mediaState, deviceDenied };
 }

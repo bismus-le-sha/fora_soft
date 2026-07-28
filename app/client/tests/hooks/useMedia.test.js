@@ -22,6 +22,21 @@ function makeFakeController(overrides = {}) {
   };
 }
 
+/**
+ * Задача 30 (Design §8 «Отказ в доступе», баннер «нет доступа»): фейковый
+ * `createMediaController`, который сохраняет переданный `deps.onDeviceDenied`
+ * и позволяет тесту вызвать его напрямую — так же, как реальный
+ * `mediaController.js` вызывает его из своего `catch` (см. его тесты).
+ */
+function makeFakeControllerFactory(overrides = {}) {
+  let capturedDeps;
+  const createMediaController = vi.fn((deps) => {
+    capturedDeps = deps;
+    return makeFakeController(overrides);
+  });
+  return { createMediaController, getCapturedDeps: () => capturedDeps };
+}
+
 describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
   it('форвардит getVideoSenders в фабрику createMediaController как deps.getVideoSenders', () => {
     const getVideoSenders = vi.fn(() => []);
@@ -85,5 +100,34 @@ describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
     const { result } = renderHook(() => useMedia({ deps: { createMediaController } }));
 
     expect(() => act(() => result.current.toggleAudio())).not.toThrow();
+  });
+
+  describe('deviceDenied (задача 30, Design §8 «Отказ в доступе»)', () => {
+    it('изначально false', () => {
+      const { createMediaController } = makeFakeControllerFactory();
+      const { result } = renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      expect(result.current.deviceDenied).toBe(false);
+    });
+
+    it('форвардит onDeviceDenied в фабрику контроллера как deps.onDeviceDenied', () => {
+      const { createMediaController } = makeFakeControllerFactory();
+      renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      expect(createMediaController).toHaveBeenCalledWith(
+        expect.objectContaining({ onDeviceDenied: expect.any(Function) }),
+      );
+    });
+
+    it('становится true, когда контроллер вызывает deps.onDeviceDenied()', () => {
+      const { createMediaController, getCapturedDeps } = makeFakeControllerFactory();
+      const { result } = renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      act(() => {
+        getCapturedDeps().onDeviceDenied();
+      });
+
+      expect(result.current.deviceDenied).toBe(true);
+    });
   });
 });
