@@ -250,10 +250,14 @@
 - [ ] ⛔ Security review — не обязателен для этой задачи (critical: NO, мерж в `develop`, хук не блокирует); рекомендован опционально перед мержем эпика в `main`, т.к. попутные фиксы затронули `socket/gateway.js`/`socket/handlers.js` (чувствительные пути) — code-reviewer уже проверил, что SEC-08/SEC-15/SEC-07/SEC-11 не ослаблены
 - [x] PR в `develop` открыт — [#41](https://github.com/bismus-le-sha/fora_soft/pull/41)
 
+### ⛔ Тотальный security-аудит эпика (перед задачей 33) — решение пользователя
+- [x] `security-auditor` — full-scope аудит (не diff) всего `app/server/src`+`app/client/src`+конфиг+CI+зависимости, коммит `910e53b`. Обоснование: задача 33 — только документация, дальше по плану лишь косметика — последняя точка эпика для содержательного полного пересмотра перед мержем в `main`. Прогоны: `npm run test --workspaces` 267/267 зелёные; `npm run lint` 0 errors (1 pre-existing warning в тестовом файле); `npm audit --omit=dev` (оба workspace) 0 vuln; CI-workflow (`pull_request`, минимальные `permissions`, секретов нет) чист. Сверка SEC-01..21 — все covered на текущем коде, включая проверку, что задачи 30–32 не ослабили более ранние гарантии (SEC-07/08/11/15). **Вердикт: PASS** (эпик готов к мержу в `main` по безопасности). 4 low-находки, все в рамках accepted-risk/дизайна, не блокируют: (L1) 6 high в dev-eslint-тулинге (`package-lock.json`) — прод-дерево чистое, `audit:dev` в CI осознанно `continue-on-error`; (L2) SEC-10 — нет лимита на число socket-соединений (только `ROOMS_MAX`), ограничение вынесено на реверс-прокси по Design §10.3 — зафиксировать в раннбуке задачи 33; (L3) `gateway.js` `Referer`-фолбэк при отсутствии `Origin` (задача 32) — fail-closed, не эксплуатируем без authN/session (SEC-21); (L4) неизвестные события/`leave` вне rate-limit категорий SEC-05 — амплификация минимальна, гасится на прокси.
+- [x] Маркер `.gates/security-910e53b.ok` создан под текущий HEAD `develop` — гейт `pre-merge-gate.js` разблокирован для этого коммита при мерже эпика в `main`. Любой новый коммит (включая задачу 33) сбросит гейт — потребуется rebind (диф чисто doc → механический rebind по прецеденту задач 4/5/6).
+
 ### [ ] Задача 33 — Документация запуска и развёртывания — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (корневой `README.md`: dev-запуск+дебаг, прод-сборка, nginx/Caddy, env, single-instance/rollback; `npm run dev` руками проверен — `/healthz` 200, Vite 200 на `127.0.0.1:5173`; doc-only diff, тестов нет)
 - [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем; при doc-only диффе — исключение по правилу «doc-only» из CLAUDE.md, либо механический rebind тотального аудита выше)
 - [ ] PR в `develop` открыт
 
 ## Легенда гейтов
