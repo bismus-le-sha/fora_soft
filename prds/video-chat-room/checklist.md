@@ -219,8 +219,8 @@
 ### [ ] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
 - [x] Тесты написаны и падают (red) — `test-author` (`app/client/tests/components/ChatPanel.test.jsx`, 12 кейсов: SEC-04 XSS (img/script/имя/новое сообщение), запрет пустых, поздняя история, автоскролл; red — `ChatPanel.jsx` отсутствует, import fails)
 - [x] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снято, команда дана
+- [x] Код написан, тесты зелёные — `implementer` (`ChatPanel.jsx` — рендер текстовыми узлами `{text}`/`{authorName}` (SEC-04), автоскролл, запрет пустых, HH:MM, `chat:system`; `react/no-danger` в `eslint.config.js`; клиент 207/207, lint чист)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
