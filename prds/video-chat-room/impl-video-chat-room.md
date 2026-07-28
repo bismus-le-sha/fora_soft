@@ -291,7 +291,7 @@
 > Ни одна задача не `[critical]` — новых security-/data-integrity-инвариантов нет (см.
 > addendum §4/§6); обычный гейт «тесты зелёные» действует на все.
 
-- [ ] **34. Фундамент: design-токены и шрифты**
+- [x] **34. Фундамент: design-токены и шрифты**
   - `app/client/src/styles/tokens.css` (CSS custom properties по таблице Design Tokens
     аддендума/README) + импорт в `main.jsx`; `<link>` на Google Fonts (Golos Text, JetBrains
     Mono, Workbench) в `app/client/index.html`. Блокирующая зависимость для всех задач ниже.

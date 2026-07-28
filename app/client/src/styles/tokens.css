@@ -1,0 +1,133 @@
+/*
+ * Design tokens — video-chat-room
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md → "Design Tokens".
+ * Не хардкодить HEX/px повторно в модульных CSS-файлах компонентов — использовать
+ * var(--token-name). Имена переменных намеренно совпадают с именами токенов из README
+ * (см. prds/video-chat-room/design-ui-video-chat-room.md §2) — это блокирующая
+ * зависимость для задач 35–44 плана, менять имена нельзя без синхронной правки README.
+ */
+
+:root {
+  /* ---------------------------------------------------------------------
+   * Цвета
+   * ------------------------------------------------------------------- */
+  --ink: #14130f;
+  --ink-soft: #2b2822;
+  --body: #56514a;
+  --muted: #7a756b;
+  --muted-2: #8a8378;
+  --faint: #a9a29a;
+  --faint-2: #b4ada1;
+  --bg: #efede8;
+  --bg-canvas: #e7e4dd;
+  --surface: #fbfaf8;
+  --surface-2: #f4f2ed;
+  --surface-3: #f7f5f1;
+  --chip: #edeae3;
+  --line: #e2ded5;
+  --line-2: #ddd8ce;
+  --dots: #dad5cb;
+  --dash: #d5cfc3;
+  --accent: #d2552f;
+  --accent-ink: #c24a22;
+  --accent-bg: #f1ded5;
+  --warn-bg: #f6ede6;
+  --warn-border: #e8d8c9;
+  --warn-text: #7b4526;
+  --ok: #4e8b62;
+  --ok-bright: #8fcfa3;
+  --silhouette: #b7b0a4;
+  --silhouette-2: #bfa898;
+  --on-dark: #f6f4f0;
+  --scrim: rgba(20, 19, 15, 0.6);
+
+  /* Видео-плейсхолдеры (заменить реальными потоками при рендере) */
+  --gradient-video-self: radial-gradient(
+    120% 90% at 38% 26%,
+    #d3c7b4,
+    #a79a87 46%,
+    #6e6555
+  );
+  --gradient-video-2: radial-gradient(
+    110% 90% at 62% 22%,
+    #b9c0bc,
+    #8c948f 44%,
+    #545c57
+  );
+  --gradient-video-3: radial-gradient(
+    120% 90% at 30% 30%,
+    #d2beaf,
+    #a08876 48%,
+    #665244
+  );
+
+  /* ---------------------------------------------------------------------
+   * Типографика
+   * ------------------------------------------------------------------- */
+  --font-sans: 'Golos Text', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Workbench', sans-serif;
+
+  /* ---------------------------------------------------------------------
+   * Отступы — скейл 4 / 6 / 8 / 10 / 12 / 14 / 18 / 20 / 24 / 26 / 32 / 44
+   * ------------------------------------------------------------------- */
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-26: 26px;
+  --space-32: 32px;
+  --space-44: 44px;
+
+  /* ---------------------------------------------------------------------
+   * Радиусы — 6 / 8 / 10 / 11 / 12 / 14 / 16 / 18 / 999
+   * ------------------------------------------------------------------- */
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-11: 11px;
+  --radius-12: 12px;
+  --radius-14: 14px;
+  --radius-16: 16px;
+  --radius-18: 18px;
+  --radius-999: 999px;
+
+  /* ---------------------------------------------------------------------
+   * Тени
+   * ------------------------------------------------------------------- */
+  --shadow-card: 0 1px 0 #ffffff inset, 0 12px 32px -24px rgba(20, 19, 15, 0.35);
+  --shadow-toast: 0 14px 34px -26px rgba(20, 19, 15, 0.5);
+  --shadow-panel: 0 18px 40px -22px rgba(20, 19, 15, 0.5);
+  --shadow-modal: 0 30px 70px -34px rgba(20, 19, 15, 0.55);
+
+  /* Фокус */
+  --shadow-focus: 0 0 0 3px rgba(20, 19, 15, 0.07);
+
+  /* Точечная сетка фона (Стартовый экран/экран входа) */
+  --dots-bg-image: radial-gradient(var(--dots) 1px, transparent 1px);
+  --dots-bg-size: 28px 28px;
+  --dots-bg-position: -1px -1px;
+}
+
+/*
+ * Базовое применение шрифта/цветов на уровне документа — минимум, достаточный
+ * чтобы токены и подключённые Google Fonts были реально видны в браузере уже
+ * на этой задаче (критерий приёмки задачи 34). Конкретная вёрстка экранов —
+ * задачи 35–44 (CSS Modules по компонентам), этот блок её не предвосхищает.
+ */
+html {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+}
+
