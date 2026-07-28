@@ -31,6 +31,10 @@ export default [
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
+      // SEC-04 (Design §10.1): пользовательский контент рендерится только
+      // текстовыми узлами React (`{value}`); `dangerouslySetInnerHTML`
+      // запрещён на уровне линта (задача 28.2, ChatPanel/VideoTile).
+      'react/no-danger': 'error',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },

@@ -216,14 +216,14 @@
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
 - [x] PR в `develop` открыт — [#36](https://github.com/bismus-le-sha/fora_soft/pull/36)
 
-### [ ] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
-- [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
-- [ ] PR в `develop` открыт
+### [x] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
+- [x] Тесты написаны и падают (red) — `test-author` (`app/client/tests/components/ChatPanel.test.jsx`, 12 кейсов: SEC-04 XSS (img/script/имя/новое сообщение), запрет пустых, поздняя история, автоскролл; red — `ChatPanel.jsx` отсутствует, import fails)
+- [x] Отчёт по тестам предоставлен пользователю
+- [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снято, команда дана
+- [x] Код написан, тесты зелёные — `implementer` (`ChatPanel.jsx` — рендер текстовыми узлами `{text}`/`{authorName}` (SEC-04), автоскролл, запрет пустых, HH:MM, `chat:system`; `react/no-danger` в `eslint.config.js`; клиент 207/207, lint чист)
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; рендер строго через `{text}`/`{authorName}`, нет `dangerouslySetInnerHTML`/`innerHTML`, `react/no-danger: error` активно без inline-disable; тест-файл не тронут в 248a5ff; ChatPanel 9/9, клиент 207/207, lint чист)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (вердикт PASS, 0 находок; SEC-04 закрыт — только текстовые узлы, `react/no-danger` активно, нет обхода рендер-барьера через `authorId`/`ts`, секретов/новых зависимостей нет)
+- [x] PR в `develop` открыт — [#37](https://github.com/bismus-le-sha/fora_soft/pull/37)
 
 ### [ ] Задача 29 — ParticipantList — актуальный состав — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
