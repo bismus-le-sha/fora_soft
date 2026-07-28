@@ -269,7 +269,7 @@
 
 ## Область 9 — E2E и документация
 
-- [ ] **32. E2E-smoke (Playwright, fake media)**
+- [x] **32. E2E-smoke (Playwright, fake media)**
   - Многопользовательские сценарии с `--use-fake-device-for-media-stream`/`--use-fake-ui-for-media-stream` и несколькими browser-context: вход по ссылке, 2-местный звонок, чат (в т.ч. поздний вход видит историю), toggle cam/mic, room-full (5-й), выход/обрыв.
   - _Требования: US-4, US-5, US-6, US-7, US-8, US-10. Design: §11.1, §11.4_
   - **Критерии приёмки:** smoke-набор зелёный в CI; покрыты ключевые US.

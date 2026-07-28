@@ -16,6 +16,11 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
     globalThis.RTCPeerConnection = function () {};
     globalThis.isSecureContext = true;
     globalThis.history.pushState(null, '', '/room/existing-room-id');
+    // Задача 32 (E2E): после `onJoin` рендерится реальный `RoomScreen` →
+    // реальный `ChatPanel.jsx` — jsdom не реализует
+    // `Element.prototype.scrollIntoView` (тот же полифилл-мок, что уже
+    // используется в `tests/components/ChatPanel.test.jsx`/`RoomScreen.test.jsx`).
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {

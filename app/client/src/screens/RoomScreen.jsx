@@ -5,6 +5,7 @@ import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
 import ControlBar from '../components/ControlBar.jsx';
 import ParticipantList from '../components/ParticipantList.jsx';
+import ChatPanel from '../components/ChatPanel.jsx';
 import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
 import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
@@ -50,11 +51,13 @@ import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
  * же React state, что обновляют `onParticipantJoined`/`onParticipantLeft`/
  * `onMediaState` выше (F-16, US-9, Design §6.2), сам по себе презентационный
  * (тот же приём, что `VideoGrid`/`ControlBar`, задачи 25/27).
- * `ChatPanel` (задача 28) существует как отдельный компонент
- * (`components/ChatPanel.jsx`), но пока не подключена сюда — для неё здесь
- * оставлена минимальная инлайн-разметка, достаточная для критерия приёмки
- * задачи 24 («при `join:ok` рендерится сетка+чат+список»); подключение —
- * вне скоупа задачи 29.
+ * `ChatPanel` (задача 28, `components/ChatPanel.jsx`) подключена ниже (задача
+ * 32 — во время подготовки сквозного E2E-потока обнаружено и закрыто: до
+ * этого здесь оставалась инлайн-разметка вместо реального компонента, без
+ * поля ввода — отправить сообщение через UI было нельзя). `onSend` эмитит
+ * `chat:send {text}` тем же `emit`, что и остальные исходящие события
+ * (Design §7.4); `messages`/`selfId` — тот же React state, что уже наполняли
+ * обработчики выше.
  *
  * Баннеры ошибок и состояний (задача 30, Design §8): `join:rejected{room-full}`
  * → `RoomFullBanner` с кнопкой «Повторить вход» (`handleRetryJoin` повторно
@@ -272,15 +275,11 @@ function RoomScreen({ roomId, name, deps = {} }) {
 
       <ParticipantList participants={participants} selfId={selfId} />
 
-      <div data-testid="chat-panel">
-        <ul>
-          {messages.map((message) => (
-            <li key={message.id}>
-              {message.kind === 'chat' ? `${message.authorName}: ${message.text}` : `${message.subjectName} — ${message.event}`}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ChatPanel
+        messages={messages}
+        selfId={selfId}
+        onSend={(text) => emit('chat:send', { text })}
+      />
     </div>
   );
 }

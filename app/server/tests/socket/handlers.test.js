@@ -224,6 +224,35 @@ describe('socket/handlers — каркас (F-40, SEC-05, SEC-15; Design §4.1/�
     client.close();
   });
 
+  it('leave с payload=null не считается bad-payload (задача 32, найдено E2E в реальном браузере)', async () => {
+    // Реальный клиентский `signalingClient.emit(event, payload)`
+    // (`app/client/src/signalingClient.js`) вызывается из `RoomScreen`/
+    // `ControlBar` как `emit('leave')` — без второго аргумента на СТОРОНЕ
+    // ВЫЗЫВАЮЩЕГО. Но сама функция-обёртка объявлена с именованным
+    // параметром `payload` и форвардит его в `socket.emit(event, payload)`
+    // ВСЕГДА с двумя позиционными аргументами (`arguments.length === 2`),
+    // даже когда его значение — `undefined`. `JSON.stringify(['leave', undefined])`
+    // даёт `["leave",null]` — по проводу долетает буквальный `null`, а не
+    // «аргумент отсутствует» (это отличается от `client.emit('leave')` в
+    // тесте выше, где `arguments.length === 1`). Раньше это доходило только
+    // до `payload === undefined` в `handlers.js`, что `null` не покрывало —
+    // сервер отвечал `error{bad-payload}`, и `leave` тихо игнорировался,
+    // хотя браузер именно так его и эмитит (обнаружено E2E-smoke, задача 32,
+    // не покрывалось Node-интеграционными тестами: `socket.io-client` в
+    // Node, вызванный здесь как `client.emit('leave')`, не воспроизводит
+    // этот сериализационный нюанс обёртки).
+    ctx = await startServer();
+    const client = connectClient(ctx.url);
+    await waitFor(client, 'connect');
+    const errors = collectErrors(client);
+
+    client.emit('leave', null);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(errors).toEqual([]);
+    client.close();
+  });
+
   it('disconnect вызывает rateLimit.release(socket.id) (устраняет утечку буфера токенов, см. JSDoc lib/rateLimit.js)', async () => {
     const releasedIds = [];
     let serverSocketId;

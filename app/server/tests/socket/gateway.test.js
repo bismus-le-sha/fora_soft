@@ -28,6 +28,22 @@ function connectClient(url, origin) {
   });
 }
 
+/**
+ * Соединение БЕЗ заголовка `Origin` (опционально с `Referer`) — эмулирует
+ * реальный браузер на первом (polling) handshake, который `Origin` для
+ * same-origin запроса не шлёт (задача 32, найдено E2E в реальном Chromium;
+ * см. JSDoc `allowRequest` в `gateway.js`). Форсируем `transports: ['polling']`
+ * — именно на этом транспорте наблюдается отсутствие `Origin`; `websocket`
+ * его шлёт всегда, тест на это не опирается.
+ */
+function connectClientWithoutOrigin(url, referer) {
+  return ioClient(url, {
+    reconnection: false,
+    transports: ['polling'],
+    extraHeaders: referer ? { Referer: referer } : {},
+  });
+}
+
 function waitFor(emitter, event) {
   return new Promise((resolve) => emitter.once(event, resolve));
 }
@@ -61,6 +77,32 @@ describe('socket/gateway (SEC-08, SEC-12, SEC-15; Design §4.1/§9.3/§10.3/§10
   it('подключение с чужого origin отклоняется на уровне handshake, а не только CORS-заголовком (SEC-15)', async () => {
     ctx = await startGateway();
     const client = connectClient(ctx.url, 'http://evil.example');
+    const err = await waitFor(client, 'connect_error');
+    expect(err).toBeTruthy();
+    expect(client.connected).toBe(false);
+    client.close();
+  });
+
+  it('без заголовка Origin, но с Referer на разрешённый origin — подключение устанавливается (задача 32, реальный браузер на polling-handshake)', async () => {
+    ctx = await startGateway();
+    const client = connectClientWithoutOrigin(ctx.url, `${TEST_ORIGIN}/room/abc`);
+    await waitFor(client, 'connect');
+    expect(client.connected).toBe(true);
+    client.close();
+  });
+
+  it('без Origin и без Referer — отклоняется (fail-closed, не безусловный allow)', async () => {
+    ctx = await startGateway();
+    const client = connectClientWithoutOrigin(ctx.url, undefined);
+    const err = await waitFor(client, 'connect_error');
+    expect(err).toBeTruthy();
+    expect(client.connected).toBe(false);
+    client.close();
+  });
+
+  it('без Origin, с Referer на чужой origin — отклоняется', async () => {
+    ctx = await startGateway();
+    const client = connectClientWithoutOrigin(ctx.url, 'http://evil.example/room/abc');
     const err = await waitFor(client, 'connect_error');
     expect(err).toBeTruthy();
     expect(client.connected).toBe(false);

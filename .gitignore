@@ -30,5 +30,11 @@ app/client/dist/
 npm-debug.log*
 coverage/
 
+# Playwright E2E (задача 32) — отчёты/трейсы, не коммитим
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # graphify — сгенерированный вывод (граф, кэш, отчёт), не коммитим
 graphify-out/

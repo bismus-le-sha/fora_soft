@@ -16,11 +16,14 @@
     "dev:client": "npm run dev --workspace=client",
     "build": "npm run build --workspace=client",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
     "lint": "npm run lint --workspaces --if-present",
     "audit": "npm audit --omit=dev --audit-level=high",
     "audit:dev": "npm audit --audit-level=high"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "concurrently": "^9.1.0"
   }
 }
