@@ -284,7 +284,7 @@
 - [x] Code review пройден — `code-reviewer` (первый проход — НЕ PASS, 2 major + 1 minor)
   - Post-review fix (`implementer`, коммит `3fd576b` поверх `cf1415f`): (1) весь копирайт `StartScreen.jsx` вынесен в новый `StartScreen.content.js` (`CLAUDE.md` → «Архитектура фронтенда: без хардкода, компонент — кирпичик»); (2) удалены недостижимые `isOverLimit`/`.counterOver` (README §9 «>30»/«недопустимые символы» вне скоупа задачи 35 — критерий приёмки запрещает менять логику валидации), JSDoc дополнен пояснением; (3) добавлен аддитивный токен `--pill-bg-inactive` в `tokens.css` вместо семантически некорректного переиспользования `--on-dark` для фона неактивной пилюли. Тесты/логика валидации не менялись. Монорепо 229 server + 327 client зелёные, lint чист; визуально сверено повторно (Playwright-скриншот, регрессии нет).
   - Re-review (`code-reviewer`): вердикт **PASS**. Все 3 находки закрыты по существу (grep подтвердил отсутствие `isOverLimit`/`.counterOver`; токен `--pill-bg-inactive` аддитивен, `--on-dark` не переименован; JSX без литералов копирайта). 327/327 client тестов зелёные, lint чист.
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#46](https://github.com/bismus-le-sha/fora_soft/pull/46)
 
 ### [ ] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
