@@ -217,8 +217,8 @@
 - [x] PR в `develop` открыт — [#36](https://github.com/bismus-le-sha/fora_soft/pull/36)
 
 ### [ ] Задача 28 — ChatPanel — XSS-безопасный рендер чата (SEC-04) — critical: YES
-- [ ] Тесты написаны и падают (red) — `test-author`
-- [ ] Отчёт по тестам предоставлен пользователю
+- [x] Тесты написаны и падают (red) — `test-author` (`app/client/tests/components/ChatPanel.test.jsx`, 12 кейсов: SEC-04 XSS (img/script/имя/новое сообщение), запрет пустых, поздняя история, автоскролл; red — `ChatPanel.jsx` отсутствует, import fails)
+- [x] Отчёт по тестам предоставлен пользователю
 - [ ] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию
 - [ ] Код написан, тесты зелёные — `implementer`
 - [ ] Code review пройден — `code-reviewer`
