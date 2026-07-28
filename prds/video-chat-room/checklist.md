@@ -292,9 +292,9 @@
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 37 — Экран подготовки к доступу (новый компонент) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`PermissionPrep.jsx` + `PermissionPrep.content.js`/`PermissionPrep.module.css` — новый экран подготовки к системному диалогу доступа по README §3: пульс-кольцо, иконка микрофона, три точки и копирайт ожидания; `RoomScreen.jsx` рендерит его пока `mediaReady === false`, то есть между стартом `media.init()` и его resolve/reject, затем скрывает и продолжает прежний поток signaling/join без изменения socket-контракта. Тест: `RoomScreen.test.jsx` проверяет показ до завершения `media.init()`, отсутствие `connect` до готовности медиа и скрытие после. Прогоны: `npx vitest run tests/screens/RoomScreen.test.jsx` — 11/11 зелёные; `npm run test` в `app/client` — 328/328 зелёные; `npm run lint` в `app/client` — чист.)
 - [ ] Code review пройден — `code-reviewer`
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#47](https://github.com/bismus-le-sha/fora_soft/pull/47)
 
 ### [ ] Задача 38 — Верхняя плашка комнаты (код/таймер/медиа/ссылка/чат/выход) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
