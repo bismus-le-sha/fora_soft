@@ -280,7 +280,7 @@
 - [x] PR в `develop` открыт — #45
 
 ### [ ] Задача 35 — StartScreen — вёрстка и путь-схема — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`StartScreen.jsx` реструктурирован под README §1/§9 addendum §3 — путь-схема из 3 mono-пилюль (активна «имя»), карточка ввода со счётчиком/hint-состояниями (`hasAttemptedSubmit` — чисто UI-флаг, не логика валидации), сноска, CSS Module `StartScreen.module.css` на токенах `tokens.css`; визуально сверено в браузере (Playwright-скриншоты, все 3 hint-состояния); логика валидации `trim().length > 0` не менялась; `StartScreen.test.jsx` 6/6 и `App.navigation.test.jsx` 4/4 зелёные без правок; монорепо 229 server + 327 client зелёные, lint чист (1 pre-existing warning в server вне скоупа))
 - [ ] Code review пройден — `code-reviewer`
 - [ ] PR в `develop` открыт
 

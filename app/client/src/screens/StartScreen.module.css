@@ -1,0 +1,315 @@
+/*
+ * StartScreen.module.css — вёрстка стартового экрана (задача 35).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md → «1. Стартовый
+ * экран (создание комнаты)» + «Design Tokens». Значения берутся из
+ * `styles/tokens.css` там, где для них есть токен; хардкод — только там, где
+ * README/таблица Design Tokens не даёт соответствующей переменной (отмечено
+ * комментарием на месте).
+ */
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+  background-image: var(--dots-bg-image);
+  background-size: var(--dots-bg-size);
+  background-position: var(--dots-bg-position);
+}
+
+/* ---------------------------------------------------------------------
+ * Верхняя плашка
+ * ------------------------------------------------------------------- */
+
+.topBar {
+  height: 68px; /* README §1: высота плашки, точного токена нет */
+  padding: 22px var(--space-32); /* 22px — вертикальный отступ, токена нет */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.brandMark {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-6);
+  background: var(--ink);
+}
+
+.topBarNote {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Центральный блок
+ * ------------------------------------------------------------------- */
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-32);
+  box-sizing: border-box;
+}
+
+.centerStack {
+  width: 100%;
+  max-width: 940px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-44);
+  text-align: center;
+  animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--faint-2);
+}
+
+.title {
+  margin: 0;
+  font-size: 58px;
+  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 420px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Путь-схема (ссылка / имя / комната)
+ * ------------------------------------------------------------------- */
+
+.pathSchema {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  opacity: 0.85;
+}
+
+.pathLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--dots);
+  transform: translateY(-50%);
+}
+
+.pathSteps {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+}
+
+.pathStepWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.pathPill {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px var(--space-10); /* 3px — вертикальный отступ, токена нет */
+  border-radius: var(--radius-999);
+  border-width: 1px;
+  border-style: solid;
+}
+
+.pathPillActive {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.pathPillInactive {
+  border-color: var(--dots);
+  color: var(--muted-2);
+  /* README §1: фон неактивной пилюли #F6F4F0 — не имеет отдельного токена по
+     смыслу, но совпадает по HEX с --on-dark (та же переменная используется
+     для текста на тёмном фоне в других местах); переиспользуем значение,
+     чтобы не хардкодить HEX повторно. */
+  background: var(--on-dark);
+}
+
+.pathDot {
+  width: var(--space-4);
+  height: var(--space-4);
+  border-radius: var(--radius-999);
+  background: #c6c0b4; /* README §1: цвет точек пути, отдельного токена нет */
+}
+
+/* ---------------------------------------------------------------------
+ * Карточка ввода имени
+ * ------------------------------------------------------------------- */
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  padding: var(--space-26);
+  box-shadow: var(--shadow-card);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.counter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint-2);
+}
+
+.counterOver {
+  /* Практически недостижимо из-за maxLength на инпуте (см. JSDoc компонента),
+     но стилизуем условие на будущее по README §1/§9 «Имя > 30 символов». */
+  color: var(--accent-ink);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px var(--space-14); /* 13px — вертикальный отступ, токена нет */
+  font-size: 16px;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: #fff; /* README §1: инпут на белом фоне, отдельного токена нет */
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-11);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--shadow-focus);
+}
+
+.hint {
+  margin: 0;
+  min-height: var(--space-20);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--faint);
+}
+
+.hintValid {
+  color: var(--ok);
+}
+
+.cta {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-14) var(--space-18);
+  border: none;
+  border-radius: var(--radius-999);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--ink);
+  color: var(--on-dark);
+  transition:
+    transform 0.14s ease,
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.cta:disabled {
+  cursor: not-allowed;
+  background: var(--line);
+  color: var(--faint);
+}
+
+.ctaIcon {
+  flex-shrink: 0;
+}
+
+.footnote {
+  margin: 0;
+  font-size: 12px;
+  color: var(--faint);
+  text-align: center;
+}
