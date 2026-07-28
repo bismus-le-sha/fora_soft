@@ -77,13 +77,21 @@ function makeFakeMesh() {
 }
 
 /** Фейковый `mediaController` — `init()` резолвится сразу (без реального getUserMedia). */
-function makeFakeMedia(state = { audio: true, video: true }) {
+function makeFakeMedia(state = { audio: true, video: true }, initResult) {
   return {
-    init: vi.fn().mockResolvedValue(state),
+    init: vi.fn(() => initResult ?? Promise.resolve(state)),
     toggleAudio: vi.fn(() => state),
     toggleVideo: vi.fn().mockResolvedValue(state),
     getLocalStream: vi.fn(() => null),
   };
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
 }
 
 /**
@@ -93,11 +101,14 @@ function makeFakeMedia(state = { audio: true, video: true }) {
  *   `useMedia` вызывает `createMediaController` — так тест может симулировать
  *   отказ устройства, не завязываясь на реальный `getUserMedia`
  *   (тот же DI-приём, что и остальные фейки в этом файле).
+ * @param {Promise<object>} [options.mediaInitResult] — задача 37:
+ *   контролируемый результат `media.init()` для проверки промежуточного
+ *   экрана подготовки к доступу.
  */
-function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, onMediaDeps } = {}) {
+function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, mediaInitResult, onMediaDeps } = {}) {
   const signaling = makeFakeSignaling();
   const mesh = makeFakeMesh();
-  const media = makeFakeMedia(mediaState);
+  const media = makeFakeMedia(mediaState, mediaInitResult);
 
   const utils = render(
     <RoomScreen
@@ -130,6 +141,26 @@ const JOIN_OK_PAYLOAD = {
 };
 
 describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки задачи 24)', () => {
+  it('показывает экран подготовки к доступу до завершения media.init(), затем скрывает его', async () => {
+    const mediaInit = deferred();
+    const { queryByTestId, findByTestId, signaling } = renderRoomScreen({
+      mediaInitResult: mediaInit.promise,
+    });
+
+    expect(await findByTestId('permission-prep')).toBeTruthy();
+    expect(queryByTestId('room-screen')).toBeNull();
+    expect(signaling.api.connect).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mediaInit.resolve({ audio: true, video: true });
+      await mediaInit.promise;
+    });
+
+    await waitFor(() => expect(queryByTestId('permission-prep')).toBeNull());
+    expect(await findByTestId('room-screen')).toBeTruthy();
+    await waitFor(() => expect(signaling.api.connect).toHaveBeenCalledTimes(1));
+  });
+
   it('media.init() выполняется ДО подключения сигналинга (Design §7.1: getUserMedia → join)', async () => {
     const { signaling, media } = renderRoomScreen();
 

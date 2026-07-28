@@ -9,6 +9,7 @@ import ChatPanel from '../components/ChatPanel.jsx';
 import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
 import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
+import PermissionPrep from './PermissionPrep.jsx';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -69,6 +70,11 @@ import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
  *
  * Requirements: F-07, F-16, F-33, F-35, F-36, US-5, US-6, US-9, US-12, US-13,
  * SEC-15. Design: §4.2, §5.3, §7.1, §8.
+ *
+ * Задача 37: пока первый `media.init()` ещё ждёт ответ браузера, вместо тихого
+ * пустого ожидания рендерится `PermissionPrep` (design-handoff README §3).
+ * После resolve/reject `mediaReady` становится `true`, экран скрывается, и
+ * существующий поток входа продолжает работу без изменения socket-контракта.
  */
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
@@ -246,6 +252,10 @@ function RoomScreen({ roomId, name, deps = {} }) {
     setJoinRejected(null);
     emit('join', { roomId, name });
   }, [emit, roomId, name]);
+
+  if (!mediaReady) {
+    return <PermissionPrep />;
+  }
 
   return (
     <div className="room-screen" data-testid="room-screen">
