@@ -235,7 +235,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (`components/errors/RoomFullBanner.jsx`, `DeviceDeniedBanner.jsx`, `ServerDownBanner.jsx`; NoWebRtcBanner уже закрыт задачей 17, не дублировался; wiring в `RoomScreen.jsx` — `join:rejected{room-full}` → RoomFullBanner+retry, `connect_error` → ServerDownBanner, `mediaController.onDeviceDenied` (новый опц. callback, не меняет форму `init()`/`toggleVideo()`) → `useMedia().deviceDenied` → DeviceDeniedBanner, юзер остаётся в комнате. Тесты: 3 новых unit-файла баннеров + доп. кейсы в `mediaController.test.js`/`useMedia.test.js`/`RoomScreen.test.jsx`. Монорепо: server 225/225, client 231/231 зелёные; lint чист (0 errors, 1 pre-existing warning вне скоупа).)
 - [x] Code review пройден — `code-reviewer` (вердикт **PASS**; тесты client 231/231, server 225/225 зелёные (перепрогнано ревьюером), lint чист (1 pre-existing warning вне диффа); RoomFull-retry, DeviceDenied-без-выхода-из-комнаты и SEC-15 (без утечки деталей) проверены по коду, не только по тестам; NoWebRTC корректно не дублирован (задача 17); 3 informational/low находки не блокируют мерж — см. отчёт ревьюера)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#39](https://github.com/bismus-le-sha/fora_soft/pull/39)
 
 ### [ ] Задача 31 — Крайние случаи медиа: autoplay, потеря устройства, graceful P2P — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
