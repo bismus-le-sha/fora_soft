@@ -239,8 +239,8 @@
 
 ### [ ] Задача 31 — Крайние случаи медиа: autoplay, потеря устройства, graceful P2P — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`VideoTile.jsx` — отдельный скрытый `<audio autoPlay>` для remote-звука + `play().catch()` → кнопка «Включить звук» (F-37); `mediaController.js`/`useMedia.js` — `track.onended`/`devicechange` → `onStateChange` → `media:state{...}` тем же контрактом, что ручные тумблеры (F-20); `PeerConnection.js`/`MeshManager.js` — `onIceConnectionStateChange`, `'failed'` для пары убирает только её remote-stream, без close/удаления из реестра (SEC-17). `VideoGrid.jsx`/`RoomScreen.jsx` — проводка `localStream`/`remoteStreams` в `VideoTile` (отложено с задачи 26). Тесты: `VideoTile.test.jsx`, `VideoGrid.test.jsx`, `mediaController.test.js`, `useMedia.test.js`, `PeerConnection.test.js`, `MeshManager.test.js`. Монорепо: server 225/225, client 267/267 (42 новых) зелёные; lint 0 errors (1 pre-existing warning вне скоупа).)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (вердикт **PASS**; blocker/major нет, 3 minor/nit не блокируют; тесты и lint перепрогнаны ревьюером — зелёные)
+- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем в `main`; для этой некритичной задачи не блокирует PR в `develop`)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 32 — E2E-smoke (Playwright, fake media) — critical: NO
