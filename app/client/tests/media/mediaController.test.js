@@ -195,4 +195,46 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       expect(controller.getLocalStream()).toBeNull();
     });
   });
+
+  describe('deps.onDeviceDenied() — задача 30 (Design §8, баннер «нет доступа»)', () => {
+    it('вызывается при отказе getUserMedia в init()', async () => {
+      const getUserMedia = vi.fn().mockRejectedValue(new Error('Permission denied'));
+      const onDeviceDenied = vi.fn();
+      const controller = createMediaController({ getUserMedia, onDeviceDenied });
+
+      await controller.init();
+
+      expect(onDeviceDenied).toHaveBeenCalledTimes(1);
+    });
+
+    it('НЕ вызывается при успешном init()', async () => {
+      const audio = fakeTrack('audio');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio]));
+      const onDeviceDenied = vi.fn();
+      const controller = createMediaController({ getUserMedia, onDeviceDenied });
+
+      await controller.init();
+
+      expect(onDeviceDenied).not.toHaveBeenCalled();
+    });
+
+    it('вызывается при отказе getUserMedia в toggleVideo() (включение после off)', async () => {
+      const getUserMedia = vi.fn().mockRejectedValue(new Error('Permission denied'));
+      const onDeviceDenied = vi.fn();
+      const controller = createMediaController({ getUserMedia, onDeviceDenied });
+      await controller.init(); // тоже reject — уже 1 вызов
+      onDeviceDenied.mockClear();
+
+      await controller.toggleVideo(); // videoTrack отсутствует → ветка включения
+
+      expect(onDeviceDenied).toHaveBeenCalledTimes(1);
+    });
+
+    it('без deps.onDeviceDenied — reject не бросает (необязательный колбэк)', async () => {
+      const getUserMedia = vi.fn().mockRejectedValue(new Error('denied'));
+      const controller = createMediaController({ getUserMedia });
+
+      await expect(controller.init()).resolves.toEqual({ audio: false, video: false });
+    });
+  });
 });

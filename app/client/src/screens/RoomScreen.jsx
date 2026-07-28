@@ -5,6 +5,9 @@ import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
 import ControlBar from '../components/ControlBar.jsx';
 import ParticipantList from '../components/ParticipantList.jsx';
+import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
+import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
+import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -50,7 +53,16 @@ import ParticipantList from '../components/ParticipantList.jsx';
  * задачи 24 («при `join:ok` рендерится сетка+чат+список»); подключение —
  * вне скоупа задачи 29.
  *
- * Requirements: F-07, F-16, US-6, US-9. Design: §4.2, §5.3, §7.1.
+ * Баннеры ошибок и состояний (задача 30, Design §8): `join:rejected{room-full}`
+ * → `RoomFullBanner` с кнопкой «Повторить вход» (`handleRetryJoin` повторно
+ * эмитит `join` тем же сокетом); `getUserMedia` reject (`useMedia().deviceDenied`,
+ * см. `mediaController.js`/`useMedia.js`) → `DeviceDeniedBanner`, пользователь
+ * остаётся в комнате; `connect_error`/timeout сокета (`onConnectionError`) →
+ * `ServerDownBanner`. `NoWebRtcBanner` (браузер без WebRTC) — preflight в
+ * `App.jsx`, не в `RoomScreen` (задача 17, вне скоупа задачи 30).
+ *
+ * Requirements: F-07, F-16, F-33, F-35, F-36, US-5, US-6, US-9, US-12, US-13,
+ * SEC-15. Design: §4.2, §5.3, §7.1, §8.
  */
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
@@ -159,7 +171,12 @@ function RoomScreen({ roomId, name, deps = {} }) {
       onSignalIce(payload) {
         mesh.ensureMesh().handleSignal({ type: 'signal:ice', from: payload.from, candidate: payload.candidate });
       },
-      /** US-13 «сервер недоступен» — баннер рендерит будущая задача 30, здесь только state. */
+      /**
+       * US-13 «сервер недоступен» — `ServerDownBanner` (задача 30, Design §8
+       * «Сигнальный сервер недоступен»). `reason` (объект `Error` от
+       * `connect_error`) намеренно не показывается пользователю (SEC-15) —
+       * только факт state-флага ниже.
+       */
       onConnectionError(reason) {
         setConnectionError(reason ?? null);
       },
@@ -211,15 +228,29 @@ function RoomScreen({ roomId, name, deps = {} }) {
     emit('leave');
   }, [emit]);
 
+  /**
+   * Задача 30, критерий приёмки: кнопка «Повторить вход» (`RoomFullBanner`)
+   * даёт пользователю повторить попытку присоединения. Design §8 «Комната
+   * заполнена»: сервер отклоняет `join` только если `socket.data.roomId`
+   * уже установлен предыдущим УСПЕШНЫМ входом — после `room-full` он не
+   * установлен, поэтому тот же сокет может повторно эмитить `join` тем же
+   * `{roomId, name}` без переподключения/повторного `getUserMedia`.
+   */
+  const handleRetryJoin = useCallback(() => {
+    setJoinRejected(null);
+    emit('join', { roomId, name });
+  }, [emit, roomId, name]);
+
   return (
     <div className="room-screen" data-testid="room-screen">
       <p>Комната: {roomId}</p>
-      {joinRejected ? (
-        <p role="alert">
-          Не удалось войти в комнату{joinRejected.message ? `: ${joinRejected.message}` : ''}
-        </p>
+      {joinRejected?.code === 'room-full' ? (
+        <RoomFullBanner onRetry={handleRetryJoin} />
+      ) : joinRejected ? (
+        <p role="alert">Не удалось войти в комнату.</p>
       ) : null}
-      {connectionError ? <p role="alert">Ошибка соединения с сервером</p> : null}
+      {connectionError ? <ServerDownBanner /> : null}
+      {media.deviceDenied ? <DeviceDeniedBanner /> : null}
 
       <VideoGrid participants={participants} selfId={selfId} />
 

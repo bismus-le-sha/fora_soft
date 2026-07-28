@@ -232,7 +232,7 @@
 - [x] PR в `develop` открыт — [#38](https://github.com/bismus-le-sha/fora_soft/pull/38)
 
 ### [ ] Задача 30 — Баннеры ошибок и состояний — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`components/errors/RoomFullBanner.jsx`, `DeviceDeniedBanner.jsx`, `ServerDownBanner.jsx`; NoWebRtcBanner уже закрыт задачей 17, не дублировался; wiring в `RoomScreen.jsx` — `join:rejected{room-full}` → RoomFullBanner+retry, `connect_error` → ServerDownBanner, `mediaController.onDeviceDenied` (новый опц. callback, не меняет форму `init()`/`toggleVideo()`) → `useMedia().deviceDenied` → DeviceDeniedBanner, юзер остаётся в комнате. Тесты: 3 новых unit-файла баннеров + доп. кейсы в `mediaController.test.js`/`useMedia.test.js`/`RoomScreen.test.jsx`. Монорепо: server 225/225, client 231/231 зелёные; lint чист (0 errors, 1 pre-existing warning вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт
