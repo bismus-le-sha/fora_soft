@@ -275,7 +275,7 @@
       применимо ко всему релизу, не только к задачам 34–44)
 
 ### [ ] Задача 34 — Фундамент: design-токены и шрифты — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer`: `app/client/src/styles/tokens.css` (все цвета/space/radius/shadow/font-токены из README, имена 1:1), импорт в `main.jsx`, Google Fonts (Golos Text/JetBrains Mono/Workbench) в `index.html`, базовое `html { font-family: var(--font-sans) }`; визуально проверено в браузере (Playwright-скриншот) — текст рендерится Golos Text; 327/327 client-тестов зелёные (267 существующих + 60 новых на tokens.css), lint чист
 - [ ] Code review пройден — `code-reviewer`
 - [ ] PR в `develop` открыт
 
