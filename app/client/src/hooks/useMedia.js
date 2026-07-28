@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createMediaController } from '../media/mediaController.js';
 
 /**
@@ -23,6 +23,17 @@ import { createMediaController } from '../media/mediaController.js';
  * отражает факт отказа в `deviceDenied` — `RoomScreen.jsx` рендерит по нему
  * `DeviceDeniedBanner`. Состояние держится здесь, а не в самом контроллере,
  * по тому же прецеденту, что и `mediaState`/`localStream` выше.
+ *
+ * Задача 31 (Design §8 «Потеря устройства во время звонка», F-20, US-7): хук
+ * дополнительно подписывается на `controller.onStateChange(cb)` — вызывается
+ * контроллером, когда состояние меняется НЕ из-за вызова `toggleAudio`/
+ * `toggleVideo` (т.е. асинхронно, из-за `track.onended`/`devicechange`).
+ * Подписчик обновляет `mediaState`/`localStream` и эмитит `media:state`
+ * (тот же контракт Design §6.1, что уже используют ручные тумблеры выше) —
+ * так потеря устройства во время звонка доходит до сервера/остальных
+ * участников тем же путём, каким доходит ручное выключение камеры/микрофона.
+ * Отписка + `controller.dispose()` (снимает `devicechange`-подписку
+ * контроллера) — при размонтировании компонента.
  */
 
 /**
@@ -66,6 +77,27 @@ export function useMedia({ getVideoSenders, emit, deps } = {}) {
 
   const [mediaState, setMediaState] = useState({ audio: false, video: false });
   const [localStream, setLocalStream] = useState(null);
+
+  /**
+   * Задача 31: подписка на асинхронные изменения состояния контроллера
+   * (потеря устройства, Design §8) — отдельный эффект от `init`/`toggleAudio`/
+   * `toggleVideo` (те обновляют state сами по возврату вызова). Пересоздаётся
+   * только при смене `emit` (стабильная ссылка из `RoomScreen`, см. его
+   * JSDoc) — `controllerRef.current` не меняется на протяжении жизни хука.
+   */
+  useEffect(() => {
+    const unsubscribe = controllerRef.current.onStateChange?.((state) => {
+      setMediaState(state);
+      setLocalStream(controllerRef.current.getLocalStream());
+      emit?.('media:state', state);
+    });
+    return () => unsubscribe?.();
+  }, [emit]);
+
+  /** Задача 31: снимает `devicechange`-подписку контроллера при размонтировании. */
+  useEffect(() => {
+    return () => controllerRef.current.dispose?.();
+  }, []);
 
   const init = useCallback(async () => {
     const state = await controllerRef.current.init();

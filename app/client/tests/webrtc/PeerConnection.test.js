@@ -29,6 +29,8 @@ class FakeRTCPeerConnection {
     this.remoteDescription = null;
     this.ontrack = null;
     this.onicecandidate = null;
+    this.oniceconnectionstatechange = null;
+    this.iceConnectionState = 'new';
     this.closed = false;
     this._senders = [];
     this._appliedIce = [];
@@ -353,6 +355,63 @@ describe('PeerConnection (Design §4.2/§7.1, F-06/US-6, SEC-18)', () => {
       pc.close();
 
       expect(pcRef.current.closed).toBe(true);
+    });
+  });
+
+  describe('onIceConnectionStateChange(cb) — задача 31 (Design §8/SEC-17 «graceful P2P»)', () => {
+    it('вызывает подписчика на нативное pc.oniceconnectionstatechange с текущим iceConnectionState', () => {
+      const { deps, pcRef } = makeDeps();
+      const pc = createPeerConnection(deps);
+      const handler = vi.fn();
+      pc.onIceConnectionStateChange(handler);
+      pcRef.current.iceConnectionState = 'failed';
+
+      pcRef.current.oniceconnectionstatechange();
+
+      expect(handler).toHaveBeenCalledWith('failed');
+    });
+
+    it('доставляет несколько последовательных изменений состояния', () => {
+      const { deps, pcRef } = makeDeps();
+      const pc = createPeerConnection(deps);
+      const handler = vi.fn();
+      pc.onIceConnectionStateChange(handler);
+
+      pcRef.current.iceConnectionState = 'checking';
+      pcRef.current.oniceconnectionstatechange();
+      pcRef.current.iceConnectionState = 'connected';
+      pcRef.current.oniceconnectionstatechange();
+
+      expect(handler).toHaveBeenNthCalledWith(1, 'checking');
+      expect(handler).toHaveBeenNthCalledWith(2, 'connected');
+    });
+
+    it('отписка через возвращённую функцию прекращает доставку', () => {
+      const { deps, pcRef } = makeDeps();
+      const pc = createPeerConnection(deps);
+      const handler = vi.fn();
+      const unsubscribe = pc.onIceConnectionStateChange(handler);
+      unsubscribe();
+      pcRef.current.iceConnectionState = 'failed';
+
+      pcRef.current.oniceconnectionstatechange();
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('падение одного подписчика не блокирует доставку остальным (не роняет клиент, SEC-17)', () => {
+      const { deps, pcRef } = makeDeps();
+      const pc = createPeerConnection(deps);
+      const broken = vi.fn(() => {
+        throw new Error('boom');
+      });
+      const healthy = vi.fn();
+      pc.onIceConnectionStateChange(broken);
+      pc.onIceConnectionStateChange(healthy);
+      pcRef.current.iceConnectionState = 'failed';
+
+      expect(() => pcRef.current.oniceconnectionstatechange()).not.toThrow();
+      expect(healthy).toHaveBeenCalledTimes(1);
     });
   });
 });

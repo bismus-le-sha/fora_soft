@@ -238,7 +238,7 @@
 - [x] PR в `develop` открыт — [#39](https://github.com/bismus-le-sha/fora_soft/pull/39)
 
 ### [ ] Задача 31 — Крайние случаи медиа: autoplay, потеря устройства, graceful P2P — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`VideoTile.jsx` — отдельный скрытый `<audio autoPlay>` для remote-звука + `play().catch()` → кнопка «Включить звук» (F-37); `mediaController.js`/`useMedia.js` — `track.onended`/`devicechange` → `onStateChange` → `media:state{...}` тем же контрактом, что ручные тумблеры (F-20); `PeerConnection.js`/`MeshManager.js` — `onIceConnectionStateChange`, `'failed'` для пары убирает только её remote-stream, без close/удаления из реестра (SEC-17). `VideoGrid.jsx`/`RoomScreen.jsx` — проводка `localStream`/`remoteStreams` в `VideoTile` (отложено с задачи 26). Тесты: `VideoTile.test.jsx`, `VideoGrid.test.jsx`, `mediaController.test.js`, `useMedia.test.js`, `PeerConnection.test.js`, `MeshManager.test.js`. Монорепо: server 225/225, client 267/267 (42 новых) зелёные; lint 0 errors (1 pre-existing warning вне скоупа).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
 - [ ] PR в `develop` открыт

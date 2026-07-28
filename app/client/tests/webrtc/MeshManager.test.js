@@ -25,6 +25,7 @@ function makeDeps(overrides = {}) {
     const id = nextId++;
     const trackHandlers = new Set();
     const iceHandlers = new Set();
+    const iceStateHandlers = new Set();
     const senders = [];
     const fake = {
       id,
@@ -48,6 +49,11 @@ function makeDeps(overrides = {}) {
         iceHandlers.add(cb);
         return () => iceHandlers.delete(cb);
       }),
+      // Задача 31 (Design §8/SEC-17 «graceful P2P») — см. `PeerConnection.js`.
+      onIceConnectionStateChange: vi.fn((cb) => {
+        iceStateHandlers.add(cb);
+        return () => iceStateHandlers.delete(cb);
+      }),
       close: vi.fn(() => {
         fake.closed = true;
       }),
@@ -57,6 +63,9 @@ function makeDeps(overrides = {}) {
       },
       _emitIce(candidate) {
         for (const cb of iceHandlers) cb(candidate);
+      },
+      _emitIceState(state) {
+        for (const cb of iceStateHandlers) cb(state);
       },
       _senders: senders,
     };
@@ -417,6 +426,99 @@ describe('MeshManager (Design §3.3/§4.2/§7.1, F-06, US-6/9)', () => {
       const mesh = createMeshManager(deps);
 
       await expect(mesh.onParticipantJoined('peer-1')).resolves.toBeUndefined();
+    });
+  });
+
+  describe('graceful P2P — ICE fail для одной пары (задача 31, Design §8/SEC-17, критерий приёмки)', () => {
+    it("ICE 'failed' для одной пары убирает её remote-stream (плитка без медиа), не роняя приложение", async () => {
+      const { deps, instances } = makeDeps();
+      const mesh = createMeshManager(deps);
+      const handler = vi.fn();
+      mesh.onRemoteStream(handler);
+      await mesh.onParticipantJoined('peer-a');
+      const streamA = { id: 'stream-a' };
+      instances.get(0)._emitTrack({ track: { kind: 'video' }, streams: [streamA] });
+
+      expect(() => instances.get(0)._emitIceState('failed')).not.toThrow();
+
+      expect(mesh.getRemoteStream('peer-a')).toBeNull();
+      expect(handler).toHaveBeenCalledWith('peer-a', null);
+    });
+
+    it("ICE 'failed' НЕ закрывает PeerConnection и НЕ убирает пира из реестра (в отличие от onParticipantLeft)", async () => {
+      const { deps, instances } = makeDeps();
+      const mesh = createMeshManager(deps);
+      await mesh.onParticipantJoined('peer-a');
+
+      instances.get(0)._emitIceState('failed');
+
+      expect(instances.get(0).close).not.toHaveBeenCalled();
+      expect(mesh.getPeerIds()).toEqual(['peer-a']);
+    });
+
+    it('ICE fail одной пары не затрагивает другую — второй пир продолжает получать/отдавать сигналинг и медиа', async () => {
+      const { deps, instances, emit } = makeDeps();
+      const mesh = createMeshManager(deps);
+      const handler = vi.fn();
+      mesh.onRemoteStream(handler);
+      await mesh.onParticipantJoined('peer-a');
+      await mesh.onParticipantJoined('peer-b');
+      const streamB = { id: 'stream-b' };
+      instances.get(1)._emitTrack({ track: { kind: 'video' }, streams: [streamB] });
+
+      instances.get(0)._emitIceState('failed');
+
+      // peer-b полностью не затронут: поток на месте, сигналинг работает.
+      expect(mesh.getRemoteStream('peer-b')).toBe(streamB);
+      expect(handler).not.toHaveBeenCalledWith('peer-b', null);
+      const candidate = { candidate: 'candidate:x' };
+      instances.get(1)._emitIce(candidate);
+      expect(emit).toHaveBeenCalledWith('signal:ice', { to: 'peer-b', candidate });
+      // Чат — самостоятельный, независимый от mesh канал (Design §7.4/§4.2:
+      // `ChatPanel`/`chat:send`/`chat:message` не обращаются к MeshManager
+      // вовсе), поэтому его работоспособность не зависит от состояния ICE
+      // какой-либо пары — здесь достаточно подтвердить, что mesh сам не упал
+      // и не «утянул» за собой остальные соединения (проверено выше).
+    });
+
+    it("состояния 'connected'/'checking'/'completed' не трогают remote-stream (реагируем только на 'failed')", async () => {
+      const { deps, instances } = makeDeps();
+      const mesh = createMeshManager(deps);
+      const handler = vi.fn();
+      mesh.onRemoteStream(handler);
+      await mesh.onParticipantJoined('peer-a');
+      const stream = { id: 's' };
+      instances.get(0)._emitTrack({ track: { kind: 'video' }, streams: [stream] });
+      handler.mockClear();
+
+      instances.get(0)._emitIceState('checking');
+      instances.get(0)._emitIceState('connected');
+      instances.get(0)._emitIceState('completed');
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(mesh.getRemoteStream('peer-a')).toBe(stream);
+    });
+
+    it('PeerConnection без onIceConnectionStateChange (дефенсивно) — регистрация пира не бросает', async () => {
+      const instances = new Map();
+      let nextId = 0;
+      const factory = vi.fn(() => {
+        const id = nextId++;
+        const fake = {
+          id,
+          createOffer: vi.fn(async () => `offer-${id}`),
+          onTrack: vi.fn(),
+          onIceCandidate: vi.fn(),
+          close: vi.fn(),
+          // onIceConnectionStateChange намеренно отсутствует.
+        };
+        instances.set(id, fake);
+        return fake;
+      });
+      const mesh = createMeshManager({ createPeerConnection: factory, emit: vi.fn() });
+
+      await expect(mesh.onParticipantJoined('peer-a')).resolves.toBeUndefined();
+      expect(instances.size).toBe(1);
     });
   });
 });
