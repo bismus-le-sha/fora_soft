@@ -221,8 +221,8 @@
 - [x] Отчёт по тестам предоставлен пользователю
 - [x] ⛔ ОЖИДАНИЕ КОМАНДЫ пользователя на реализацию — снято, команда дана
 - [x] Код написан, тесты зелёные — `implementer` (`ChatPanel.jsx` — рендер текстовыми узлами `{text}`/`{authorName}` (SEC-04), автоскролл, запрет пустых, HH:MM, `chat:system`; `react/no-danger` в `eslint.config.js`; клиент 207/207, lint чист)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем)
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; рендер строго через `{text}`/`{authorName}`, нет `dangerouslySetInnerHTML`/`innerHTML`, `react/no-danger: error` активно без inline-disable; тест-файл не тронут в 248a5ff; ChatPanel 9/9, клиент 207/207, lint чист)
+- [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (вердикт PASS, 0 находок; SEC-04 закрыт — только текстовые узлы, `react/no-danger` активно, нет обхода рендер-барьера через `authorId`/`ts`, секретов/новых зависимостей нет)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 29 — ParticipantList — актуальный состав — critical: NO
