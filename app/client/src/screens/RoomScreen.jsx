@@ -4,6 +4,7 @@ import { useMesh } from '../hooks/useMesh.js';
 import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
 import ControlBar from '../components/ControlBar.jsx';
+import ParticipantList from '../components/ParticipantList.jsx';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -39,11 +40,15 @@ import ControlBar from '../components/ControlBar.jsx';
  * (Design §7.3 `leave {}`, без payload), «Копировать ссылку» получает
  * `roomUrl` в формате `${window.location.origin}/room/${roomId}` (тот же
  * маршрут, что разбирает `App.jsx` `ROOM_PATH`).
- * `ChatPanel`/`ParticipantList` — отдельные будущие задачи 28-29 (ещё не
- * существуют), для них здесь пока минимальная инлайн-разметка, достаточная
- * для критерия приёмки задачи 24 («при `join:ok` рендерится сетка+чат+список;
- * `participant:joined/left` обновляют состав»); задачи 28-29 заменят эту
- * разметку на выделенные компоненты без изменения оркестрации в этом файле.
+ * `ParticipantList` (задача 29) подключена ниже — рендерит `participants` тем
+ * же React state, что обновляют `onParticipantJoined`/`onParticipantLeft`/
+ * `onMediaState` выше (F-16, US-9, Design §6.2), сам по себе презентационный
+ * (тот же приём, что `VideoGrid`/`ControlBar`, задачи 25/27).
+ * `ChatPanel` (задача 28) существует как отдельный компонент
+ * (`components/ChatPanel.jsx`), но пока не подключена сюда — для неё здесь
+ * оставлена минимальная инлайн-разметка, достаточная для критерия приёмки
+ * задачи 24 («при `join:ok` рендерится сетка+чат+список»); подключение —
+ * вне скоупа задачи 29.
  *
  * Requirements: F-07, F-16, US-6, US-9. Design: §4.2, §5.3, §7.1.
  */
@@ -226,11 +231,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
         roomUrl={roomUrl}
       />
 
-      <ul data-testid="participant-list">
-        {participants.map((participant) => (
-          <li key={participant.id}>{participant.name}</li>
-        ))}
-      </ul>
+      <ParticipantList participants={participants} selfId={selfId} />
 
       <div data-testid="chat-panel">
         <ul>
