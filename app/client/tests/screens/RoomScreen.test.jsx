@@ -1,6 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import RoomScreen from '../../src/screens/RoomScreen.jsx';
+
+// Задача 32 (E2E): `RoomScreen` теперь рендерит реальный `ChatPanel.jsx`
+// (ранее — инлайн-заглушка без автоскролла) — jsdom не реализует
+// `Element.prototype.scrollIntoView` (тот же полифилл-мок, что уже
+// используется в `tests/components/ChatPanel.test.jsx`).
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
 /**
  * Задача 24 — `RoomScreen` + хуки оркестрации (Design §4.2/§5.3/§7.1,

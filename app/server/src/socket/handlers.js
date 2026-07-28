@@ -165,8 +165,24 @@ export function registerHandlers(io, config, deps = {}) {
 
       // Клиенты без содержательного payload (напр. `leave`) могут не
       // передать аргумент вовсе — трактуем это как пустой объект, а не как
-      // структурно битый payload.
-      const normalizedPayload = payload === undefined ? {} : payload;
+      // структурно битый payload. Для `leave` ЕЩЁ и `null` трактуется так же
+      // (задача 32): реальный `signalingClient.emit(event, payload)`
+      // (`app/client/src/signalingClient.js`) форвардит `payload` в
+      // `socket.emit` ВСЕГДА вторым позиционным аргументом, даже когда его
+      // значение `undefined` — `JSON.stringify(['leave', undefined])` на
+      // проводе даёт буквальный `null`, а не «аргумент отсутствует» (это
+      // отличается от вызова без второго аргумента вовсе). Без этого частного
+      // случая настоящий браузерный клиент, эмитящий `leave` штатным путём
+      // (`RoomScreen`/`ControlBar`), всегда получал бы `error{bad-payload}`, и
+      // выход из комнаты по кнопке молча игнорировался бы (обнаружено
+      // E2E-smoke в реальном Chromium, не покрывалось Node-интеграционными
+      // тестами — см. `handlers.test.js`). НЕ распространяется на остальные
+      // события (`media:state`/`chat:send`/`signal:*`) — им `payload: null`
+      // по-прежнему структурно некорректен и остаётся `bad-payload` (см.
+      // параметризованный тест «битый payload известного события» ниже) —
+      // только `leave` в принципе не требует полей payload.
+      const normalizedPayload =
+        payload === undefined || (payload === null && eventName === 'leave') ? {} : payload;
       if (!isPlainObject(normalizedPayload)) {
         emitError(socket, 'bad-payload');
         return;
