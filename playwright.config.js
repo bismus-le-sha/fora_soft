@@ -19,11 +19,12 @@ import { defineConfig, devices } from '@playwright/test';
  * `/healthz` (Design §12.4), клиент — по корню Vite dev-сервера; так нет гонки
  * «Vite уже отвечает, но прокси на ещё не поднявшийся Node возвращает 500».
  *
- * `ALLOWED_ORIGIN` (server `config.js`) по умолчанию — `http://localhost:5173`
- * (совпадает с портом Vite dev-сервера по умолчанию, см. `vite.config.js`) —
- * поэтому `baseURL` ниже нарочно `http://localhost:5173` (не `127.0.0.1`),
- * чтобы браузерный `Origin` совпадал с CORS/`allowRequest`-проверкой gateway
- * (SEC-15, `socket/gateway.js`) без дополнительных env-переменных.
+ * `ALLOWED_ORIGIN` (server `config.js`) по умолчанию — `http://127.0.0.1:5173`
+ * (совпадает с хостом/портом Vite dev-сервера по умолчанию, см.
+ * `vite.config.js`, который слушает `127.0.0.1` явно) — поэтому `baseURL`
+ * ниже нарочно `http://127.0.0.1:5173` (не `localhost`), чтобы браузерный
+ * `Origin` совпадал с CORS/`allowRequest`-проверкой gateway (SEC-15,
+ * `socket/gateway.js`) без дополнительных env-переменных.
  *
  * Fake-media флаги Chromium (`--use-fake-device-for-media-stream`/
  * `--use-fake-ui-for-media-stream`) эмулируют камеру/микрофон и автоматически
@@ -40,7 +41,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }], ['list']] : [['list']],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',
   },
   projects: [
@@ -57,13 +58,13 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run dev:server',
-      url: 'http://localhost:3001/healthz',
+      url: 'http://127.0.0.1:3001/healthz',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
     {
       command: 'npm run dev:client',
-      url: 'http://localhost:5173',
+      url: 'http://127.0.0.1:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },

@@ -168,7 +168,7 @@ limit_conn perip 20;
 |---|---|---|
 | `NODE_ENV` | `production` включает раздачу статики клиента, HSTS-заголовок, отключает dev-ветки | не задано |
 | `PORT` | порт, который слушает Node за прокси | `3001` |
-| `ALLOWED_ORIGIN` | разрешённый origin для CORS Socket.io/HTTP (SEC-15); в проде — `https://<PROD_DOMAIN>`, **не** `*` | `http://localhost:5173` |
+| `ALLOWED_ORIGIN` | разрешённый origin для CORS Socket.io/HTTP (SEC-15); в проде — `https://<PROD_DOMAIN>`, **не** `*` | `http://127.0.0.1:5173` |
 | `PROD_DOMAIN` | хост (без схемы) для CSP `connect-src` (`wss://<PROD_DOMAIN>`, SEC-13) | `example.com` |
 | `CLIENT_DIST_DIR` | путь к собранной статике клиента, если раскладка деплоя нестандартная | `app/client/dist` |
 

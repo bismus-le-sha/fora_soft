@@ -77,8 +77,17 @@ export const ICE_SERVERS = Object.freeze([
  * Разрешённый origin для CORS Socket.io/HTTP (SEC-15).
  * В проде подставляется через env при деплое; wildcard '*' в проде
  * запрещён — проверяется в `socket/gateway.js` (задача 6).
+ *
+ * Дефолт — `http://127.0.0.1:5173`, а не `http://localhost:5173`: Vite dev-
+ * сервер (`app/client/vite.config.js`) слушает `127.0.0.1` явно (не
+ * `localhost`, во избежание dual-stack IPv4/IPv6 на Windows), и README
+ * инструктирует открывать именно `http://127.0.0.1:5173`. Реальный браузер
+ * на этом хосте шлёт `Origin: http://127.0.0.1:5173` — при дефолте
+ * `localhost` gateway (`socket/gateway.js`) отклонял handshake 403-м, из-за
+ * чего клиент штатно показывал `ServerDownBanner` («Ошибка сервера») сразу
+ * после установки проекта по инструкции.
  */
-export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://127.0.0.1:5173';
 
 /**
  * Прод-домен (host, без схемы) для CSP `connect-src` (`wss://<PROD_DOMAIN>`,
