@@ -256,8 +256,8 @@
 
 ### [ ] Задача 33 — Документация запуска и развёртывания — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (корневой `README.md`: dev-запуск+дебаг, прод-сборка, nginx/Caddy, env, single-instance/rollback; `npm run dev` руками проверен — `/healthz` 200, Vite 200 на `127.0.0.1:5173`; doc-only diff, тестов нет)
-- [ ] Code review пройден — `code-reviewer`
-- [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (строго перед PR/мержем; при doc-only диффе — исключение по правилу «doc-only» из CLAUDE.md, либо механический rebind тотального аудита выше)
+- [x] Code review пройден — `code-reviewer` (вердикт PASS; факты README сверены с кодом, L2-находка тотального аудита отражена корректно; 2 minor-косметики применены)
+- [x] ⛔ Security review — не обязателен для этой задачи (critical: NO, мерж в `develop`, хук не блокирует); к тому же doc-only diff (только `README.md` + отметки чеклиста/плана) и покрыт тотальным аудитом эпика перед этой задачей выше
 - [ ] PR в `develop` открыт
 
 ## Легенда гейтов

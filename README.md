@@ -19,7 +19,7 @@ npm install
 
 ## Dev-режим (отладка и дебаг)
 
-Один процесс поднимает и сервер, и клиент:
+Одна команда поднимает и сервер, и клиент (двумя дочерними процессами через `concurrently`):
 
 ```bash
 npm run dev
@@ -72,7 +72,7 @@ SERVER_PORT=4000 npm run dev:client
   состояние вкладки); для автоматизированных сценариев без реальной
   камеры/микрофона см. E2E-тесты (`npm run test:e2e`) — используют
   `--use-fake-device-for-media-stream`.
-- **`/healthz`** — `GET http://localhost:3001/healthz` → `{status:'ok', rooms: N}`,
+- **`/healthz`** — `GET http://127.0.0.1:3001/healthz` → `{status:'ok', rooms: N}`,
   быстрый способ убедиться, что сервер жив и видит текущее число комнат в RAM.
 
 ### Тесты
