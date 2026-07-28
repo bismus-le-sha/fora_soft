@@ -225,11 +225,11 @@
 - [x] ⛔ Security review ПРОЙДЕН — `security-auditor` (вердикт PASS, 0 находок; SEC-04 закрыт — только текстовые узлы, `react/no-danger` активно, нет обхода рендер-барьера через `authorId`/`ts`, секретов/новых зависимостей нет)
 - [x] PR в `develop` открыт — [#37](https://github.com/bismus-le-sha/fora_soft/pull/37)
 
-### [ ] Задача 29 — ParticipantList — актуальный состав — critical: NO
+### [x] Задача 29 — ParticipantList — актуальный состав — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`app/client/src/components/ParticipantList.jsx` — презентационный компонент `ParticipantList({participants, selfId})`, имена только `{participant.name}` текстовым узлом (SEC-04), self помечен `(я)`/`data-self`, mic-off иконка при `media.audio===false`; подключена в `RoomScreen.jsx` взамен инлайн `<ul data-testid="participant-list">` (тот же testid, регрессии нет). Тесты `app/client/tests/components/ParticipantList.test.jsx` — 7 кейсов (рендер по участнику, join/leave через `rerender`, self-пометка, mic-off, пустой список, SEC-04 XSS-payload как текст без `<img>`/`<script>` в DOM). Монорепо `npm run test --workspaces`: 225 server + 214 client (7 новых) зелёные; `npm run lint --workspaces`: 0 errors (1 pre-existing warning в server вне скоупа).)
 - [x] Code review пройден — `code-reviewer` (вердикт **PASS**, 0 находок; критерии приёмки, Design §4.2/§6.2 и wiring в `RoomScreen.jsx` проверены, тесты/lint перепрогнаны самостоятельно)
 - [ ] ⛔ Security review ПРОЙДЕН — `security-auditor` (не обязателен для non-critical задачи в `develop`)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#38](https://github.com/bismus-le-sha/fora_soft/pull/38)
 
 ### [ ] Задача 30 — Баннеры ошибок и состояний — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
