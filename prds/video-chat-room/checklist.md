@@ -281,7 +281,8 @@
 
 ### [ ] Задача 35 — StartScreen — вёрстка и путь-схема — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`StartScreen.jsx` реструктурирован под README §1/§9 addendum §3 — путь-схема из 3 mono-пилюль (активна «имя»), карточка ввода со счётчиком/hint-состояниями (`hasAttemptedSubmit` — чисто UI-флаг, не логика валидации), сноска, CSS Module `StartScreen.module.css` на токенах `tokens.css`; визуально сверено в браузере (Playwright-скриншоты, все 3 hint-состояния); логика валидации `trim().length > 0` не менялась; `StartScreen.test.jsx` 6/6 и `App.navigation.test.jsx` 4/4 зелёные без правок; монорепо 229 server + 327 client зелёные, lint чист (1 pre-existing warning в server вне скоупа))
-- [ ] Code review пройден — `code-reviewer`
+- [ ] Code review пройден — `code-reviewer` (первый проход — НЕ PASS, 2 major + 1 minor)
+  - Post-review fix (`implementer`, коммит поверх `cf1415f`): (1) весь копирайт `StartScreen.jsx` вынесен в новый `StartScreen.content.js` (`CLAUDE.md` → «Архитектура фронтенда: без хардкода, компонент — кирпичик»); (2) удалены недостижимые `isOverLimit`/`.counterOver` (README §9 «>30»/«недопустимые символы» вне скоупа задачи 35 — критерий приёмки запрещает менять логику валидации), JSDoc дополнен пояснением; (3) добавлен аддитивный токен `--pill-bg-inactive` в `tokens.css` вместо семантически некорректного переиспользования `--on-dark` для фона неактивной пилюли. Тесты/логика валидации не менялись. Монорепо 229 server + 327 client зелёные, lint чист; визуально сверено повторно (Playwright-скриншот, регрессии нет).
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO

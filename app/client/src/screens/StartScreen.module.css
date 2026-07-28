@@ -175,11 +175,7 @@
 .pathPillInactive {
   border-color: var(--dots);
   color: var(--muted-2);
-  /* README §1: фон неактивной пилюли #F6F4F0 — не имеет отдельного токена по
-     смыслу, но совпадает по HEX с --on-dark (та же переменная используется
-     для текста на тёмном фоне в других местах); переиспользуем значение,
-     чтобы не хардкодить HEX повторно. */
-  background: var(--on-dark);
+  background: var(--pill-bg-inactive);
 }
 
 .pathDot {
@@ -227,12 +223,6 @@
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--faint-2);
-}
-
-.counterOver {
-  /* Практически недостижимо из-за maxLength на инпуте (см. JSDoc компонента),
-     но стилизуем условие на будущее по README §1/§9 «Имя > 30 символов». */
-  color: var(--accent-ink);
 }
 
 .input {

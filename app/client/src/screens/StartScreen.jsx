@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styles from './StartScreen.module.css';
+import { TOP_BAR, HERO, PATH_STEPS, ACTIVE_PATH_STEP_ID, NAME_CARD, HINTS, FOOTNOTE } from './StartScreen.content.js';
 
 /**
  * StartScreen — стартовый экран: ввод имени + «Создать комнату» (задача 19,
@@ -15,7 +16,11 @@ import styles from './StartScreen.module.css';
  * путь-схема (3 mono-пилюли «ссылка/имя/комната», активна «имя» — путь ещё не
  * пройден до конца), карточка ввода с состояниями подсказки §9, сноска.
  * Источник точных значений — `design-handoff/README.md` §1/§9. CSS Module
- * (`StartScreen.module.css`) — токены из `styles/tokens.css`.
+ * (`StartScreen.module.css`) — токены из `styles/tokens.css`. Весь
+ * пользовательский текст — в `StartScreen.content.js` (`CLAUDE.md` →
+ * «Архитектура фронтенда: без хардкода, компонент — кирпичик»): компонент
+ * не хардкодит копирайт литералами в JSX, а импортирует его из отдельного
+ * модуля контента, оставаясь переиспользуемым «кирпичиком».
  *
  * Requirements: F-01, F-02, US-1, US-2.
  *
@@ -35,28 +40,21 @@ import styles from './StartScreen.module.css';
  * `hasAttemptedSubmit` — локальный UI-флаг (не часть логики валидации): по
  * README §9 «после первой неудачной попытки подсказка меняется на явную».
  * Он только переключает ТЕКСТ подсказки под пустым именем, ничего не решает
- * о валидности значения. Состояния README §9 «> 30 символов» и «недопустимые
- * символы» здесь сознательно не реализованы — они относятся к более богатой
- * серверной валидации (regex/лимит), которая вне скоупа задачи 35 и не
- * достижима при текущей клиентской логике `trim().length > 0` (переполнение
- * длины физически блокируется атрибутом `maxLength`, разрешённые символы не
- * ограничиваются клиентом вовсе).
+ * о валидности значения. Реализованы только 3 реально достижимых при
+ * текущей UX-валидации (`trim().length > 0`) состояния подсказки: пустое-
+ * нетронутое / пустое-после-попытки / валидно. Состояния README §9
+ * «> 30 символов» и «недопустимые символы» **сознательно не реализованы**:
+ * они требуют более строгой клиентской валидации (regex разрешённых
+ * символов/явная проверка лимита), которая вне скоупа задачи 35 — критерий
+ * приёмки прямо запрещает менять существующую логику валидации. Переполнение
+ * длины и так физически блокируется атрибутом `maxLength` на инпуте, поэтому
+ * ветка «> 30» недостижима в принципе и не стилизуется как мёртвый код; при
+ * появлении отдельной задачи на богатую UX-валидацию эти состояния можно
+ * будет включить.
  */
 
 /** PRD §4 «Стартовый экран»: поле имени до 30 символов (US-1, UX-подсказка). */
 const NAME_MAX = 30;
-
-/**
- * Путь-схема (README §1): порядок шагов «ссылка → имя → комната». На этом
- * экране пройден шаг «ссылка» ещё не начат — пользователь как раз вводит
- * имя, поэтому активна пилюля «имя» (см. задание задачи 35).
- */
-const PATH_STEPS = [
-  { id: 'link', label: 'ссылка' },
-  { id: 'name', label: 'имя' },
-  { id: 'room', label: 'комната' },
-];
-const ACTIVE_PATH_STEP_ID = 'name';
 
 /** Инлайн-SVG стрелки для CTA (README §1: «иконка-стрелка 15px справа»). */
 function ArrowIcon() {
@@ -94,7 +92,6 @@ function StartScreen({ onCreate }) {
 
   const trimmedName = name.trim();
   const isValid = trimmedName.length > 0;
-  const isOverLimit = name.length > NAME_MAX;
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -108,12 +105,12 @@ function StartScreen({ onCreate }) {
   let hintText;
   let hintClassName = styles.hint;
   if (isValid) {
-    hintText = 'Готово — можно заходить';
+    hintText = HINTS.valid;
     hintClassName = `${styles.hint} ${styles.hintValid}`;
   } else if (hasAttemptedSubmit) {
-    hintText = 'Введите имя — его увидят другие участники';
+    hintText = HINTS.emptyAfterAttempt;
   } else {
-    hintText = 'Как вас представить остальным?';
+    hintText = HINTS.empty;
   }
 
   return (
@@ -121,18 +118,16 @@ function StartScreen({ onCreate }) {
       <header className={styles.topBar}>
         <div className={styles.brand}>
           <span className={styles.brandMark} aria-hidden="true" />
-          <span>Комната</span>
+          <span>{TOP_BAR.brandLabel}</span>
         </div>
-        <p className={styles.topBarNote}>до 4 участников · без регистрации</p>
+        <p className={styles.topBarNote}>{TOP_BAR.note}</p>
       </header>
 
       <main className={styles.main}>
         <div className={styles.centerStack}>
-          <p className={styles.eyebrow}>VIDEO ROOM</p>
-          <h1 className={styles.title}>Позвоните без лишних шагов</h1>
-          <p className={styles.subtitle}>
-            Создайте комнату, отправьте ссылку. До четырёх человек, прямо в браузере.
-          </p>
+          <p className={styles.eyebrow}>{HERO.eyebrow}</p>
+          <h1 className={styles.title}>{HERO.title}</h1>
+          <p className={styles.subtitle}>{HERO.subtitle}</p>
 
           <div className={styles.pathSchema}>
             <span className={styles.pathLine} aria-hidden="true" />
@@ -157,9 +152,9 @@ function StartScreen({ onCreate }) {
           <form className={styles.card} onSubmit={handleSubmit}>
             <div className={styles.cardHead}>
               <label className={styles.label} htmlFor="start-screen-name">
-                Ваше имя
+                {NAME_CARD.label}
               </label>
-              <span className={`${styles.counter} ${isOverLimit ? styles.counterOver : ''}`}>
+              <span className={styles.counter}>
                 {name.length}/{NAME_MAX}
               </span>
             </div>
@@ -170,17 +165,17 @@ function StartScreen({ onCreate }) {
               value={name}
               maxLength={NAME_MAX}
               autoComplete="name"
-              placeholder="Например, Аня"
+              placeholder={NAME_CARD.placeholder}
               onChange={(event) => setName(event.target.value)}
             />
             <p className={hintClassName}>{hintText}</p>
             <button type="submit" className={styles.cta} disabled={!isValid}>
-              Создать комнату
+              {NAME_CARD.ctaLabel}
               <ArrowIcon />
             </button>
           </form>
 
-          <p className={styles.footnote}>Ничего не сохраняем — имя нужно только для этого звонка</p>
+          <p className={styles.footnote}>{FOOTNOTE}</p>
         </div>
       </main>
     </div>
