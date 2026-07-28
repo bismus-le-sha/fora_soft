@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Workbench&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #E7E4DD; }
+  body { font-family: "Golos Text", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #14130F; text-decoration: none; border-bottom: 1px solid #C6C0B4; }
+  a:hover { color: #D2552F; border-color: #D2552F; }
+  @keyframes dotPulse { 0%, 100% { opacity: .18; } 50% { opacity: 1; } }
+</style>
+</helmet>
+
+<section style="padding: 72px 80px 120px; display: flex; flex-direction: column; gap: 56px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 900px;">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8A8378;">Ход 1 · видеочат-комната</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.05;">Композиция экрана комнаты — три направления</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #6E695F; max-width: 720px; text-wrap: pretty;">Одна визуальная система, три способа распорядиться экраном. Ниже — каталог состояний из §9 и заглушки видео. Кликабельный флоу живёт в отдельном файле «Видеочат — прототип».</p>
+    <div style="display: flex; gap: 10px; margin-top: 6px; font-size: 14px; color: #56514A;">
+      <span>Варианты:</span>
+      <a href="#1a">1a</a><a href="#1b">1b</a><a href="#1c">1c</a>
+      <span style="color: #A9A29A;">·</span>
+      <span>Состояния: <a href="#1d">1d</a></span>
+      <span style="color: #A9A29A;">·</span>
+      <span>Заглушки: <a href="#1e">1e</a></span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+
+    <div id="1a" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #FBFAF8; background: #14130F; border-radius: 999px; padding: 5px 11px;">1a</div>
+        <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.015em;">Светлая сетка</div>
+        <div style="font-size: 14px; color: #8A8378;">равные плитки, панель управления всплывает на ховере</div>
+      </div>
+
+      <div style="width: 1280px; height: 760px; background: #EFEDE8; border: 1px solid #DDD8CE; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 70px -40px rgba(20,19,15,.4);">
+        <div style="flex: none; height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2DED5; background: #F4F2ED;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 7px; background: #14130F;"></div>
+            <div style="font-family: Workbench, monospace; font-size: 15px; letter-spacing: 0.06em;">RM-4F2A</div>
+            <div style="width: 1px; height: 18px; background: #DFDAD1;"></div>
+            <div style="display: flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8A8378;">
+              <div style="width: 6px; height: 6px; border-radius: 999px; background: #4E8B62;"></div><span>12:04</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 9px; padding: 9px 15px 9px 11px; border: 1px solid #DDD8CE; border-radius: 999px; background: #FBFAF8; font-size: 13px; font-weight: 500;">
+              <span style="width: 22px; height: 22px; border-radius: 6px; background: #EDEAE3; display: grid; place-items: center;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path></svg>
+              </span>
+              <span>Скопировать ссылку</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 7px; padding: 9px 14px; border: 1px solid #DDD8CE; border-radius: 999px; background: #FBFAF8; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #56514A;">3/4</div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 9px 15px; border: 1px solid #DDD8CE; border-radius: 999px; background: #FBFAF8; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-3.2-6.4"></path><path d="M20 4v5h-5"></path></svg>
+              <span>Чат</span>
+              <span style="min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #D2552F; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; display: grid; place-items: center;">2</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex: 1; min-height: 0; position: relative; padding: 18px; display: grid; gap: 14px; grid-template-columns: 1fr 1fr 1fr;">
+          <div style="position: relative; border-radius: 16px; overflow: hidden; border: 1.5px solid #14130F; background: radial-gradient(120% 90% at 38% 26%, #D3C7B4 0%, #A79A87 46%, #6E6555 100%);">
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,19,15,.42), rgba(20,19,15,0) 46%);"></div>
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(20,19,15,.6); color: #F6F4F0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5z"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0"></path><path d="M12 16v4"></path></svg>
+              <span style="font-size: 13px; font-weight: 500;">Аня</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; opacity: .6;">вы</span>
+            </div>
+          </div>
+          <div style="position: relative; border-radius: 16px; overflow: hidden; background: radial-gradient(110% 90% at 62% 22%, #B9C0BC 0%, #8C948F 44%, #545C57 100%);">
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,19,15,.42), rgba(20,19,15,0) 46%);"></div>
+            <div style="position: absolute; right: 12px; top: 12px; display: flex; align-items: flex-end; gap: 2.5px; padding: 6px 9px; border-radius: 999px; background: rgba(20,19,15,.6);">
+              <div style="width: 2.5px; height: 6px; border-radius: 2px; background: #8FCFA3;"></div>
+              <div style="width: 2.5px; height: 12px; border-radius: 2px; background: #8FCFA3;"></div>
+              <div style="width: 2.5px; height: 8px; border-radius: 2px; background: #8FCFA3;"></div>
+            </div>
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(20,19,15,.6); color: #F6F4F0; font-size: 13px; font-weight: 500;">Марк</div>
+          </div>
+          <div style="position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(160deg, #E6E2D9 0%, #D8D3C8 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+            <div style="position: relative; width: 76px; height: 76px;">
+              <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 999px; background: #B7B0A4;"></div>
+              <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 62px; height: 34px; border-radius: 34px 34px 0 0; background: #B7B0A4;"></div>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">камера выключена</div>
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(251,250,248,.9); color: #14130F; font-size: 13px; font-weight: 500;">Ирина</div>
+          </div>
+
+          <div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 26px; display: flex; align-items: center; gap: 8px; padding: 9px; border-radius: 999px; background: rgba(251,250,248,.94); border: 1px solid #DFDAD1; box-shadow: 0 18px 40px -22px rgba(20,19,15,.5);">
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 16px 10px 12px; border-radius: 999px; background: #EDEAE3; font-size: 13.5px; font-weight: 500;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5z"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0"></path><path d="M12 16v4"></path></svg>
+              <span>Микрофон</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 16px 10px 12px; border-radius: 999px; background: #F1DED5; color: #C24A22; font-size: 13.5px; font-weight: 500;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10.2V9a1.5 1.5 0 0 0-1.5-1.5H8"></path><path d="M4.2 7.6A1.5 1.5 0 0 0 2 9v6a1.5 1.5 0 0 0 1.5 1.5h10c.5 0 .9-.2 1.2-.6"></path><path d="M20 8.4v7.2L16.6 13"></path><path d="M4 3.5l16 17"></path></svg>
+              <span>Включить камеру</span>
+            </div>
+            <div style="width: 1px; height: 24px; background: #E2DED5; margin: 0 3px;"></div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 18px 10px 14px; border-radius: 999px; background: #14130F; color: #F6F4F0; font-size: 13.5px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 8l-4 4 4 4"></path><path d="M15 12H6"></path></svg>
+              <span>Выйти</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 14px; line-height: 1.5; color: #6E695F; max-width: 620px;">Продолжение стартового экрана: тот же бумажный фон, видео — единственное цветное пятно. Панель управления не занимает места, пока курсор не двигается.</div>
+    </div>
+
+    <div id="1b" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #FBFAF8; background: #14130F; border-radius: 999px; padding: 5px 11px;">1b</div>
+        <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.015em;">Тёмная сцена</div>
+        <div style="font-size: 14px; color: #8A8378;">чернильный фон, чат — оверлеем, контролы всегда видны</div>
+      </div>
+
+      <div style="width: 1280px; height: 760px; background: #14130F; border: 1px solid #14130F; border-radius: 18px; overflow: hidden; position: relative; box-shadow: 0 30px 70px -40px rgba(20,19,15,.5);">
+        <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(246,244,240,.07) 1px, transparent 1px); background-size: 26px 26px;"></div>
+
+        <div style="position: relative; height: 56px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px; color: #F6F4F0;">
+            <div style="width: 22px; height: 22px; border-radius: 6px; background: #F6F4F0;"></div>
+            <div style="font-family: Workbench, monospace; font-size: 14px; letter-spacing: 0.06em;">RM-4F2A</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(246,244,240,.45);">12:04 · 4/4</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 999px; background: rgba(246,244,240,.1); color: #F6F4F0; font-size: 13px; font-weight: 500;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path></svg>
+              <span>Ссылка</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 999px; background: #F6F4F0; color: #14130F; font-size: 13px; font-weight: 600;">Чат · 2</div>
+          </div>
+        </div>
+
+        <div style="position: relative; padding: 8px 18px 18px; height: 704px; display: grid; gap: 12px; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+          <div style="position: relative; border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 38% 26%, #D3C7B4 0%, #A79A87 46%, #6E6555 100%); box-shadow: 0 0 0 1.5px #F6F4F0;">
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(20,19,15,.55); color: #F6F4F0; font-size: 13px; font-weight: 500;">Аня <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; opacity: .6;">вы</span></div>
+          </div>
+          <div style="position: relative; border-radius: 14px; overflow: hidden; background: radial-gradient(110% 90% at 62% 22%, #B9C0BC 0%, #8C948F 44%, #545C57 100%);">
+            <div style="position: absolute; left: 12px; bottom: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(20,19,15,.55); color: #F6F4F0; font-size: 13px; font-weight: 500;">Марк</div>
+          </div>
+          <div style="position: relative; border-radius: 14px; overflow: hidden; background: #1E1C18; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+            <div style="position: relative; width: 72px; height: 72px; opacity: .5;">
+              <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 999px; background: #6F6A60;"></div>
+              <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 58px; height: 32px; border-radius: 32px 32px 0 0; background: #6F6A60;"></div>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #7A756B;">камера выключена</div>
+            <div style="position: absolute; left: 12px; bottom: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(246,244,240,.12); color: #F6F4F0; font-size: 13px; font-weight: 500;">Ирина</div>
+          </div>
+          <div style="position: relative; border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 30% 30%, #D2BEAF 0%, #A08876 48%, #665244 100%);">
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(20,19,15,.55); color: #F6F4F0; font-size: 13px; font-weight: 500;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E8846A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8"></path><path d="M4 3.5l16 17"></path></svg>
+              <span>Дима</span>
+            </div>
+          </div>
+
+          <div style="position: absolute; right: 30px; top: 20px; width: 320px; height: 420px; border-radius: 16px; background: rgba(20,19,15,.72); backdrop-filter: blur(18px); border: 1px solid rgba(246,244,240,.14); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="flex: none; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(246,244,240,.1);">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(246,244,240,.5);">чат комнаты</div>
+              <div style="color: rgba(246,244,240,.5);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>
+              </div>
+            </div>
+            <div style="flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1; height: 1px; background: rgba(246,244,240,.12);"></div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(246,244,240,.4); white-space: nowrap;">дима присоединился</div>
+                <div style="flex: 1; height: 1px; background: rgba(246,244,240,.12);"></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                <div style="font-size: 12px; font-weight: 600; color: rgba(246,244,240,.6);">Марк</div>
+                <div style="max-width: 88%; padding: 10px 13px; border-radius: 13px 13px 13px 4px; background: rgba(246,244,240,.1); color: #F6F4F0; font-size: 14px; line-height: 1.45;">Слышно нормально? У меня наушники новые</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                <div style="max-width: 88%; padding: 10px 13px; border-radius: 13px 13px 4px 13px; background: #F6F4F0; color: #14130F; font-size: 14px; line-height: 1.45;">Отлично слышно</div>
+              </div>
+            </div>
+            <div style="flex: none; padding: 12px 14px; border-top: 1px solid rgba(246,244,240,.1);">
+              <div style="padding: 10px 14px; border-radius: 12px; background: rgba(246,244,240,.08); font-size: 13.5px; color: rgba(246,244,240,.45);">Написать сообщение</div>
+            </div>
+          </div>
+
+          <div style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 26px; display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 999px; background: rgba(246,244,240,.1); backdrop-filter: blur(16px); border: 1px solid rgba(246,244,240,.14);">
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 16px 10px 12px; border-radius: 999px; background: rgba(246,244,240,.14); color: #F6F4F0; font-size: 13.5px; font-weight: 500;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5z"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0"></path><path d="M12 16v4"></path></svg>
+              <span>Микрофон</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 16px 10px 12px; border-radius: 999px; background: rgba(246,244,240,.14); color: #F6F4F0; font-size: 13.5px; font-weight: 500;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5h10a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 2 15V9a1.5 1.5 0 0 1 1.5-1.5z"></path><path d="M15 11l5-3v8l-5-3"></path></svg>
+              <span>Камера</span>
+            </div>
+            <div style="width: 1px; height: 24px; background: rgba(246,244,240,.16); margin: 0 3px;"></div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 10px 18px 10px 14px; border-radius: 999px; background: #F6F4F0; color: #14130F; font-size: 13.5px; font-weight: 600;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 8l-4 4 4 4"></path><path d="M15 12H6"></path></svg>
+              <span>Выйти</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 14px; line-height: 1.5; color: #6E695F; max-width: 620px;">Максимальный контраст для лиц: интерфейс уходит в фон, чат не сжимает сетку. Риск — тёмная комната перестаёт быть «продолжением» светлого стартового экрана.</div>
+    </div>
+
+    <div id="1c" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #FBFAF8; background: #14130F; border-radius: 999px; padding: 5px 11px;">1c</div>
+        <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.015em;">Говорящий крупно</div>
+        <div style="font-size: 14px; color: #8A8378;">активный участник во весь экран, остальные — лентой</div>
+      </div>
+
+      <div style="width: 1280px; height: 760px; background: #EFEDE8; border: 1px solid #DDD8CE; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 70px -40px rgba(20,19,15,.4);">
+        <div style="flex: none; height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2DED5; background: #F4F2ED;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 7px; background: #14130F;"></div>
+            <div style="font-family: Workbench, monospace; font-size: 15px;">RM-4F2A</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; background: #EDEAE3; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5z"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0"></path><path d="M12 16v4"></path></svg>
+            </div>
+            <div style="display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; background: #F1DED5; color: #C24A22; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10.2V9a1.5 1.5 0 0 0-1.5-1.5H8"></path><path d="M4.2 7.6A1.5 1.5 0 0 0 2 9v6a1.5 1.5 0 0 0 1.5 1.5h10c.5 0 .9-.2 1.2-.6"></path><path d="M20 8.4v7.2L16.6 13"></path><path d="M4 3.5l16 17"></path></svg>
+            </div>
+            <div style="width: 1px; height: 20px; background: #DFDAD1; margin: 0 4px;"></div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 9px 15px 9px 11px; border: 1px solid #DDD8CE; border-radius: 999px; background: #FBFAF8; font-size: 13px; font-weight: 500;">Скопировать ссылку</div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 9px 15px; border-radius: 999px; background: #14130F; color: #F6F4F0; font-size: 13px; font-weight: 500;">Чат</div>
+            <div style="display: flex; align-items: center; gap: 9px; padding: 9px 16px 9px 13px; border: 1px solid #DDD8CE; border-radius: 999px; background: #FBFAF8; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 8l-4 4 4 4"></path><path d="M15 12H6"></path></svg>
+              <span>Выйти</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex: 1; min-height: 0; display: flex; gap: 14px; padding: 18px;">
+          <div style="flex: 1; min-width: 0; position: relative; border-radius: 16px; overflow: hidden; background: radial-gradient(110% 90% at 62% 22%, #B9C0BC 0%, #8C948F 44%, #545C57 100%);">
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,19,15,.45), rgba(20,19,15,0) 50%);"></div>
+            <div style="position: absolute; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 999px; background: rgba(20,19,15,.6); color: #F6F4F0; font-size: 14px; font-weight: 500;">Марк</div>
+              <div style="display: flex; align-items: flex-end; gap: 3px; padding: 8px 11px; border-radius: 999px; background: rgba(20,19,15,.6);">
+                <div style="width: 3px; height: 7px; border-radius: 2px; background: #8FCFA3;"></div>
+                <div style="width: 3px; height: 14px; border-radius: 2px; background: #8FCFA3;"></div>
+                <div style="width: 3px; height: 10px; border-radius: 2px; background: #8FCFA3;"></div>
+              </div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(246,244,240,.75);">говорит</div>
+            </div>
+          </div>
+
+          <div style="flex: none; width: 260px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="position: relative; height: 148px; border-radius: 14px; overflow: hidden; border: 1.5px solid #14130F; background: radial-gradient(120% 90% at 38% 26%, #D3C7B4 0%, #A79A87 46%, #6E6555 100%);">
+              <div style="position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: rgba(20,19,15,.6); color: #F6F4F0; font-size: 12.5px; font-weight: 500;">Аня <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; opacity: .6;">вы</span></div>
+            </div>
+            <div style="position: relative; height: 148px; border-radius: 14px; overflow: hidden; background: linear-gradient(160deg, #E6E2D9 0%, #D8D3C8 100%); display: flex; align-items: center; justify-content: center;">
+              <div style="position: relative; width: 54px; height: 54px;">
+                <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 999px; background: #B7B0A4;"></div>
+                <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 44px; height: 24px; border-radius: 24px 24px 0 0; background: #B7B0A4;"></div>
+              </div>
+              <div style="position: absolute; left: 10px; bottom: 10px; padding: 5px 11px; border-radius: 999px; background: rgba(251,250,248,.92); font-size: 12.5px; font-weight: 500;">Ирина</div>
+            </div>
+            <div style="position: relative; height: 148px; border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 30% 30%, #D2BEAF 0%, #A08876 48%, #665244 100%);">
+              <div style="position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: rgba(20,19,15,.6); color: #F6F4F0; font-size: 12.5px; font-weight: 500;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8846A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8"></path><path d="M4 3.5l16 17"></path></svg>
+                <span>Дима</span>
+              </div>
+            </div>
+            <div style="flex: 1; border-radius: 14px; border: 1px dashed #D5CFC3; background: #F4F2ED; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px;">
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 4px; height: 4px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out infinite;"></div>
+                <div style="width: 4px; height: 4px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out .2s infinite;"></div>
+                <div style="width: 4px; height: 4px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out .4s infinite;"></div>
+              </div>
+              <div style="font-size: 12.5px; text-align: center; line-height: 1.4; color: #8A8378;">Свободное место — отправьте ссылку</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 14px; line-height: 1.5; color: #6E695F; max-width: 620px;">Оптимально для разговора «один говорит — трое слушают»: интервью, демо. Управление переезжает в верхнюю плашку, свободный слот честно показывает, что комната не полна.</div>
+    </div>
+  </div>
+
+  <div id="1d" style="display: flex; flex-direction: column; gap: 24px; padding-top: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #FBFAF8; background: #14130F; border-radius: 999px; padding: 5px 11px;">1d</div>
+      <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.025em;">Каталог состояний</div>
+      <div style="font-size: 14px; color: #8A8378;">§9 — тон тёплый, без запугивания, всегда есть следующий шаг</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 620px); gap: 24px;">
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">комната заполнена · 5-й участник</div>
+        <div style="padding: 40px 32px; background: #EFEDE8; background-image: radial-gradient(#DAD5CB 1px, transparent 1px); background-size: 26px 26px; display: grid; place-items: center;">
+          <div style="width: 420px; background: #FBFAF8; border: 1px solid #E2DED5; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+            <div style="font-family: Workbench, monospace; font-size: 34px; line-height: 1; color: #14130F;">4/4</div>
+            <div style="font-size: 21px; font-weight: 600; letter-spacing: -0.02em;">Похоже, комната уже занята</div>
+            <div style="font-size: 14px; line-height: 1.5; color: #7A756B; text-wrap: pretty;">В звонке максимум четыре человека. Попробуйте войти ещё раз — кто-нибудь наверняка скоро освободит место.</div>
+            <div style="display: flex; gap: 9px; margin-top: 8px; width: 100%;">
+              <div style="flex: 1; text-align: center; padding: 12px; border-radius: 999px; background: #14130F; color: #F6F4F0; font-size: 14px; font-weight: 600;">Попробовать снова</div>
+              <div style="flex: 1; text-align: center; padding: 12px; border: 1px solid #DDD8CE; border-radius: 999px; font-size: 14px; font-weight: 500;">Своя комната</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">пустое / некорректное имя</div>
+        <div style="padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 18px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8378;"><span>пусто, поле не тронуто</span><span style="color: #B4ADA1;">0/30</span></div>
+            <div style="padding: 13px 14px; background: #FFFFFF; border: 1px solid #DDD8CE; border-radius: 11px; font-size: 15px; color: #A9A29A;">Например, Аня</div>
+            <div style="margin-top: 7px; font-size: 12.5px; color: #A9A29A;">Как вас представить остальным?</div>
+            <div style="margin-top: 10px; padding: 13px; border-radius: 999px; background: #E2DED5; color: #A9A29A; text-align: center; font-size: 14px; font-weight: 600;">Войти в комнату</div>
+          </div>
+          <div style="height: 1px; background: #EDEAE3;"></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8378;"><span>лишние символы</span><span style="color: #C24A22;">14/30</span></div>
+            <div style="padding: 13px 14px; background: #FFFFFF; border: 1px solid #C24A22; border-radius: 11px; font-size: 15px; box-shadow: 0 0 0 3px rgba(194,74,34,.09);">&lt;script&gt;Аня&lt;/&gt;</div>
+            <div style="margin-top: 7px; display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #C24A22;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4.5"></path><circle cx="12" cy="16.4" r=".8" fill="currentColor" stroke="none"></circle></svg>
+              <span>Похоже, тут лишние символы — оставьте буквы, цифры, дефис и точку</span>
+            </div>
+          </div>
+          <div style="height: 1px; background: #EDEAE3;"></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8378;"><span>всё в порядке</span><span style="color: #B4ADA1;">3/30</span></div>
+            <div style="padding: 13px 14px; background: #FFFFFF; border: 1px solid #14130F; border-radius: 11px; font-size: 15px; box-shadow: 0 0 0 3px rgba(20,19,15,.07);">Аня</div>
+            <div style="margin-top: 7px; font-size: 12.5px; color: #4E8B62;">Готово — можно заходить</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">отказ в доступе к камере и микрофону</div>
+        <div style="padding: 24px 24px 28px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #F6EDE6; border: 1px solid #E8D8C9; border-radius: 12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4552B" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.5" r=".9" fill="#B4552B" stroke="none"></circle></svg>
+            <div style="font-size: 13.5px; line-height: 1.45; color: #7B4526;">Камера и микрофон заблокированы браузером. Вы в комнате — вас услышат, когда разрешите доступ в настройках сайта.</div>
+          </div>
+          <div style="position: relative; height: 240px; border-radius: 14px; border: 1.5px solid #14130F; background: linear-gradient(160deg, #E6E2D9 0%, #D8D3C8 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+            <div style="position: relative; width: 76px; height: 76px;">
+              <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 999px; background: #B7B0A4;"></div>
+              <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 62px; height: 34px; border-radius: 34px 34px 0 0; background: #B7B0A4;"></div>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">нет доступа к камере</div>
+            <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(251,250,248,.92); font-size: 13px; font-weight: 500;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C24A22" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8"></path><path d="M4 3.5l16 17"></path></svg>
+              <span>Аня</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #A9A29A;">вы</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 1px dashed #D5CFC3; border-radius: 11px; font-size: 13px; color: #56514A;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #A9A29A;">как исправить</span>
+            <span>значок замка в адресной строке → «Разрешить камеру и микрофон»</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">устройство пропало во время звонка</div>
+        <div style="padding: 32px; background: #EFEDE8; display: flex; flex-direction: column; gap: 16px; align-items: center;">
+          <div style="width: 100%; display: flex; align-items: flex-start; gap: 13px; padding: 15px 17px; background: #FBFAF8; border: 1px solid #E2DED5; border-radius: 14px; box-shadow: 0 14px 34px -26px rgba(20,19,15,.5);">
+            <span style="width: 30px; height: 30px; flex: none; border-radius: 9px; background: #F1DED5; color: #C24A22; display: grid; place-items: center;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10.2V9a1.5 1.5 0 0 0-1.5-1.5H8"></path><path d="M4.2 7.6A1.5 1.5 0 0 0 2 9v6a1.5 1.5 0 0 0 1.5 1.5h10c.5 0 .9-.2 1.2-.6"></path><path d="M20 8.4v7.2L16.6 13"></path><path d="M4 3.5l16 17"></path></svg>
+            </span>
+            <div style="flex: 1;">
+              <div style="font-size: 15px; font-weight: 600;">Камера пропала</div>
+              <div style="margin-top: 4px; font-size: 13.5px; line-height: 1.45; color: #7A756B;">Похоже, её отключили или занял другой сервис. Остальные пока видят вашу заглушку — звук идёт.</div>
+              <div style="margin-top: 12px; display: flex; gap: 8px;">
+                <div style="padding: 9px 14px; border-radius: 999px; background: #14130F; color: #F6F4F0; font-size: 13px; font-weight: 500;">Попробовать снова</div>
+                <div style="padding: 9px 14px; border: 1px solid #DDD8CE; border-radius: 999px; font-size: 13px; font-weight: 500;">Настройки браузера</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #A9A29A;">карточка появляется поверх сетки, звонок не прерывается</div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">участник исчез · системное сообщение в чате</div>
+        <div style="padding: 24px; display: flex; gap: 18px;">
+          <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="height: 108px; border-radius: 12px; border: 1.5px solid #14130F; background: radial-gradient(120% 90% at 38% 26%, #D3C7B4 0%, #A79A87 46%, #6E6555 100%);"></div>
+            <div style="height: 108px; border-radius: 12px; background: radial-gradient(110% 90% at 62% 22%, #B9C0BC 0%, #8C948F 44%, #545C57 100%);"></div>
+            <div style="height: 108px; border-radius: 12px; border: 1px dashed #D5CFC3; background: #F1EFE9; display: grid; place-items: center;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #B4ADA1;">плитка ушла</div>
+            </div>
+            <div style="height: 108px; border-radius: 12px; border: 1px dashed #E2DED5; background: #F6F4F0;"></div>
+          </div>
+          <div style="flex: none; width: 250px; background: #F7F5F1; border: 1px solid #E7E4DC; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 11.5px; font-weight: 600; color: #56514A;">Марк · 12:31</div>
+              <div style="padding: 9px 12px; border-radius: 12px 12px 12px 4px; background: #FFFFFF; border: 1px solid #E2DED5; font-size: 13.5px; line-height: 1.4;">Мне пора, спасибо!</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <div style="flex: 1; height: 1px; background: #E2DED5;"></div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: #A9A29A; white-space: nowrap;">марк вышел</div>
+              <div style="flex: 1; height: 1px; background: #E2DED5;"></div>
+            </div>
+            <div style="font-size: 12px; line-height: 1.45; color: #A9A29A;">Формулировка одна и та же — вышел он сам или пропала связь.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">сервер недоступен</div>
+        <div style="padding: 40px 32px; background: #EFEDE8; background-image: radial-gradient(#DAD5CB 1px, transparent 1px); background-size: 26px 26px; display: grid; place-items: center;">
+          <div style="width: 420px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
+            <div style="display: flex; gap: 5px;">
+              <div style="width: 6px; height: 6px; border-radius: 999px; background: #C6C0B4;"></div>
+              <div style="width: 6px; height: 6px; border-radius: 999px; background: #C6C0B4;"></div>
+              <div style="width: 6px; height: 6px; border-radius: 999px; background: #14130F; animation: dotPulse 1.6s ease-in-out infinite;"></div>
+            </div>
+            <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em;">Не получается связаться с сервером</div>
+            <div style="font-size: 14px; line-height: 1.5; color: #7A756B; text-wrap: pretty;">Комнаты живут на нашей стороне, и прямо сейчас она не отвечает. Мы уже пробуем переподключиться — это займёт несколько секунд.</div>
+            <div style="margin-top: 6px; padding: 12px 22px; border-radius: 999px; background: #14130F; color: #F6F4F0; font-size: 14px; font-weight: 600;">Попробовать сейчас</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #B4ADA1;">попытка 3 · через 4 с</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">браузер не поддерживает видеозвонки</div>
+        <div style="padding: 40px 32px; background: #EFEDE8; display: grid; place-items: center;">
+          <div style="width: 440px; background: #FBFAF8; border: 1px solid #E2DED5; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #A9A29A;">поддержка браузера</div>
+            <div style="font-size: 21px; font-weight: 600; letter-spacing: -0.02em;">Этот браузер не умеет видеозвонки</div>
+            <div style="font-size: 14px; line-height: 1.5; color: #7A756B; text-wrap: pretty;">Откройте ссылку в свежем Chrome, Safari, Firefox или Edge — там всё заработает без установки.</div>
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <div style="padding: 7px 13px; border: 1px solid #DDD8CE; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #56514A;">Chrome 90+</div>
+              <div style="padding: 7px 13px; border: 1px solid #DDD8CE; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #56514A;">Safari 15+</div>
+              <div style="padding: 7px 13px; border: 1px solid #DDD8CE; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #56514A;">Firefox 88+</div>
+            </div>
+            <div style="margin-top: 8px; padding: 11px 14px; border-radius: 11px; background: #F4F2ED; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #56514A;">chat.example.ru/r/RM-4F2A</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FBFAF8; border: 1px solid #DDD8CE; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 12px 18px; border-bottom: 1px solid #E7E4DC; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">браузер заблокировал звук</div>
+        <div style="padding: 32px; background: #EFEDE8; display: flex; flex-direction: column; gap: 16px; align-items: center;">
+          <div style="width: 100%; height: 150px; border-radius: 14px; background: radial-gradient(110% 90% at 62% 22%, #B9C0BC 0%, #8C948F 44%, #545C57 100%); position: relative; overflow: hidden;">
+            <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 11px; padding: 12px 20px 12px 15px; border-radius: 999px; background: #FBFAF8; box-shadow: 0 20px 44px -20px rgba(20,19,15,.6);">
+              <span style="width: 30px; height: 30px; border-radius: 999px; background: #14130F; color: #F6F4F0; display: grid; place-items: center;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l4.5 4V6L7 10z"></path><path d="M16 9.5a3.5 3.5 0 0 1 0 5"></path><path d="M18.5 7a7 7 0 0 1 0 10"></path></svg>
+              </span>
+              <span style="font-size: 14.5px; font-weight: 600;">Включить звук</span>
+            </div>
+          </div>
+          <div style="font-size: 13.5px; line-height: 1.5; color: #7A756B; text-align: center; max-width: 420px; text-wrap: pretty;">Браузер не даёт запустить звук сам — одно нажатие, и вы всех слышите. Кнопка живёт поверх сетки, пока на неё не нажали.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="1e" style="display: flex; flex-direction: column; gap: 24px; padding-top: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #FBFAF8; background: #14130F; border-radius: 999px; padding: 5px 11px;">1e</div>
+      <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.025em;">Заглушка видео</div>
+      <div style="font-size: 14px; color: #8A8378;">силуэт + имя, три степени тишины</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 420px); gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="position: relative; height: 236px; border-radius: 16px; overflow: hidden; background: linear-gradient(160deg, #E6E2D9 0%, #D8D3C8 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+          <div style="position: relative; width: 80px; height: 80px;">
+            <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 32px; height: 32px; border-radius: 999px; background: #B7B0A4;"></div>
+            <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 66px; height: 36px; border-radius: 36px 36px 0 0; background: #B7B0A4;"></div>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8378;">камера выключена</div>
+          <div style="position: absolute; left: 12px; bottom: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(251,250,248,.92); font-size: 13px; font-weight: 500;">Ирина</div>
+        </div>
+        <div style="font-size: 13px; color: #6E695F;">Камеру выключили сами — светлая заглушка, участник на связи.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="position: relative; height: 236px; border-radius: 16px; overflow: hidden; background: linear-gradient(160deg, #E8E1DA 0%, #DCD2C8 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+          <div style="position: relative; width: 80px; height: 80px; opacity: .75;">
+            <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 32px; height: 32px; border-radius: 999px; background: #BFA898;"></div>
+            <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 66px; height: 36px; border-radius: 36px 36px 0 0; background: #BFA898;"></div>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #B4552B;">нет доступа к камере</div>
+          <div style="position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(251,250,248,.92); font-size: 13px; font-weight: 500;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C24A22" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4"></path><path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8"></path><path d="M4 3.5l16 17"></path></svg>
+            <span>Дима</span>
+          </div>
+        </div>
+        <div style="font-size: 13px; color: #6E695F;">Доступ запрещён или устройство пропало — тёплый оттенок и другой микро-текст.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="position: relative; height: 236px; border-radius: 16px; overflow: hidden; border: 1px dashed #D5CFC3; background: #F4F2ED; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+          <div style="display: flex; gap: 5px;">
+            <div style="width: 5px; height: 5px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out infinite;"></div>
+            <div style="width: 5px; height: 5px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out .2s infinite;"></div>
+            <div style="width: 5px; height: 5px; border-radius: 999px; background: #14130F; animation: dotPulse 1.4s ease-in-out .4s infinite;"></div>
+          </div>
+          <div style="font-size: 14px; font-weight: 500; color: #56514A;">Марк подключается</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #B4ADA1;">видео вот-вот появится</div>
+        </div>
+        <div style="font-size: 13px; color: #6E695F;">Плитка занимает место заранее — сетка не «прыгает», когда видео придёт.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>

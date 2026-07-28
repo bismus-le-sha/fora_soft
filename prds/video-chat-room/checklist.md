@@ -260,6 +260,75 @@
 - [x] ⛔ Security review — не обязателен для этой задачи (critical: NO, мерж в `develop`, хук не блокирует); к тому же doc-only diff (только `README.md` + отметки чеклиста/плана) и покрыт тотальным аудитом эпика перед этой задачей выше
 - [x] PR в `develop` открыт — [#42](https://github.com/bismus-le-sha/fora_soft/pull/42)
 
+## Эпик 2 — Визуальная реализация дизайна (Design Handoff)
+
+> Добавлено 2026-07-28. Источник: `design-ui-video-chat-room.md` (UI Design Addendum),
+> план — `impl-video-chat-room.md` область 10 (задачи 34–44). Функционал (Эпик 1, задачи
+> 1–33 выше) полностью готов — эти задачи только про визуал поверх него.
+
+### Стадии эпика 2
+- [x] UI Design Addendum готов — `design-ui-video-chat-room.md`
+- [x] Локальное зеркало Design Handoff синхронизировано — `design-handoff/`
+- [x] Implementation Plan дополнен (область 10, задачи 34–44) — `impl-video-chat-room.md`
+- [x] Секции задач ниже сгенерированы из плана
+- [ ] ⛔ Security audit эпика ПРОЙДЕН перед мержем в `main` (см. «Легенда гейтов» ниже —
+      применимо ко всему релизу, не только к задачам 34–44)
+
+### [ ] Задача 34 — Фундамент: design-токены и шрифты — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 35 — StartScreen — вёрстка и путь-схема — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 37 — Экран подготовки к доступу (новый компонент) — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 38 — Верхняя плашка комнаты (код/таймер/медиа/ссылка/чат/выход) — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 39 — Сцена + Лента (реструктуризация VideoGrid) — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 40 — VideoTile — варианты сцена/лента и 3 состояния заглушки — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 41 — Сворачиваемая панель Чат/Участники — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 42 — Модалка подтверждения выхода (новый компонент) — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 43 — Баннеры/состояния — вёрстка и сверка копирайта (§9) — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
+### [ ] Задача 44 — Визуальная QA-сверка по всем экранам и состояниям — critical: NO
+- [ ] Код написан, тесты зелёные — `implementer`
+- [ ] Code review пройден — `code-reviewer`
+- [ ] PR в `develop` открыт
+
 ## Легенда гейтов
 - ⛔ **ОЖИДАНИЕ КОМАНДЫ** — критичная задача: код НЕ пишем, пока пользователь
   явно не разрешил после отчёта по тестам.
