@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * VideoTile.jsx — self/remote плитка: видео **или** заглушка-силуэт с именем
@@ -30,8 +30,25 @@ import { useEffect, useRef } from 'react';
  * запрещает вставку пользовательского **текста/HTML**, а не самого элемента
  * `<video>`).
  *
- * Requirements: F-08, F-14, F-16, F-18, US-6, US-12, SEC-04.
- * Design: §4.2, §10.1, §11.3.
+ * Задача 31 («Крайние случаи медиа: autoplay, потеря устройства, graceful
+ * P2P», Design §8 «Autoplay заблокирован», F-37, US-13): звук удалённого
+ * участника доверен ОТДЕЛЬНОМУ скрытому `<audio autoPlay>`, а не `<video>` —
+ * так он продолжает играть, даже когда видео недоступно (камера
+ * выключена/отсутствует — тогда рендерится плейсхолдер БЕЗ `<video>` вовсе,
+ * но звук собеседника всё равно должен быть слышен). `<video>` для remote
+ * поэтому теперь всегда `muted` (визуал без звука — звук идёт через
+ * `<audio>`, иначе было бы задвоение). Self-плитка `<audio>` не получает —
+ * себя самого слышать не нужно (эхо), видео self и так `muted`.
+ *
+ * Явный `audioEl.play()` (в дополнение к атрибуту `autoPlay`) нужен, чтобы
+ * получить Promise и обработать возможный `reject` браузерной autoplay-
+ * политики (voспроизведение без предшествующего жеста пользователя) — при
+ * реджекте показывается кнопка «Включить звук», повторный клик по которой
+ * вызывает `play()` ещё раз (тот же паттерн, что описан в Design §8: «вход =
+ * user-gesture… fallback-кнопка при `play()` reject»).
+ *
+ * Requirements: F-08, F-14, F-16, F-18, F-37, US-6, US-12, US-13, SEC-04.
+ * Design: §4.2, §8, §10.1, §11.3.
  */
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
@@ -49,17 +66,56 @@ import { useEffect, useRef } from 'react';
  * @param {{audio?: boolean, video?: boolean}} [props.mediaState] — текущее
  *   состояние тумблеров (Design §5.3 `Participant.media`/§7.2 `media:state`).
  * @param {boolean} [props.isSelf] — self-плитка (Design §6.2 `join:ok.selfId`);
- *   влияет на подпись `(я)` и `muted` у `<video>` (не проигрывать своё же аудио).
+ *   влияет на подпись `(я)` и на то, рендерится ли отдельный `<audio>` для
+ *   звука (self не слушает сам себя, задача 31 — см. JSDoc модуля).
  */
 function VideoTile({ participant, stream = null, mediaState = {}, isSelf = false }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const hasVideo = Boolean(stream) && mediaState.video !== false;
+  // Задача 31: звук чужого участника не зависит от того, показывается ли его
+  // видео (см. JSDoc модуля) — только от наличия потока и того, что это НЕ
+  // self-плитка (себя не слушаем).
+  const hasRemoteAudio = Boolean(stream) && !isSelf;
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = hasVideo ? stream : null;
     }
   }, [stream, hasVideo]);
+
+  /**
+   * Design §8 «Autoplay заблокирован»/F-37: пытается воспроизвести звук
+   * собеседника при каждом изменении потока; при `play()` reject (браузер
+   * заблокировал автозапуск без свежего жеста пользователя) показывает
+   * fallback-кнопку вместо того, чтобы тихо промолчать (Design §8/SEC-15 —
+   * пользователю нужен явный способ восстановить звук, а не белый экран).
+   */
+  useEffect(() => {
+    if (!hasRemoteAudio || !audioRef.current) {
+      setAudioBlocked(false);
+      return;
+    }
+    audioRef.current.srcObject = stream;
+    const playResult = audioRef.current.play();
+    if (playResult && typeof playResult.then === 'function') {
+      playResult.then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
+    }
+  }, [stream, hasRemoteAudio]);
+
+  /** Клик по «Включить звук» — повторная попытка `play()` тем же жестом. */
+  function handleUnmuteClick() {
+    if (!audioRef.current) {
+      return;
+    }
+    const playResult = audioRef.current.play();
+    if (playResult && typeof playResult.then === 'function') {
+      playResult.then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
+    } else {
+      setAudioBlocked(false);
+    }
+  }
 
   return (
     <div
@@ -75,7 +131,7 @@ function VideoTile({ participant, stream = null, mediaState = {}, isSelf = false
           className="video-tile-video"
           autoPlay
           playsInline
-          muted={isSelf}
+          muted
         />
       ) : (
         <div className="video-tile-placeholder" data-testid="video-tile-placeholder">
@@ -84,6 +140,21 @@ function VideoTile({ participant, stream = null, mediaState = {}, isSelf = false
           </span>
         </div>
       )}
+
+      {hasRemoteAudio ? (
+        <audio ref={audioRef} data-testid="video-tile-audio" autoPlay hidden />
+      ) : null}
+
+      {audioBlocked ? (
+        <button
+          type="button"
+          className="video-tile-unmute"
+          data-testid="video-tile-unmute"
+          onClick={handleUnmuteClick}
+        >
+          Включить звук
+        </button>
+      ) : null}
 
       <div className="video-tile-overlay">
         <span className="video-tile-name" data-testid="video-tile-name">

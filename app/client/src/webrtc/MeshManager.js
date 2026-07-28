@@ -56,7 +56,14 @@
  * падает сам ни при отсутствующем peerId (гонки/поздние сообщения), ни при
  * повторных/неожиданных событиях состава.
  *
- * Requirements: F-06, US-6, US-9. Design: §3.3, §4.2, §7.1, §11.3.
+ * Задача 31 (Design §8 «STUN недоступен/P2P не встал», SEC-17): каждый
+ * созданный `PeerConnection` подписывается на `onIceConnectionStateChange` —
+ * `'failed'` для одной пары убирает только её агрегированный remote-stream
+ * (плитка без медиа у остальных), соединение не закрывается и реестр не
+ * трогается — независимость пар друг от друга обеспечена самой структурой
+ * `Map<peerId, PeerConnection>` (см. `getOrCreatePeer`).
+ *
+ * Requirements: F-06, F-34, US-6, US-9, US-13, SEC-17. Design: §3.3, §4.2, §7.1, §8, §11.3.
  */
 import { createPeerConnection } from './PeerConnection.js';
 
@@ -181,6 +188,21 @@ export function createMeshManager(deps = {}) {
 
     pc.onIceCandidate((candidate) => {
       emit('signal:ice', { to: peerId, candidate });
+    });
+
+    // Задача 31 (Design §8 «STUN недоступен/P2P не встал», SEC-17, graceful
+    // degradation): `'failed'` для КОНКРЕТНОЙ пары убирает только её
+    // агрегированный remote-stream (плитка у этого пира становится «без
+    // медиа») — `PeerConnection` НЕ закрывается и не удаляется из реестра
+    // (в отличие от `onParticipantLeft`), поэтому остальные пиры/чат не
+    // затрагиваются и приложение не падает. `pc.onIceConnectionStateChange`
+    // опционален (`?.`) — фейковые `PeerConnection` без этого метода (старые
+    // тесты) не ломают регистрацию пира.
+    pc.onIceConnectionStateChange?.((state) => {
+      if (state === 'failed') {
+        remoteStreams.delete(peerId);
+        notifyRemoteStream(peerId, null);
+      }
     });
 
     pc.onTrack((event) => {

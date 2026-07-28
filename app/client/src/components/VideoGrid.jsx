@@ -9,14 +9,16 @@ import VideoTile from './VideoTile.jsx';
  * компонент, `VideoGrid` отвечает только за раскладку и не знает о деталях
  * содержимого плитки.
  *
- * `stream` в `VideoTile` здесь не передаётся (`undefined`) — `VideoGrid`
- * получает только `participants`/`selfId` (Design §5.3 снимок состава), без
- * `MediaStream`; подключение реальных потоков (`useMedia().localStream`/
- * `useMesh().remoteStreams`) к плиткам — вне контракта этого компонента,
- * `VideoTile` при отсутствии `stream` корректно показывает заглушку-силуэт
- * (F-14/F-18, см. JSDoc `VideoTile.jsx`).
+ * Задача 31 (ранее отложено задачами 25/26, см. их JSDoc/отчёт code-review):
+ * реальные потоки теперь подключены — `localStream` (self) и `remoteStreams`
+ * (Design §7.1 «агрегирует remote-streams», ключ — peerId, из
+ * `useMesh().remoteStreams`) форвардятся в `VideoTile` per-participant по
+ * `participant.id === selfId ? localStream : remoteStreams[participant.id]`.
+ * Оба пропа необязательны — без них (или без совпадения id) `VideoTile`
+ * по-прежнему корректно показывает заглушку-силуэт (F-14/F-18, см. JSDoc
+ * `VideoTile.jsx`), поведенческий контракт задач 25/26 не меняется.
  *
- * Requirements: F-07, US-6.
+ * Requirements: F-07, F-37, US-6, US-13.
  *
  * `ROOM_CAPACITY = 4` (Design §9 «Configuration») — участников не может быть
  * больше 4, поэтому раскладка определена ровно для 1/2/3/4: 1 — во весь экран,
@@ -39,8 +41,13 @@ import VideoTile from './VideoTile.jsx';
  *   — снимок состава комнаты (Design §5.3), включает self.
  * @param {string} [props.selfId] — id самого себя (Design §6.2 `join:ok.selfId`),
  *   для пометки self-плитки.
+ * @param {MediaStream | null} [props.localStream] — задача 31: собственный
+ *   поток (`useMedia().localStream`), форвардится в self-плитку.
+ * @param {Record<string, MediaStream>} [props.remoteStreams] — задача 31:
+ *   потоки остальных участников по peerId (`useMesh().remoteStreams`),
+ *   форвардится в соответствующую не-self-плитку.
  */
-function VideoGrid({ participants, selfId }) {
+function VideoGrid({ participants, selfId, localStream = null, remoteStreams = {} }) {
   const count = participants.length;
   // Раскладка определена для 1..4 (ROOM_CAPACITY, Design §9); при отсутствии
   // участников (пограничный случай до `join:ok`) сетка пуста — класс не хуже
@@ -49,14 +56,19 @@ function VideoGrid({ participants, selfId }) {
 
   return (
     <div className={`video-grid ${gridCountClass}`} data-testid="video-grid" data-count={count}>
-      {participants.map((participant) => (
-        <VideoTile
-          key={participant.id}
-          participant={participant}
-          mediaState={participant.media ?? {}}
-          isSelf={participant.id === selfId}
-        />
-      ))}
+      {participants.map((participant) => {
+        const isSelf = participant.id === selfId;
+        const stream = isSelf ? localStream : (remoteStreams[participant.id] ?? null);
+        return (
+          <VideoTile
+            key={participant.id}
+            participant={participant}
+            stream={stream}
+            mediaState={participant.media ?? {}}
+            isSelf={isSelf}
+          />
+        );
+      })}
     </div>
   );
 }

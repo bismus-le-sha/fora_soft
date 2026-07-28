@@ -17,7 +17,7 @@ import { createMediaController } from '../../src/media/mediaController.js';
 
 /** @returns {MediaStreamTrack} фейковая дорожка с моками `stop`/`enabled`. */
 function fakeTrack(kind) {
-  return { kind, enabled: true, stop: vi.fn() };
+  return { kind, enabled: true, readyState: 'live', stop: vi.fn() };
 }
 
 /** Минимальный фейковый MediaStream, достаточный для mediaController. */
@@ -38,6 +38,26 @@ function fakeStream(tracks) {
 /** Фейковый RTCRtpSender — единственный релевантный метод: `replaceTrack`. */
 function fakeSender() {
   return { replaceTrack: vi.fn().mockResolvedValue(undefined) };
+}
+
+/**
+ * Задача 31 — фейковый `MediaDevices`, достаточный для проверки
+ * `devicechange`-подписки/отписки (`addEventListener`/`removeEventListener`),
+ * с тестовым хелпером `_trigger()` для симуляции события.
+ */
+function fakeMediaDevices() {
+  const handlers = new Set();
+  return {
+    addEventListener: vi.fn((event, cb) => {
+      if (event === 'devicechange') handlers.add(cb);
+    }),
+    removeEventListener: vi.fn((event, cb) => {
+      if (event === 'devicechange') handlers.delete(cb);
+    }),
+    _trigger() {
+      for (const cb of handlers) cb();
+    },
+  };
 }
 
 describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', () => {
@@ -235,6 +255,171 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const controller = createMediaController({ getUserMedia });
 
       await expect(controller.init()).resolves.toEqual({ audio: false, video: false });
+    });
+  });
+
+  describe('потеря устройства во время звонка — track.onended (задача 31, Design §8, F-20, US-7)', () => {
+    it('video.onended переводит видео в off, останавливает sender без нового getUserMedia', async () => {
+      const audio = fakeTrack('audio');
+      const video = fakeTrack('video');
+      const senderA = fakeSender();
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
+      const getVideoSenders = vi.fn().mockReturnValue([senderA]);
+      const controller = createMediaController({ getUserMedia, getVideoSenders });
+      await controller.init();
+      getUserMedia.mockClear();
+
+      video.onended();
+
+      expect(controller.getLocalStream().getVideoTracks()).toEqual([]);
+      expect(senderA.replaceTrack).toHaveBeenCalledWith(null);
+      // Восстановление — НЕ автоматическое (F-20: пользователь выбирает устройство
+      // в настройках ОС/браузера сам, повторный getUserMedia здесь не вызывается).
+      expect(getUserMedia).not.toHaveBeenCalled();
+    });
+
+    it('audio.onended переводит микрофон в off', async () => {
+      const audio = fakeTrack('audio');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+
+      audio.onended();
+
+      expect(controller.getLocalStream().getAudioTracks()).toEqual([]);
+      // toggleAudio() без активной дорожки — no-op (см. существующий тест выше),
+      // возвращаемое состояние подтверждает audio:false.
+      expect(controller.toggleAudio()).toEqual({ audio: false, video: false });
+    });
+
+    it('onStateChange(cb) уведомляется новым состоянием при потере видео', async () => {
+      const video = fakeTrack('video');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      const handler = vi.fn();
+      controller.onStateChange(handler);
+
+      video.onended();
+
+      expect(handler).toHaveBeenCalledWith({ audio: false, video: false });
+    });
+
+    it('устаревший track.onended (дорожка уже заменена ручным toggleVideo) — не переигрывает состояние', async () => {
+      const initialVideo = fakeTrack('video');
+      const newVideo = fakeTrack('video');
+      const getUserMedia = vi
+        .fn()
+        .mockResolvedValueOnce(fakeStream([initialVideo]))
+        .mockResolvedValueOnce(fakeStream([newVideo]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      await controller.toggleVideo(); // off (ручной путь) — videoTrack теперь null
+      await controller.toggleVideo(); // on again — videoTrack теперь newVideo
+      const handler = vi.fn();
+      controller.onStateChange(handler);
+
+      // "Протухший" onended от УЖЕ отсоединённой первой дорожки.
+      initialVideo.onended();
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(controller.getLocalStream().getVideoTracks()).toEqual([newVideo]);
+    });
+
+    it('падение одного подписчика onStateChange не блокирует остальных', async () => {
+      const video = fakeTrack('video');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      const broken = vi.fn(() => {
+        throw new Error('boom');
+      });
+      const healthy = vi.fn();
+      controller.onStateChange(broken);
+      controller.onStateChange(healthy);
+
+      expect(() => video.onended()).not.toThrow();
+      expect(healthy).toHaveBeenCalledTimes(1);
+    });
+
+    it('отписка через возвращённую функцию прекращает доставку onStateChange', async () => {
+      const video = fakeTrack('video');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      const handler = vi.fn();
+      const unsubscribe = controller.onStateChange(handler);
+      unsubscribe();
+
+      video.onended();
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('новая дорожка, полученная повторным toggleVideo() (on), тоже получает onended-обработчик', async () => {
+      const initialVideo = fakeTrack('video');
+      const newVideo = fakeTrack('video');
+      const getUserMedia = vi
+        .fn()
+        .mockResolvedValueOnce(fakeStream([initialVideo]))
+        .mockResolvedValueOnce(fakeStream([newVideo]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      await controller.toggleVideo(); // off
+      await controller.toggleVideo(); // on again -> newVideo
+      const handler = vi.fn();
+      controller.onStateChange(handler);
+
+      newVideo.onended();
+
+      expect(handler).toHaveBeenCalledWith({ audio: false, video: false });
+    });
+  });
+
+  describe('devicechange — подстраховка (задача 31, Design §8, F-20)', () => {
+    it('подписывается на mediaDevices.devicechange при создании контроллера', () => {
+      const mediaDevices = fakeMediaDevices();
+      createMediaController({ getUserMedia: vi.fn(), mediaDevices });
+
+      expect(mediaDevices.addEventListener).toHaveBeenCalledWith('devicechange', expect.any(Function));
+    });
+
+    it('devicechange при readyState==="ended" у активной дорожки — переводит в off', async () => {
+      const video = fakeTrack('video');
+      const mediaDevices = fakeMediaDevices();
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
+      const controller = createMediaController({ getUserMedia, mediaDevices });
+      await controller.init();
+      video.readyState = 'ended'; // симулируем: track.onended браузер не прислал
+
+      mediaDevices._trigger();
+
+      expect(controller.getLocalStream().getVideoTracks()).toEqual([]);
+    });
+
+    it('devicechange при живых дорожках (readyState !== "ended") ничего не меняет', async () => {
+      const video = fakeTrack('video');
+      const mediaDevices = fakeMediaDevices();
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
+      const controller = createMediaController({ getUserMedia, mediaDevices });
+      await controller.init();
+
+      mediaDevices._trigger();
+
+      expect(controller.getLocalStream().getVideoTracks()).toEqual([video]);
+    });
+
+    it('dispose() снимает devicechange-подписку', () => {
+      const mediaDevices = fakeMediaDevices();
+      const controller = createMediaController({ getUserMedia: vi.fn(), mediaDevices });
+
+      controller.dispose();
+
+      expect(mediaDevices.removeEventListener).toHaveBeenCalledWith('devicechange', expect.any(Function));
+    });
+
+    it('без deps.mediaDevices — не бросает (опциональная подстраховка)', () => {
+      expect(() => createMediaController({ getUserMedia: vi.fn(), mediaDevices: undefined })).not.toThrow();
     });
   });
 });

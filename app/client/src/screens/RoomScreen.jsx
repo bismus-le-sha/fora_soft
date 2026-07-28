@@ -36,7 +36,10 @@ import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
  * локальные треки прикрепляются к уже созданным `PeerConnection`
  * (`attachLocalTrack`).
  *
- * `VideoGrid` (задача 25) уже выделена в `components/VideoGrid.jsx`.
+ * `VideoGrid` (задача 25) уже выделена в `components/VideoGrid.jsx`; с задачи
+ * 31 получает `localStream={media.localStream}`/`remoteStreams={mesh.remoteStreams}`
+ * (ранее отложенная проводка, см. отчёт code-review задачи 26) — так плитки
+ * реально показывают видео/играют звук, а не только заглушку-силуэт.
  * `ControlBar` (задача 27) подключена ниже — тумблеры mic/cam вызывают
  * `media.toggleAudio`/`media.toggleVideo` (сами эмитят `media:state`, Design
  * §7.2, см. JSDoc `useMedia.js`), «Выйти» эмитит `signaling.emit('leave')`
@@ -252,7 +255,12 @@ function RoomScreen({ roomId, name, deps = {} }) {
       {connectionError ? <ServerDownBanner /> : null}
       {media.deviceDenied ? <DeviceDeniedBanner /> : null}
 
-      <VideoGrid participants={participants} selfId={selfId} />
+      <VideoGrid
+        participants={participants}
+        selfId={selfId}
+        localStream={media.localStream}
+        remoteStreams={mesh.remoteStreams}
+      />
 
       <ControlBar
         mediaState={media.mediaState}

@@ -23,6 +23,26 @@ function makeFakeController(overrides = {}) {
 }
 
 /**
+ * Задача 31 (Design §8 «Потеря устройства», F-20, US-7): фейковый контроллер
+ * с управляемым `onStateChange` — тест может вызвать захваченный колбэк
+ * напрямую, симулируя `mediaController`, обнаруживший потерю устройства
+ * (`track.onended`/`devicechange`), без реального `MediaStreamTrack`.
+ */
+function makeFakeControllerWithStateChange(overrides = {}) {
+  let capturedCb;
+  const unsubscribe = vi.fn();
+  const controller = makeFakeController({
+    onStateChange: vi.fn((cb) => {
+      capturedCb = cb;
+      return unsubscribe;
+    }),
+    dispose: vi.fn(),
+    ...overrides,
+  });
+  return { controller, unsubscribe, emitStateChange: (state) => capturedCb(state) };
+}
+
+/**
  * Задача 30 (Design §8 «Отказ в доступе», баннер «нет доступа»): фейковый
  * `createMediaController`, который сохраняет переданный `deps.onDeviceDenied`
  * и позволяет тесту вызвать его напрямую — так же, как реальный
@@ -128,6 +148,61 @@ describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
       });
 
       expect(result.current.deviceDenied).toBe(true);
+    });
+  });
+
+  describe('потеря устройства во время звонка — controller.onStateChange (задача 31, Design §8, F-20, US-7)', () => {
+    it('подписывается на controller.onStateChange при монтировании', () => {
+      const { controller } = makeFakeControllerWithStateChange();
+      const createMediaController = vi.fn(() => controller);
+
+      renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      expect(controller.onStateChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('когда контроллер сообщает о потере устройства — обновляет mediaState/localStream и эмитит media:state (тот же контракт, что ручные тумблеры)', () => {
+      const { controller, emitStateChange } = makeFakeControllerWithStateChange();
+      const createMediaController = vi.fn(() => controller);
+      const emit = vi.fn();
+      const { result } = renderHook(() => useMedia({ emit, deps: { createMediaController } }));
+
+      act(() => {
+        emitStateChange({ audio: true, video: false });
+      });
+
+      expect(result.current.mediaState).toEqual({ audio: true, video: false });
+      expect(result.current.localStream).toEqual({ id: 'stream-1' });
+      expect(emit).toHaveBeenCalledWith('media:state', { audio: true, video: false });
+    });
+
+    it('без emit — потеря устройства не бросает', () => {
+      const { controller, emitStateChange } = makeFakeControllerWithStateChange();
+      const createMediaController = vi.fn(() => controller);
+      renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      expect(() => act(() => emitStateChange({ audio: false, video: false }))).not.toThrow();
+    });
+
+    it('размонтирование отписывается от onStateChange и вызывает controller.dispose()', () => {
+      const { controller, unsubscribe } = makeFakeControllerWithStateChange();
+      const createMediaController = vi.fn(() => controller);
+      const { unmount } = renderHook(() => useMedia({ deps: { createMediaController } }));
+
+      unmount();
+
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
+      expect(controller.dispose).toHaveBeenCalledTimes(1);
+    });
+
+    it('без controller.onStateChange/dispose (старый контроллер) — не бросает', () => {
+      const fakeController = makeFakeController();
+      const createMediaController = vi.fn(() => fakeController);
+
+      expect(() => {
+        const { unmount } = renderHook(() => useMedia({ deps: { createMediaController } }));
+        unmount();
+      }).not.toThrow();
     });
   });
 });

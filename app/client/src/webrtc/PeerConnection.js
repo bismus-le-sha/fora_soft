@@ -65,6 +65,7 @@ function defaultRTCPeerConnection(target) {
  *   replaceTrack: (track: MediaStreamTrack | null) => Promise<void>,
  *   onTrack: (cb: (event: RTCTrackEvent) => void) => () => void,
  *   onIceCandidate: (cb: (candidate: RTCIceCandidate) => void) => () => void,
+ *   onIceConnectionStateChange: (cb: (state: RTCIceConnectionState) => void) => () => void,
  *   close: () => void,
  * }}
  */
@@ -88,6 +89,17 @@ export function createPeerConnection(deps = {}) {
    * @type {RTCRtpSender | null}
    */
   let videoSender = null;
+
+  /**
+   * Задача 31 (Design §8 «STUN недоступен/P2P не встал», SEC-17): подписчики
+   * на изменение `pc.iceConnectionState`. Сам модуль не решает, что значит
+   * `'failed'` для UI/реестра пиров — это знает `MeshManager` (задача 23);
+   * здесь только ретрансляция нативного события, тот же приём изоляции
+   * подписчиков try/catch, что `ontrack`/`onicecandidate` выше.
+   *
+   * @type {Set<(state: RTCIceConnectionState) => void>}
+   */
+  const iceConnectionStateHandlers = new Set();
 
   // Design §7.1 «агрегирует remote-streams» (MeshManager) — этот модуль лишь
   // ретранслирует нативное событие всем подписчикам, каждый в своём try/catch
@@ -115,6 +127,23 @@ export function createPeerConnection(deps = {}) {
     for (const handler of iceCandidateHandlers) {
       try {
         handler(event.candidate);
+      } catch {
+        // см. комментарий выше.
+      }
+    }
+  };
+
+  // Задача 31 (Design §8/SEC-17 «graceful P2P»): изменение состояния ICE для
+  // ЭТОГО соединения не должно влиять на другие `PeerConnection`/остальное
+  // приложение — каждый экземпляр этого модуля независим (собственный
+  // замкнутый `pc`), поэтому изоляция уже обеспечена на уровне создания
+  // соединений (см. JSDoc модуля); здесь — только ретрансляция состояния,
+  // те же try/catch-подписчики, что выше.
+  pc.oniceconnectionstatechange = () => {
+    const state = pc.iceConnectionState;
+    for (const handler of iceConnectionStateHandlers) {
+      try {
+        handler(state);
       } catch {
         // см. комментарий выше.
       }
@@ -261,6 +290,22 @@ export function createPeerConnection(deps = {}) {
   }
 
   /**
+   * Задача 31 (Design §8/SEC-17 «STUN недоступен/P2P не встал», graceful
+   * degradation): подписка на изменения `pc.iceConnectionState`
+   * (`'new'|'checking'|'connected'|'completed'|'failed'|'disconnected'|'closed'`).
+   * `MeshManager` реагирует на `'failed'`, убирая агрегированный
+   * remote-stream этой пары (плитка без медиа), НЕ закрывая соединение и не
+   * трогая остальных пиров.
+   *
+   * @param {(state: RTCIceConnectionState) => void} cb
+   * @returns {() => void} функция отписки.
+   */
+  function onIceConnectionStateChange(cb) {
+    iceConnectionStateHandlers.add(cb);
+    return () => iceConnectionStateHandlers.delete(cb);
+  }
+
+  /**
    * Закрывает нативное соединение (Design §7.3 «pc[id].close()» при
    * выходе/обрыве пира). Идемпотентность обеспечивает сам браузерный API
    * (повторный `close()` на уже закрытом соединении — безопасный no-op).
@@ -278,6 +323,7 @@ export function createPeerConnection(deps = {}) {
     replaceTrack,
     onTrack,
     onIceCandidate,
+    onIceConnectionStateChange,
     close,
   };
 }
