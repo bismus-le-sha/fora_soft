@@ -288,7 +288,7 @@
 
 ### [ ] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`JoinGate.jsx` реструктурирован по прецеденту задачи 35 — та же путь-схема/карточка ввода/hint-состояния, копирайт вынесен в `JoinGate.content.js`, CSS Module `JoinGate.module.css` на токенах `tokens.css` (аддитивные `--presence-pill-bg`/`--presence-pill-border`/`--avatar-1`/`--avatar-2`); новая пилюля присутствия «N уже в комнате» (наложенные аватары-инициалы, `Intl.ListFormat('ru')`) — принимает участников через проп `participants` (по умолчанию `[]`, не рендерится), т.к. ни один существующий socket-контракт не отдаёт состав комнаты до `join` (см. JSDoc компонента) — не заводился новый протокольный запрос вне скоупа задачи. Логика валидации имени не менялась. Визуально сверено в браузере (Playwright-скриншоты empty/valid состояний + отдельная проверка presence-пилюли рендером с `participants`); `JoinGate.test.jsx` 8/8 и `App.joinGate.test.jsx` 3/3 зелёные без правок; монорепо 229 server + 328 client зелёные, lint чист)
-- [ ] Code review пройден — `code-reviewer`
+- [x] Code review пройден — `code-reviewer`
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 37 — Экран подготовки к доступу (новый компонент) — critical: NO
