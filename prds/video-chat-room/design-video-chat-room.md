@@ -593,7 +593,7 @@ sequenceDiagram
 ### 12.1 Инициализация проекта (нет миграции данных — greenfield)
 1. `package.json` (workspaces app/server, app/client), `.nvmrc` (Node 20 LTS), `.gitignore` (node_modules, build).
 2. `server` (Socket.io + http/express для статики) и `client` (Vite + React) как отдельные workspace.
-3. Наполнить CI-джобы `lint` и `test` в `.github/workflows/ci.yml` (сейчас заготовки) + `npm audit` (SEC-20); добавить их в required checks (см. `.github/README.md`).
+3. Наполнить CI-джобы `lint` и `test` в `.github/workflows/ci.yml` (сейчас заготовки) + `npm audit` (SEC-20); добавить их в required checks (см. `.github/repository-settings.md`).
 
 ### 12.2 Сборка и запуск (реверс-прокси, зафиксировано v1.1)
 | Среда | Клиент | Сервер | Транспорт |

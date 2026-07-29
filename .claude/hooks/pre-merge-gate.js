@@ -5,7 +5,7 @@
  * Гейт привязан к ГРАНИЦЕ ЭПИКА (релиз/hotfix), не к каждому PR задачи.
  * Перехватывает ТОЛЬКО команды, которые вливают код в main/master:
  *   - gh pr create --base main/master (без явного --base — не гейтуется,
- *     т.к. дефолтная база репозитория — develop, см. .github/README.md)
+ *     т.к. дефолтная база репозитория — develop, см. .github/repository-settings.md)
  *   - git merge (находясь на main/master)
  *   - git push в main/master (явно указана ветка или текущая ветка = main/master)
  * PR/push отдельной задачи фичи в develop этим хуком НЕ блокируется — там
