@@ -320,7 +320,7 @@
 - [x] Код написан, тесты зелёные — `implementer` (новый `components/ExitConfirmModal.jsx` + `.content.js`/`.module.css`, README §7 дословно: оверлей blur+fade, карточка 380px, «Остаться»/«Выйти» нейтрального тона; `RoomScreen.jsx` рендерит его вместо временного гейта задачи 38, контракт `handleStay`/`handleConfirmLeave`/testid'ы не менялись; `RoomScreen.content.js` удалён — контент перенесён в `ExitConfirmModal.content.js`. 392 client + 229 server vitest зелёные, lint чист, все 6 e2e-сценариев зелёные (серийно, `--workers=1`); визуально сверено Playwright-скриншотом модалки — совпадает с README §7)
 - [x] Code review пройден — `/code-review` (Standards+Spec, PASS; 1 minor находка — комментарий к отклонению от буквального README §7 по цели анимации `fadeUp`, применён)
 - [x] Post-review баг-фикс: пользователь сообщил, что «Выйти» в модалке не возвращает на стартовый экран — `RoomScreen` эмитил `leave` на сервер, но никогда не сообщал `App.jsx` (баг существовал с задачи 27, не был замечен раньше). Добавлен `RoomScreen.onLeave`/`App.handleRoomLeave` (та же навигация, что `handleCreate`, в обратную сторону); тесты: `RoomScreen.test.jsx` (`onLeave` вызывается только по «Выйти», не по «Остаться»), новый `App.leave.test.jsx` (полный флоу «Войти»→«Выйти»→StartScreen), `e2e/leave-disconnect.spec.js` дополнен проверкой URL/экрана ушедшего. 395 client + 229 server vitest зелёные, lint чист, все 6 e2e зелёные (серийно)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — #54
 
 ### [ ] Задача 43 — Баннеры/состояния — вёрстка и сверка копирайта (§9) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
