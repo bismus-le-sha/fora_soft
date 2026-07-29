@@ -311,10 +311,10 @@
 - [x] Code review пройден — `code-reviewer` (Standards+Spec: соответствует addendum §3/§5.1 + README §4/§6/§9; noAccess форвардится только в self-плитку; SEC-04 сохранён; копирайт вынесен в `.content.js`; хардкод HEX согласован с прецедентом; 373/373 client зелёные, lint чист, server не тронут. 0 blocker/major.)
 - [x] PR в `develop` открыт — [#52](https://github.com/bismus-le-sha/fora_soft/pull/52) (смержен; чекбокс не был проставлен вовремя — исправлено при работе над задачей 41)
 
-### [ ] Задача 41 — Сворачиваемая панель Чат/Участники — critical: NO
+### [x] Задача 41 — Сворачиваемая панель Чат/Участники — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (новый `ChatSidePanel.jsx`+`.content.js`+`.module.css` — контейнер с табами «Чат»/«Участники» (README §5), анимация ширины `0→344px`; `ChatPanel.jsx` restyled под README §5 (пузыри свой/чужой, системные события, поле ввода) — тот же контракт props/data-testid; `ParticipantList.jsx` переиспользован без изменений внутренней логики. `RoomTopBar.jsx`: `isChatOpen` стал controlled-пропом (единый источник истины — `RoomScreen`) вместо локального тумблера. `RoomScreen.jsx`: состояние `isChatOpen`/`chatActiveTab`/`unreadCount`, инкремент на `onChatMessage`/`onChatSystem` пока панель закрыта/не на вкладке «Чат», сброс при открытии на неё (addendum §5.4); новый `RoomScreen.module.css` — flex-раскладка (шапка + строка Сцена/Лента+панель), сжатие Ленты (`VideoGrid` isChatOpen, проводка задачи 39) теперь реально работает. Оба таба всегда смонтированы (видимость через CSS) — черновик чата переживает переключение табов и закрытие панели. `e2e/helpers.js` — новые `openChatPanel`/`openParticipantsTab`, `sendChatMessage` открывает панель перед вводом; `media-toggle.spec.js` открывает вкладку «Участники» перед проверкой видимости. 229 server + 389 client тестов зелёные (+28 новых: `ChatSidePanel.test.jsx`, `RoomScreen` unread-сюита, обновлён `RoomTopBar.test.jsx`), lint чист, все 6 e2e-сценариев зелёные (серийно). Визуально сверено в браузере (127.0.0.1:5173, реальный `getUserMedia`): открытие/закрытие панели, переключение табов с сохранением черновика, отправка сообщения — подтверждено.)
 - [x] Code review пройден — `code-reviewer` (PASS; 1 nit — `.bubble` padding 14px vs README §5 13px — исправлено в этом же PR)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#53](https://github.com/bismus-le-sha/fora_soft/pull/53)
 
 ### [ ] Задача 42 — Модалка подтверждения выхода (новый компонент) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
