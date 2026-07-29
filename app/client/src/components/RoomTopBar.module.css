@@ -134,11 +134,17 @@
   display: inline-flex;
 }
 
-.copyLinkButton {
+/*
+ * Общая форма «пилюльных» кнопок шапки («Скопировать ссылку», «Чат»,
+ * «Выйти» — README §4): flex-строка с иконкой/текстом, скруглённые края,
+ * поверхностный фон, sans 13px/500. Различаются только padding (у каждой
+ * свой, вне скейла токенов) и hover/pressed-состояния — они остаются в
+ * специфичных классах ниже, комбинируются с этим в JSX.
+ */
+.pillButton {
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
-  padding: 9px 15px 9px 11px; /* README §4: точные значения вне скейла токенов */
   border: 1px solid var(--line-2);
   border-radius: var(--radius-999);
   background: var(--surface);
@@ -147,6 +153,10 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.copyLinkButton {
+  padding: 9px 15px 9px 11px; /* README §4: точные значения вне скейла токенов */
   transition:
     border-color 0.16s ease,
     background-color 0.16s ease;
@@ -241,18 +251,7 @@
 .chatButton,
 .chatButtonOpen {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
   padding: 9px 15px; /* README §4: вне скейла токенов */
-  border-radius: var(--radius-999);
-  border: 1px solid var(--line-2);
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
 }
 
 .chatButtonOpen {
@@ -291,18 +290,7 @@
  * ------------------------------------------------------------------- */
 
 .leaveButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
   padding: 9px 16px 9px 13px; /* README §4: вне скейла токенов */
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-999);
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
   transition:
     border-color 0.16s ease,
     background-color 0.16s ease;

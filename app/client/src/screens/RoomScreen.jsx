@@ -10,6 +10,7 @@ import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
 import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 import PermissionPrep from './PermissionPrep.jsx';
+import { EXIT_CONFIRM } from './RoomScreen.content.js';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -332,12 +333,12 @@ function RoomScreen({ roomId, name, deps = {} }) {
        */}
       {isExitConfirmOpen ? (
         <div role="dialog" aria-modal="true" data-testid="exit-confirm">
-          <p>Выйти из комнаты?</p>
+          <p>{EXIT_CONFIRM.question}</p>
           <button type="button" data-testid="exit-confirm-stay" onClick={handleStay}>
-            Остаться
+            {EXIT_CONFIRM.stayLabel}
           </button>
           <button type="button" data-testid="exit-confirm-leave" onClick={handleConfirmLeave}>
-            Выйти
+            {EXIT_CONFIRM.leaveLabel}
           </button>
         </div>
       ) : null}

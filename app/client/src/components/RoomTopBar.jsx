@@ -66,6 +66,68 @@ function defaultClipboardWrite(text) {
   return globalThis.navigator.clipboard.writeText(text);
 }
 
+/* README §4: иконки mic/cam 16px, только цвет/фон кнопки меняется по
+   состоянию — сам глиф статичен, поэтому вынесен в модульные константы, не
+   пересоздаётся на каждый рендер/тик таймера. */
+const MIC_ON_ICON = (
+  <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5Z" />
+    <path d="M6.5 10.5a5.5 5.5 0 0 0 11 0" />
+    <path d="M12 16v4" />
+  </svg>
+);
+const MIC_OFF_ICON = (
+  <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4" />
+    <path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8" />
+    <path d="M4 3.5l16 17" />
+  </svg>
+);
+const CAM_ON_ICON = (
+  <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 8a1.5 1.5 0 0 1 1.5-1.5H13A1.5 1.5 0 0 1 14.5 8v8A1.5 1.5 0 0 1 13 17.5H4.5A1.5 1.5 0 0 1 3 16Z" />
+    <path d="M18.4 9.4 21 7.6v8.8l-2.6-1.8" />
+  </svg>
+);
+const CAM_OFF_ICON = (
+  <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 10.2V9a1.5 1.5 0 0 0-1.5-1.5H8" />
+    <path d="M4.2 7.6A1.5 1.5 0 0 0 2 9v6a1.5 1.5 0 0 0 1.5 1.5h10c.5 0 .9-.2 1.2-.6" />
+    <path d="M20 8.4v7.2L16.6 13" />
+    <path d="M4 3.5l16 17" />
+  </svg>
+);
+
+/* eslint-disable react/prop-types -- см. общее обоснование ниже у RoomTopBar */
+/**
+ * Кнопка-тумблер mic/cam (README §4) — mic и cam различаются только набором
+ * иконок/подписей, вся остальная разметка/поведение общие (было продублировано
+ * дважды до code-review задачи 38).
+ * @param {object} props
+ * @param {string} props.testId
+ * @param {boolean} props.pressed
+ * @param {string} props.onLabel
+ * @param {string} props.offLabel
+ * @param {import('react').ReactNode} props.onIcon
+ * @param {import('react').ReactNode} props.offIcon
+ * @param {() => void} props.onClick
+ */
+function MediaToggleButton({ testId, pressed, onLabel, offLabel, onIcon, offIcon, onClick }) {
+  return (
+    <button
+      type="button"
+      className={styles.mediaButton}
+      data-testid={testId}
+      aria-pressed={pressed}
+      aria-label={pressed ? onLabel : offLabel}
+      onClick={onClick}
+    >
+      {pressed ? onIcon : offIcon}
+    </button>
+  );
+}
+/* eslint-enable react/prop-types */
+
 /**
  * Addendum §5.3 «Таймер звонка (MM:SS)»: `joinedAt` — момент успешного
  * `join:ok` (`Date.now()`), не момент монтирования компонента — до `join:ok`
@@ -208,56 +270,35 @@ function RoomTopBar({
       </div>
 
       <div className={styles.right}>
-        <button
-          type="button"
-          className={styles.mediaButton}
-          data-testid="toggle-audio"
-          aria-pressed={audioOn}
-          aria-label={audioOn ? MEDIA_BUTTON_LABELS.audioOn : MEDIA_BUTTON_LABELS.audioOff}
+        <MediaToggleButton
+          testId="toggle-audio"
+          pressed={audioOn}
+          onLabel={MEDIA_BUTTON_LABELS.audioOn}
+          offLabel={MEDIA_BUTTON_LABELS.audioOff}
+          onIcon={MIC_ON_ICON}
+          offIcon={MIC_OFF_ICON}
           onClick={onToggleAudio}
-        >
-          {audioOn ? (
-            <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v4.4a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5Z" />
-              <path d="M6.5 10.5a5.5 5.5 0 0 0 11 0" />
-              <path d="M12 16v4" />
-            </svg>
-          ) : (
-            <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9.4 5.6a2.6 2.6 0 0 1 5.2.5v4.4" />
-              <path d="M6.5 10.5a5.5 5.5 0 0 0 8.3 4.8" />
-              <path d="M4 3.5l16 17" />
-            </svg>
-          )}
-        </button>
+        />
 
-        <button
-          type="button"
-          className={styles.mediaButton}
-          data-testid="toggle-video"
-          aria-pressed={videoOn}
-          aria-label={videoOn ? MEDIA_BUTTON_LABELS.videoOn : MEDIA_BUTTON_LABELS.videoOff}
+        <MediaToggleButton
+          testId="toggle-video"
+          pressed={videoOn}
+          onLabel={MEDIA_BUTTON_LABELS.videoOn}
+          offLabel={MEDIA_BUTTON_LABELS.videoOff}
+          onIcon={CAM_ON_ICON}
+          offIcon={CAM_OFF_ICON}
           onClick={onToggleVideo}
-        >
-          {videoOn ? (
-            <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 8a1.5 1.5 0 0 1 1.5-1.5H13A1.5 1.5 0 0 1 14.5 8v8A1.5 1.5 0 0 1 13 17.5H4.5A1.5 1.5 0 0 1 3 16Z" />
-              <path d="M18.4 9.4 21 7.6v8.8l-2.6-1.8" />
-            </svg>
-          ) : (
-            <svg className={styles.mediaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 10.2V9a1.5 1.5 0 0 0-1.5-1.5H8" />
-              <path d="M4.2 7.6A1.5 1.5 0 0 0 2 9v6a1.5 1.5 0 0 0 1.5 1.5h10c.5 0 .9-.2 1.2-.6" />
-              <path d="M20 8.4v7.2L16.6 13" />
-              <path d="M4 3.5l16 17" />
-            </svg>
-          )}
-        </button>
+        />
 
         <span className={styles.divider} aria-hidden="true" />
 
         <span className={styles.copyLinkWrap}>
-          <button type="button" className={styles.copyLinkButton} data-testid="copy-link-button" onClick={handleCopyLink}>
+          <button
+            type="button"
+            className={`${styles.pillButton} ${styles.copyLinkButton}`}
+            data-testid="copy-link-button"
+            onClick={handleCopyLink}
+          >
             <span className={styles.copyLinkIconBox}>
               <svg className={styles.copyLinkIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" />
@@ -288,7 +329,7 @@ function RoomTopBar({
 
         <button
           type="button"
-          className={isChatOpen ? styles.chatButtonOpen : styles.chatButton}
+          className={`${styles.pillButton} ${isChatOpen ? styles.chatButtonOpen : styles.chatButton}`}
           data-testid="chat-toggle-button"
           aria-pressed={isChatOpen}
           onClick={handleToggleChat}
@@ -301,7 +342,12 @@ function RoomTopBar({
           ) : null}
         </button>
 
-        <button type="button" className={styles.leaveButton} data-testid="leave-button" onClick={onRequestLeave}>
+        <button
+          type="button"
+          className={`${styles.pillButton} ${styles.leaveButton}`}
+          data-testid="leave-button"
+          onClick={onRequestLeave}
+        >
           <svg className={styles.leaveIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
             <path d="M10 8l-4 4 4 4" />
