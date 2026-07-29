@@ -213,6 +213,11 @@ function RoomScreen({
         setJoinRejected(null);
         setJoinedAt(Date.now());
         onJoined?.(roomId, name, mediaStateRef.current);
+        // До join:ok сервер ещё не знает участника и игнорирует media:state,
+        // отправленный во время подготовки устройств. Повторяем актуальный
+        // снимок после успешного входа, чтобы остальные плитки сразу
+        // показывали корректные mic/cam off.
+        emit('media:state', mediaStateRef.current);
 
         const meshInstance = mesh.ensureMesh(payload?.iceServers);
         const stream = media.getLocalStream();

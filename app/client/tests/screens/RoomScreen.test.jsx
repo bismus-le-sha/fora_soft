@@ -181,6 +181,20 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     expect(signaling.api.emit).toHaveBeenCalledWith('join', { roomId: 'room-1', name: 'Алекс' });
   });
 
+  it('после join:ok синхронизирует с сервером текущее начальное состояние устройств', async () => {
+    const mediaState = { audio: false, video: false };
+    const { signaling } = renderRoomScreen({ mediaState });
+
+    await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+    signaling.api.emit.mockClear();
+
+    act(() => {
+      signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+    });
+
+    expect(signaling.api.emit).toHaveBeenCalledWith('media:state', mediaState);
+  });
+
   it('передаёт сохранённый выбор устройств в media.init() и сообщает фактическое состояние наверх', async () => {
     const initialMediaState = { audio: false, video: true };
     const onMediaStateChange = vi.fn();

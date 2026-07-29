@@ -15,7 +15,7 @@ import { createRoom, joinRoomByUrl, waitForParticipantCount, openParticipantsTab
  * в заглушку сразу по `media:state`, не дожидаясь renegotiation).
  */
 test.describe('Toggle камеры/микрофона (US-7)', () => {
-  test('выключение микрофона/камеры у A отражается в списке/плитке у B', async ({ browser }) => {
+  test('включение и повторное выключение микрофона/камеры у A отражается у B', async ({ browser }) => {
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -35,20 +35,29 @@ test.describe('Toggle камеры/микрофона (US-7)', () => {
       const aleksItemOnB = pageB.getByTestId('participant-list-item').filter({ hasText: 'Алекс' });
       const aleksTileOnB = pageB.getByTestId('video-tile').filter({ hasText: 'Алекс' });
 
-      // До тумблера — ни иконки mic-off, ни заглушки-силуэта у Алекса на экране Бориса.
+      const toggleAudio = pageA.getByTestId('toggle-audio');
+      const toggleVideo = pageA.getByTestId('toggle-video');
+
+      // Новый продуктовый дефолт: оба устройства выключены.
+      await expect(toggleAudio).toHaveAttribute('aria-pressed', 'false');
+      await expect(toggleVideo).toHaveAttribute('aria-pressed', 'false');
+      await expect(aleksItemOnB.getByTestId('participant-list-mic-off')).toBeVisible();
+      await expect(aleksTileOnB.getByTestId('video-tile-placeholder')).toBeVisible();
+
+      // Включение после входа должно дойти и как media:state, и как WebRTC-трек.
+      await toggleAudio.click();
+      await toggleVideo.click();
+      await expect(toggleAudio).toHaveAttribute('aria-pressed', 'true');
+      await expect(toggleVideo).toHaveAttribute('aria-pressed', 'true');
       await expect(aleksItemOnB.getByTestId('participant-list-mic-off')).toHaveCount(0);
       await expect(aleksTileOnB.getByTestId('video-tile-placeholder')).toHaveCount(0);
 
-      const toggleAudio = pageA.getByTestId('toggle-audio');
-      await expect(toggleAudio).toHaveAttribute('aria-pressed', 'true');
+      // Повторное выключение возвращает удалённые индикаторы в off.
       await toggleAudio.click();
       await expect(toggleAudio).toHaveAttribute('aria-pressed', 'false');
-
       await expect(aleksItemOnB.getByTestId('participant-list-mic-off')).toBeVisible();
       await expect(aleksTileOnB.getByTestId('video-tile-mic-off')).toBeVisible();
 
-      const toggleVideo = pageA.getByTestId('toggle-video');
-      await expect(toggleVideo).toHaveAttribute('aria-pressed', 'true');
       await toggleVideo.click();
       await expect(toggleVideo).toHaveAttribute('aria-pressed', 'false');
 
