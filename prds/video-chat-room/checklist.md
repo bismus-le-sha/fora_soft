@@ -299,7 +299,7 @@
 ### [x] Задача 38 — Верхняя плашка комнаты (код/таймер/медиа/ссылка/чат/выход) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`ControlBar.jsx` заменён на `RoomTopBar.jsx` + `.content.js`/`.module.css` — код комнаты (`formatRoomCode`, `lib/roomId.js`, SEC-14-safe), таймер звонка (`joinedAt` от `join:ok`, тик раз в секунду), круглые тумблеры mic/cam, «Скопировать ссылку» + тост (автоскрытие 2200ms), счётчик `N/4`, «Чат» + слот бейджа (без логики — задача 41), «Выйти» открывает временный неоформленный гейт подтверждения в `RoomScreen.jsx` (`isExitConfirmOpen`, полноценная `ExitConfirmModal.jsx` — задача 42), НЕ эмитит `leave` напрямую. `e2e/leave-disconnect.spec.js` обновлён под новый гейт. 229 server + 345 client тестов зелёные, lint чист, все 6 e2e-сценариев зелёные (серийно); визуально сверено в браузере (реальный `getUserMedia`, ручной проход)).
 - [x] Code review пройден — `code-reviewer` (Standards+Spec, 2 параллельных под-агента; Spec — 0 находок; Standards — 1 hard violation (хардкод копирайта гейта выхода в `RoomScreen.jsx` вместо контент-модуля) + 2 minor duplication smells (CSS пилюль-кнопок, JSX mic/cam тумблеров) — все три закрыты в том же PR: новый `RoomScreen.content.js`, общий класс `.pillButton`, компонент `MediaToggleButton`; повторный прогон тестов/lint зелёный)
-- [ ] PR в `develop` открыт
+- [x] PR в `develop` открыт — [#49](https://github.com/bismus-le-sha/fora_soft/pull/49)
 
 ### [ ] Задача 39 — Сцена + Лента (реструктуризация VideoGrid) — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
