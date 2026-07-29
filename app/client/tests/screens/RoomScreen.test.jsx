@@ -80,7 +80,7 @@ function makeFakeMesh() {
 function makeFakeMedia(state = { audio: true, video: true }, initResult) {
   return {
     init: vi.fn(() => initResult ?? Promise.resolve(state)),
-    toggleAudio: vi.fn(() => state),
+    toggleAudio: vi.fn().mockResolvedValue(state),
     toggleVideo: vi.fn().mockResolvedValue(state),
     getLocalStream: vi.fn(() => null),
   };
@@ -105,7 +105,16 @@ function deferred() {
  *   контролируемый результат `media.init()` для проверки промежуточного
  *   экрана подготовки к доступу.
  */
-function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, mediaInitResult, onMediaDeps, onLeave } = {}) {
+function renderRoomScreen({
+  roomId = 'room-1',
+  name = 'Алекс',
+  mediaState,
+  mediaInitResult,
+  initialMediaState,
+  onMediaStateChange,
+  onMediaDeps,
+  onLeave,
+} = {}) {
   const signaling = makeFakeSignaling();
   const mesh = makeFakeMesh();
   const media = makeFakeMedia(mediaState, mediaInitResult);
@@ -114,6 +123,8 @@ function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, 
     <RoomScreen
       roomId={roomId}
       name={name}
+      initialMediaState={initialMediaState}
+      onMediaStateChange={onMediaStateChange}
       onLeave={onLeave}
       deps={{
         signaling: { createSignalingClient: () => signaling.api },
@@ -170,6 +181,56 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     expect(signaling.api.emit).toHaveBeenCalledWith('join', { roomId: 'room-1', name: 'Алекс' });
   });
 
+  it('после join:ok синхронизирует с сервером текущее начальное состояние устройств', async () => {
+    const mediaState = { audio: false, video: false };
+    const { signaling } = renderRoomScreen({ mediaState });
+
+    await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+    signaling.api.emit.mockClear();
+
+    act(() => {
+      signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+    });
+
+    expect(signaling.api.emit).toHaveBeenCalledWith('media:state', mediaState);
+  });
+
+  it('передаёт сохранённый выбор устройств в media.init() и сообщает фактическое состояние наверх', async () => {
+    const initialMediaState = { audio: false, video: true };
+    const onMediaStateChange = vi.fn();
+    const { media } = renderRoomScreen({
+      initialMediaState,
+      mediaState: initialMediaState,
+      onMediaStateChange,
+    });
+
+    await waitFor(() => expect(media.init).toHaveBeenCalledWith(initialMediaState));
+    await waitFor(() =>
+      expect(onMediaStateChange).toHaveBeenCalledWith('room-1', initialMediaState),
+    );
+  });
+
+  it('подключает впервые включённую дорожку к mesh после успешного входа', async () => {
+    let capturedMediaDeps;
+    const { signaling, mesh } = renderRoomScreen({
+      onMediaDeps: (mediaDeps) => {
+        capturedMediaDeps = mediaDeps;
+      },
+    });
+    await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+    act(() => {
+      signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+    });
+    const track = { kind: 'audio' };
+    const stream = { id: 'local-stream' };
+
+    act(() => {
+      capturedMediaDeps.onLocalTrackAdded(track, stream);
+    });
+
+    expect(mesh.attachLocalTrack).toHaveBeenCalledWith(track, stream);
+  });
+
   it('join:ok рендерит сетку (video-tile на каждого участника снимка) + список + чат-историю', async () => {
     const { getByTestId, getAllByTestId, signaling, mesh } = renderRoomScreen();
 
@@ -187,6 +248,27 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     expect(mesh.addExistingParticipant).toHaveBeenCalledTimes(1);
     expect(mesh.addExistingParticipant).toHaveBeenCalledWith('peer-1');
     expect(mesh.addExistingParticipant).not.toHaveBeenCalledWith('self-1');
+  });
+
+  it('локальная плитка отражает фактическое отсутствие камеры и выключенный микрофон, а не состояние из join:ok', async () => {
+    const { getAllByTestId, signaling } = renderRoomScreen({
+      mediaState: { audio: false, video: false },
+    });
+    await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+    act(() => {
+      signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+    });
+
+    const selfTile = await waitFor(() => {
+      const tile = getAllByTestId('video-tile').find((candidate) => candidate.textContent.includes('Алекс'));
+      expect(tile).toBeTruthy();
+      return tile;
+    });
+
+    expect(selfTile.querySelector('[data-testid="video-tile-placeholder"]')).not.toBeNull();
+    expect(selfTile.querySelector('[data-testid="video-tile-mic-off"]')).not.toBeNull();
+    expect(selfTile.querySelector('[data-testid="video-tile-mic-on"]')).toBeNull();
   });
 
   it('participant:joined добавляет участника в сетку/список и вызывает mesh.onParticipantJoined', async () => {
@@ -241,7 +323,7 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
   });
 
   it('join:rejected рендерит предупреждение и не падает', async () => {
-    const { getByRole, signaling } = renderRoomScreen();
+    const { getByRole, queryByTestId, signaling } = renderRoomScreen();
     await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
 
     act(() => {
@@ -249,6 +331,8 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     });
 
     await waitFor(() => expect(getByRole('alert').textContent).toContain('Похоже, комната уже занята'));
+    expect(queryByTestId('room-top-bar')).toBeNull();
+    expect(queryByTestId('video-grid')).toBeNull();
   });
 
   it('signal:offer/answer/ice маршрутизируются в mesh.handleSignal', async () => {

@@ -23,3 +23,16 @@
   min-height: 0;
   min-width: 0;
 }
+
+.joinErrorScreen {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.joinErrorScreen > * {
+  width: 100%;
+}

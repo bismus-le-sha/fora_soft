@@ -2,72 +2,73 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import StartScreen from '../../src/screens/StartScreen.jsx';
 
-/**
- * Задача 19.2 (red-фаза, покрытие для implementer) — StartScreen.
- *
- * Требования: F-01, F-02, US-1, US-2. Design: §4.2 (таблица: `StartScreen.jsx`,
- * props `onCreate(name)`), §6.4 (URL-контракт: «Создать комнату» → генерация
- * roomId → navigate(/room/:id)).
- *
- * Критерии приёмки задачи 19: «пустое имя блокирует кнопку (UX); переход на
- * /room/:id». Навигация/генерация roomId запускается через контрактный проп
- * `onCreate(name)` (Design §4.2) — сама генерация id проверяется в
- * roomId.test.js, здесь проверяется, что валидный сабмит его ТРИГГЕРИТ, а
- * пустое имя — нет.
- *
- * Тесты падают до реализации `src/screens/StartScreen.jsx` (модуль ещё не
- * существует — ожидаемый red по задаче 19.2, который закроет implementer).
- */
-describe('StartScreen (Design §4.2/§6.4, F-01/F-02, US-1/US-2)', () => {
+describe('StartScreen', () => {
   const getNameInput = (container) => container.querySelector('input');
-  const getCreateButton = (getByRole) => getByRole('button', { name: /создать комнату/i });
+  const getCreateButton = (getByRole, name = /создать комнату|как вас зовут/i) =>
+    getByRole('button', { name });
 
-  it('рендерит поле ввода имени и кнопку «Создать комнату»', () => {
+  it('renders name input and create button', () => {
     const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-
     expect(getNameInput(container)).not.toBeNull();
     expect(getCreateButton(getByRole)).not.toBeNull();
   });
 
-  it('пустое имя блокирует кнопку (UX-валидация, US-1 «Пустое имя»)', () => {
+  it('keeps the empty-name CTA clickable without a forbidden cursor', () => {
     const { getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-
-    expect(getCreateButton(getByRole).disabled).toBe(true);
+    const button = getCreateButton(getByRole);
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('имя из одних пробелов также блокирует кнопку (US-1)', () => {
+  it('keeps button invalid for whitespace-only name', () => {
     const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-
     fireEvent.change(getNameInput(container), { target: { value: '   ' } });
-
-    expect(getCreateButton(getByRole).disabled).toBe(true);
+    expect(getCreateButton(getByRole).getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('после ввода валидного имени кнопка становится активной', () => {
+  it('activates button for a valid name', () => {
     const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-
     fireEvent.change(getNameInput(container), { target: { value: 'Алекс' } });
-
     expect(getCreateButton(getByRole).disabled).toBe(false);
+    expect(getCreateButton(getByRole).getAttribute('aria-disabled')).toBe('false');
   });
 
-  it('клик «Создать комнату» с валидным именем вызывает onCreate(name) ровно один раз (триггер генерации roomId + navigate, §6.4)', () => {
+  it('shows validation for invalid characters and an overlong name', () => {
+    const { container, getByText } = render(<StartScreen onCreate={vi.fn()} />);
+    const input = getNameInput(container);
+
+    fireEvent.change(input, { target: { value: 'Alex<' } });
+    expect(getByText(/лишние символы/i)).not.toBeNull();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+
+    fireEvent.change(input, { target: { value: 'А'.repeat(31) } });
+    expect(getByText(/не больше 30 символов/i)).not.toBeNull();
+    expect(input.value).toHaveLength(31);
+  });
+
+  it('allows underscore and changes invalid CTA copy on hover', () => {
+    const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
+    const button = getCreateButton(getByRole);
+    fireEvent.mouseEnter(button);
+    expect(getCreateButton(getByRole, /как вас зовут/i)).not.toBeNull();
+
+    fireEvent.change(getNameInput(container), { target: { value: 'Алекс_1' } });
+    expect(getCreateButton(getByRole, /создать комнату/i).getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('calls onCreate(name) once with a trimmed valid name', () => {
     const onCreate = vi.fn();
     const { container, getByRole } = render(<StartScreen onCreate={onCreate} />);
-
-    fireEvent.change(getNameInput(container), { target: { value: 'Алекс' } });
+    fireEvent.change(getNameInput(container), { target: { value: '  Алекс  ' } });
     fireEvent.click(getCreateButton(getByRole));
-
     expect(onCreate).toHaveBeenCalledTimes(1);
     expect(onCreate).toHaveBeenCalledWith('Алекс');
   });
 
-  it('пустое имя: onCreate не вызывается даже при попытке клика (вход не происходит, US-1/US-2)', () => {
+  it('does not call onCreate for an invalid name', () => {
     const onCreate = vi.fn();
     const { getByRole } = render(<StartScreen onCreate={onCreate} />);
-
     fireEvent.click(getCreateButton(getByRole));
-
     expect(onCreate).not.toHaveBeenCalled();
   });
 });

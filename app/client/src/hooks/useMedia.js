@@ -41,6 +41,8 @@ import { createMediaController } from '../media/mediaController.js';
  * @param {() => RTCRtpSender[]} [options.getVideoSenders] — форвардится в
  *   `createMediaController` как `deps.getVideoSenders`; в рантайме —
  *   `useMesh().getVideoSenders`.
+ * @param {(track: MediaStreamTrack, stream: MediaStream) => void} [options.onLocalTrackAdded]
+ *   — форвардится контроллеру для подключения новой дорожки к mesh.
  * @param {(event: string, payload?: object) => void} [options.emit] —
  *   `signalingClient.emit`-совместимая функция для `media:state` (Design
  *   §6.1); необязательна (например, до готовности сигналинга) — тогда
@@ -53,8 +55,8 @@ import { createMediaController } from '../media/mediaController.js';
  *   — форвардится как `deps.getUserMedia` (тестируемость, тот же приём, что
  *   `JoinGate.jsx`).
  * @returns {{
- *   init: () => Promise<{audio: boolean, video: boolean}>,
- *   toggleAudio: () => {audio: boolean, video: boolean},
+ *   init: (initialState?: {audio: boolean, video: boolean}) => Promise<{audio: boolean, video: boolean}>,
+ *   toggleAudio: () => Promise<{audio: boolean, video: boolean}>,
  *   toggleVideo: () => Promise<{audio: boolean, video: boolean}>,
  *   getLocalStream: () => MediaStream | null,
  *   localStream: MediaStream | null,
@@ -62,7 +64,7 @@ import { createMediaController } from '../media/mediaController.js';
  *   deviceDenied: boolean,
  * }}
  */
-export function useMedia({ getVideoSenders, emit, deps } = {}) {
+export function useMedia({ getVideoSenders, onLocalTrackAdded, emit, deps } = {}) {
   const [deviceDenied, setDeviceDenied] = useState(false);
 
   const controllerRef = useRef(null);
@@ -71,6 +73,7 @@ export function useMedia({ getVideoSenders, emit, deps } = {}) {
     controllerRef.current = createController({
       getUserMedia: deps?.getUserMedia,
       getVideoSenders,
+      onLocalTrackAdded,
       onDeviceDenied: () => setDeviceDenied(true),
     });
   }
@@ -99,16 +102,17 @@ export function useMedia({ getVideoSenders, emit, deps } = {}) {
     return () => controllerRef.current.dispose?.();
   }, []);
 
-  const init = useCallback(async () => {
-    const state = await controllerRef.current.init();
+  const init = useCallback(async (initialState) => {
+    const state = await controllerRef.current.init(initialState);
     setMediaState(state);
     setLocalStream(controllerRef.current.getLocalStream());
     return state;
   }, []);
 
-  const toggleAudio = useCallback(() => {
-    const state = controllerRef.current.toggleAudio();
+  const toggleAudio = useCallback(async () => {
+    const state = await controllerRef.current.toggleAudio();
     setMediaState(state);
+    setLocalStream(controllerRef.current.getLocalStream());
     emit?.('media:state', state);
     return state;
   }, [emit]);

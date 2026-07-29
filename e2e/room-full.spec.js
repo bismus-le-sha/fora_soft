@@ -52,6 +52,15 @@ test.describe(`room-full (лимит ${ROOM_CAPACITY} участников, US-5
       const banner = overflowPage.getByTestId('room-full-banner');
       await expect(banner).toBeVisible();
       await expect(banner.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
+      await expect(overflowPage.getByTestId('room-top-bar')).toHaveCount(0);
+      await expect(overflowPage.getByTestId('video-grid')).toHaveCount(0);
+
+      const bannerBox = await banner.boundingBox();
+      const viewport = overflowPage.viewportSize();
+      expect(bannerBox).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(Math.abs(bannerBox.x + bannerBox.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2);
+      expect(Math.abs(bannerBox.y + bannerBox.height / 2 - viewport.height / 2)).toBeLessThanOrEqual(2);
 
       // Состав комнаты не выросло — лишний участник не попал в список ни у кого.
       await waitForParticipantCount(firstPage, ROOM_CAPACITY);

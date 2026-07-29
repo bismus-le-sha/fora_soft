@@ -54,10 +54,12 @@ describe('App: подтверждённый выход возвращает на
     globalThis.isSecureContext = true;
     globalThis.navigator.mediaDevices = { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) };
     globalThis.history.pushState(null, '', '/room/existing-room-id');
+    globalThis.sessionStorage.clear();
     Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {
+    globalThis.sessionStorage.clear();
     delete globalThis.RTCPeerConnection;
     delete globalThis.isSecureContext;
     if (globalThis.navigator) {
@@ -82,5 +84,6 @@ describe('App: подтверждённый выход возвращает на
     await waitFor(() => expect(getByRole('button', { name: /создать комнату/i })).not.toBeNull());
     expect(queryByTestId('room-screen')).toBeNull();
     expect(globalThis.location.pathname).toBe('/');
+    expect(globalThis.sessionStorage.length).toBe(0);
   });
 });

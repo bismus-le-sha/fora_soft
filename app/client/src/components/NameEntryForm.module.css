@@ -1,0 +1,133 @@
+.card {
+  width: min(460px, 100%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-26);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label,
+.counter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-2);
+}
+
+.label {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.counter {
+  color: var(--faint-2);
+}
+
+.counterError {
+  color: var(--accent-ink);
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px var(--space-14);
+  padding-right: var(--space-44);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--input-bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-11);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--shadow-focus);
+}
+
+.inputError,
+.inputError:focus {
+  border-color: var(--accent-ink);
+  box-shadow: var(--shadow-error);
+}
+
+.inputWarning {
+  position: absolute;
+  top: 50%;
+  right: var(--space-14);
+  color: var(--accent-ink);
+  transform: translateY(-50%);
+}
+
+.hint {
+  min-height: var(--space-20);
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--faint);
+}
+
+.hintValid {
+  color: var(--ok);
+}
+
+.hintError {
+  color: var(--accent-ink);
+}
+
+.cta {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-14) var(--space-18);
+  border: none;
+  border-radius: var(--radius-999);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--ink);
+  color: var(--on-dark);
+  transition:
+    transform 0.14s ease,
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.cta:hover,
+.cta:focus-visible {
+  transform: translateY(-1px);
+}
+
+.ctaInvalid {
+  background: var(--line);
+  color: var(--faint);
+}
+
+.ctaIcon {
+  flex-shrink: 0;
+}

@@ -28,7 +28,8 @@ export async function createRoom(page, name) {
   const roomUrl = page.url();
   const roomId = new URL(roomUrl).pathname.split('/room/')[1];
 
-  await enterJoinGate(page, name);
+  const roomScreen = page.getByTestId('room-screen');
+  await expect(roomScreen).toBeVisible({ timeout: 20_000 });
 
   return { roomId, roomUrl };
 }

@@ -347,13 +347,26 @@ describe('MeshManager (Design §3.3/§4.2/§7.1, F-06, US-6/9)', () => {
       const mesh = createMeshManager(deps);
       await mesh.onParticipantJoined('peer-a');
       await mesh.onParticipantJoined('peer-b');
+      deps.emit.mockClear();
+      instances.get(0).createOffer.mockClear();
+      instances.get(1).createOffer.mockClear();
       const track = { kind: 'audio' };
       const stream = { id: 'local' };
 
-      mesh.attachLocalTrack(track, stream);
+      await mesh.attachLocalTrack(track, stream);
 
       expect(instances.get(0).addTrack).toHaveBeenCalledWith(track, stream);
       expect(instances.get(1).addTrack).toHaveBeenCalledWith(track, stream);
+      expect(instances.get(0).createOffer).toHaveBeenCalledTimes(1);
+      expect(instances.get(1).createOffer).toHaveBeenCalledTimes(1);
+      expect(deps.emit).toHaveBeenCalledWith('signal:offer', {
+        to: 'peer-a',
+        sdp: 'offer-sdp-0',
+      });
+      expect(deps.emit).toHaveBeenCalledWith('signal:offer', {
+        to: 'peer-b',
+        sdp: 'offer-sdp-1',
+      });
     });
 
     it('трек, прикреплённый ДО входа пира в mesh, автоматически подставляется в новый PeerConnection', async () => {
@@ -366,6 +379,21 @@ describe('MeshManager (Design §3.3/§4.2/§7.1, F-06, US-6/9)', () => {
       await mesh.onParticipantJoined('peer-a');
 
       expect(instances.get(0).addTrack).toHaveBeenCalledWith(track, stream);
+    });
+
+    it('повторное прикрепление дорожки того же типа обновляет её для будущих пиров без дубликата', async () => {
+      const { deps, instances } = makeDeps();
+      const mesh = createMeshManager(deps);
+      const oldTrack = { kind: 'video' };
+      const newTrack = { kind: 'video' };
+      const stream = { id: 'local' };
+
+      mesh.attachLocalTrack(oldTrack, stream);
+      mesh.attachLocalTrack(newTrack, stream);
+      await mesh.onParticipantJoined('peer-a');
+
+      expect(instances.get(0).addTrack).toHaveBeenCalledTimes(1);
+      expect(instances.get(0).addTrack).toHaveBeenCalledWith(newTrack, stream);
     });
 
     it('getVideoSenders агрегирует video-sender по одному на соединение, включая пиров, добавленных после attachLocalTrack', async () => {

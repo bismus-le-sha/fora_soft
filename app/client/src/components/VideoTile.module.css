@@ -175,8 +175,8 @@
 }
 
 /* ---------------------------------------------------------------------
- * Эквалайзер «ГОВОРИТ» (только вариант «сцена», визуальный, без VAD —
- * addendum §5.1)
+ * Зарезервированный эквалайзер «ГОВОРИТ». Стили сохраняются для будущего
+ * реального VAD, но компонент пока намеренно не рендерит индикатор.
  * ------------------------------------------------------------------- */
 
 .speaking {
@@ -256,6 +256,50 @@
   background: var(--ink);
   color: var(--on-dark);
   font-size: 14px;
+}
+
+.overlay {
+  position: absolute;
+  left: var(--space-12);
+  right: var(--space-12);
+  bottom: var(--space-12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.name {
+  max-width: calc(100% - var(--space-44) - var(--space-12));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-999);
+  background: var(--scrim);
+  color: var(--on-dark);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.micBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-32);
+  height: var(--space-32);
+  border-radius: var(--radius-999);
+  background: var(--scrim);
+  color: var(--on-dark);
+  font-size: 15px;
+}
+
+.micBadgeOn {
+  background: var(--scrim);
+}
+
+.micBadgeOff {
+  background: var(--accent-ink);
 }
 
 @keyframes dotPulse {

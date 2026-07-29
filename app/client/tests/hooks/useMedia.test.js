@@ -15,7 +15,7 @@ import { useMedia } from '../../src/hooks/useMedia.js';
 function makeFakeController(overrides = {}) {
   return {
     init: vi.fn().mockResolvedValue({ audio: true, video: true }),
-    toggleAudio: vi.fn(() => ({ audio: false, video: true })),
+    toggleAudio: vi.fn().mockResolvedValue({ audio: false, video: true }),
     toggleVideo: vi.fn().mockResolvedValue({ audio: true, video: false }),
     getLocalStream: vi.fn(() => ({ id: 'stream-1' })),
     ...overrides,
@@ -60,13 +60,16 @@ function makeFakeControllerFactory(overrides = {}) {
 describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
   it('форвардит getVideoSenders в фабрику createMediaController как deps.getVideoSenders', () => {
     const getVideoSenders = vi.fn(() => []);
+    const onLocalTrackAdded = vi.fn();
     const fakeController = makeFakeController();
     const createMediaController = vi.fn(() => fakeController);
 
-    renderHook(() => useMedia({ getVideoSenders, deps: { createMediaController } }));
+    renderHook(() =>
+      useMedia({ getVideoSenders, onLocalTrackAdded, deps: { createMediaController } }),
+    );
 
     expect(createMediaController).toHaveBeenCalledWith(
-      expect.objectContaining({ getVideoSenders }),
+      expect.objectContaining({ getVideoSenders, onLocalTrackAdded }),
     );
   });
 
@@ -75,23 +78,24 @@ describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
     const createMediaController = vi.fn(() => fakeController);
     const { result } = renderHook(() => useMedia({ deps: { createMediaController } }));
 
+    const initialState = { audio: false, video: true };
     await act(async () => {
-      await result.current.init();
+      await result.current.init(initialState);
     });
 
-    expect(fakeController.init).toHaveBeenCalledTimes(1);
+    expect(fakeController.init).toHaveBeenCalledWith(initialState);
     expect(result.current.mediaState).toEqual({ audio: true, video: true });
     expect(result.current.localStream).toEqual({ id: 'stream-1' });
   });
 
-  it('toggleAudio() обновляет mediaState и эмитит media:state', () => {
+  it('toggleAudio() обновляет mediaState и эмитит media:state', async () => {
     const fakeController = makeFakeController();
     const createMediaController = vi.fn(() => fakeController);
     const emit = vi.fn();
     const { result } = renderHook(() => useMedia({ emit, deps: { createMediaController } }));
 
-    act(() => {
-      result.current.toggleAudio();
+    await act(async () => {
+      await result.current.toggleAudio();
     });
 
     expect(fakeController.toggleAudio).toHaveBeenCalledTimes(1);
@@ -114,12 +118,16 @@ describe('useMedia (Design §3.3/§4.2/§7.2/§8)', () => {
     expect(emit).toHaveBeenCalledWith('media:state', { audio: true, video: false });
   });
 
-  it('без emit (undefined) тумблеры не бросают', () => {
+  it('без emit (undefined) тумблеры не бросают', async () => {
     const fakeController = makeFakeController();
     const createMediaController = vi.fn(() => fakeController);
     const { result } = renderHook(() => useMedia({ deps: { createMediaController } }));
 
-    expect(() => act(() => result.current.toggleAudio())).not.toThrow();
+    await expect(
+      act(async () => {
+        await result.current.toggleAudio();
+      }),
+    ).resolves.toBeUndefined();
   });
 
   describe('deviceDenied (задача 30, Design §8 «Отказ в доступе»)', () => {

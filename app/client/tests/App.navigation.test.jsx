@@ -1,26 +1,50 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import App from '../src/App.jsx';
 
-/**
- * Задача 19.2 (fix по замечанию code-review) — навигация Start → Room.
- *
- * Критерий приёмки задачи 19 (`impl-video-chat-room.md`): «переход на
- * `/room/:id»`. Design §6.4: «Создание комнаты на StartScreen генерирует
- * `roomId = crypto.randomUUID()` и делает `navigate(/room/:roomId)`».
- *
- * Проверяет именно связку App → StartScreen.onCreate → generateRoomId →
- * history меняется на `/room/:id` (без полной перезагрузки страницы —
- * `pushState`, а не `location.assign`). Генерация id и UX-валидация имени
- * покрыты отдельно в `roomId.test.js`/`StartScreen.test.jsx` — здесь не
- * дублируется, а проверяется сама навигация.
- */
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-describe('App: навигация Start ↔ Room (задача 19, Design §6.4)', () => {
+function makeRoomDeps() {
+  return {
+    signaling: {
+      createSignalingClient: () => ({
+        connect: vi.fn(),
+        emit: vi.fn(),
+        on: vi.fn(),
+        onError: vi.fn(() => () => {}),
+        disconnect: vi.fn(),
+      }),
+    },
+    mesh: {
+      createMeshManager: () => ({
+        onParticipantJoined: vi.fn(),
+        addExistingParticipant: vi.fn(),
+        onParticipantLeft: vi.fn(),
+        handleSignal: vi.fn(),
+        attachLocalTrack: vi.fn(),
+        getVideoSenders: vi.fn(() => []),
+        onRemoteStream: vi.fn(() => () => {}),
+        closeAll: vi.fn(),
+      }),
+    },
+    media: {
+      createMediaController: () => ({
+        init: vi.fn(() => Promise.resolve({ audio: true, video: true })),
+        toggleAudio: vi.fn(() => ({ audio: true, video: true })),
+        toggleVideo: vi.fn(() => Promise.resolve({ audio: true, video: true })),
+        getLocalStream: vi.fn(() => null),
+        onStateChange: vi.fn(() => () => {}),
+        dispose: vi.fn(),
+      }),
+    },
+  };
+}
+
+describe('App navigation', () => {
   beforeEach(() => {
-    globalThis.RTCPeerConnection = function () {};
-    globalThis.navigator.mediaDevices = { getUserMedia: () => {} };
+    Element.prototype.scrollIntoView = vi.fn();
+    globalThis.RTCPeerConnection = function MockRtc() {};
+    globalThis.navigator.mediaDevices = { getUserMedia: vi.fn() };
     globalThis.isSecureContext = true;
     globalThis.history.pushState(null, '', '/');
   });
@@ -28,45 +52,39 @@ describe('App: навигация Start ↔ Room (задача 19, Design §6.4)
   afterEach(() => {
     delete globalThis.RTCPeerConnection;
     delete globalThis.isSecureContext;
-    if (globalThis.navigator) {
-      delete globalThis.navigator.mediaDevices;
-    }
+    delete globalThis.navigator.mediaDevices;
     globalThis.history.pushState(null, '', '/');
   });
 
-  it('на "/" рендерит StartScreen', () => {
-    const { getByRole } = render(<App />);
+  it('renders StartScreen on "/"', () => {
+    const { getByRole } = render(<App deps={{ room: makeRoomDeps() }} />);
     expect(getByRole('button', { name: /создать комнату/i })).not.toBeNull();
   });
 
-  it('клик «Создать комнату» с валидным именем переводит на /room/:id (без reload) и рендерит соответствующий экран', () => {
-    const { container, getByRole } = render(<App />);
+  it('creating a room with a valid name navigates to /room/:id and enters the room directly', async () => {
+    const { container, getByRole, queryByText, findByTestId } = render(<App deps={{ room: makeRoomDeps() }} />);
 
-    fireEvent.change(container.querySelector('input'), {
-      target: { value: 'Алекс' },
-    });
+    fireEvent.change(container.querySelector('input'), { target: { value: 'Алекс' } });
     fireEvent.click(getByRole('button', { name: /создать комнату/i }));
 
     const match = /^\/room\/([0-9a-f-]+)$/.exec(globalThis.location.pathname);
     expect(match).not.toBeNull();
     expect(match[1]).toMatch(UUID_V4);
-    expect(container.textContent).toContain(match[1]);
+    expect(queryByText(/вас ждут в комнате/i)).toBeNull();
+    expect(await findByTestId('room-screen')).toBeTruthy();
   });
 
-  it('пустое имя: клик не переходит с "/"', () => {
-    const { getByRole } = render(<App />);
-
-    fireEvent.click(getByRole('button', { name: /создать комнату/i }));
-
+  it('empty name does not navigate away from "/"', () => {
+    const { getByRole } = render(<App deps={{ room: makeRoomDeps() }} />);
+    fireEvent.click(getByRole('button', { name: /создать комнату|как вас зовут/i }));
     expect(globalThis.location.pathname).toBe('/');
   });
 
-  it('прямой заход на /room/:id рендерит экран комнаты с этим id (без StartScreen)', () => {
+  it('direct /room/:id visit still renders JoinGate first', async () => {
     globalThis.history.pushState(null, '', '/room/existing-room-id');
-
-    const { container, queryByRole } = render(<App />);
-
-    expect(container.textContent).toContain('existing-room-id');
+    const { container, findByRole, queryByRole } = render(<App deps={{ room: makeRoomDeps() }} />);
+    expect(await findByRole('button', { name: /войти/i })).not.toBeNull();
+    expect(container.textContent).not.toContain('existing-room-id');
     expect(queryByRole('button', { name: /создать комнату/i })).toBeNull();
   });
 });
