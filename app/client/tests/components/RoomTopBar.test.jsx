@@ -199,17 +199,35 @@ describe('RoomTopBar (Design addendum §3/§5.2/§5.3, критерий приё
       expect(getByTestId('chat-unread-badge').textContent).toBe('2');
     });
 
-    it('клик переключает локальный визуальный tumbler (aria-pressed) и вызывает onToggleChat, если передан', () => {
+    it('aria-pressed отражает controlled-проп isChatOpen (задача 41), клик только вызывает onToggleChat', () => {
       const onToggleChat = vi.fn();
-      const { getByTestId } = renderRoomTopBar({ onToggleChat });
+      const { getByTestId, rerender } = renderRoomTopBar({ isChatOpen: false, onToggleChat });
 
       const chatButton = getByTestId('chat-toggle-button');
       expect(chatButton.getAttribute('aria-pressed')).toBe('false');
 
       fireEvent.click(chatButton);
 
-      expect(chatButton.getAttribute('aria-pressed')).toBe('true');
+      // Компонент больше не хранит своё состояние — без внешнего изменения
+      // пропа aria-pressed не меняется, даже после клика.
+      expect(getByTestId('chat-toggle-button').getAttribute('aria-pressed')).toBe('false');
       expect(onToggleChat).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <RoomTopBar
+          roomId="4f2a9c11-70e2-4b3a-9c2d-1a2b3c4d5e6f"
+          mediaState={{ audio: true, video: true }}
+          onToggleAudio={vi.fn()}
+          onToggleVideo={vi.fn()}
+          onRequestLeave={vi.fn()}
+          roomUrl="https://example.com/room/room-1"
+          isChatOpen
+          onToggleChat={onToggleChat}
+          deps={{ clipboardWrite: vi.fn().mockResolvedValue(undefined) }}
+        />,
+      );
+
+      expect(getByTestId('chat-toggle-button').getAttribute('aria-pressed')).toBe('true');
     });
   });
 
