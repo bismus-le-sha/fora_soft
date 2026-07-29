@@ -54,7 +54,10 @@ import styles from './RoomScreen.module.css';
  * эмитит `leave` напрямую (критерий приёмки задачи 38) — вызывает
  * `handleRequestLeave`, который открывает `isExitConfirmOpen`; задача 42
  * рендерит по нему полноценную `ExitConfirmModal.jsx` (README §7) ниже —
- * только подтверждение внутри неё реально эмитит `leave`.
+ * только подтверждение внутри неё реально эмитит `leave`, сразу после чего
+ * вызывается `props.onLeave` (баг-фикс задачи 42 — до него ничего не
+ * возвращало пользователя на стартовый экран после выхода; см. JSDoc
+ * `onLeave` у сигнатуры компонента и `App.jsx.handleRoomLeave`).
  * `ParticipantList` (задача 29) и `ChatPanel` (задача 28) с задачи 41 больше
  * НЕ рендерятся напрямую здесь — они объединены в `ChatSidePanel.jsx`
  * (design addendum §3/§5.4, RESTRUCTURE): одна сворачиваемая панель с табами
@@ -93,13 +96,17 @@ import styles from './RoomScreen.module.css';
  * @param {object} props
  * @param {string} props.roomId — id комнаты из URL (Design §6.1 `join.roomId`).
  * @param {string} props.name — имя, введённое в `JoinGate` (Design §6.1 `join.name`).
+ * @param {() => void} [props.onLeave] — задача 42 (баг-фикс): вызывается сразу
+ *   после реального `emit('leave')` в `handleConfirmLeave` — владелец
+ *   маршрута (`App.jsx`) переключает URL обратно на `/` (см. его JSDoc).
+ *   `RoomScreen` сам не знает о роутинге (Design §4.2 — это забота `App.jsx`).
  * @param {object} [props.deps] — DI, только для тестируемости (тот же приём,
  *   что `deps` в `JoinGate.jsx`).
  * @param {object} [props.deps.signaling] — форвардится в `useSignaling` как `deps`.
  * @param {object} [props.deps.mesh] — форвардится в `useMesh` как `deps`.
  * @param {object} [props.deps.media] — форвардится в `useMedia` как `deps`.
  */
-function RoomScreen({ roomId, name, deps = {} }) {
+function RoomScreen({ roomId, name, onLeave, deps = {} }) {
   const [mediaReady, setMediaReady] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -312,11 +319,20 @@ function RoomScreen({ roomId, name, deps = {} }) {
     setIsExitConfirmOpen(false);
   }, []);
 
-  /** Подтверждение внутри гейта — только отсюда реально уходит `leave {}` (Design §7.3). */
+  /**
+   * Подтверждение внутри гейта — только отсюда реально уходит `leave {}`
+   * (Design §7.3). Задача 42 (баг-фикс): до этого фикса `onLeave` не
+   * вызывался вовсе — `RoomScreen` эмитил `leave` на сервер, но ничего не
+   * сообщало `App.jsx`, и пользователь визуально оставался на экране комнаты
+   * (сервер уже вычистил его из `Room`, но клиент не знал вернуться на
+   * стартовый экран). `onLeave?.()` — единственное место, что сообщает
+   * наверх «выход подтверждён» (см. JSDoc `onLeave` выше).
+   */
   const handleConfirmLeave = useCallback(() => {
     setIsExitConfirmOpen(false);
     emit('leave');
-  }, [emit]);
+    onLeave?.();
+  }, [emit, onLeave]);
 
   /**
    * Задача 41 (addendum §5.4): кнопка «Чат» в `RoomTopBar` — единственный

@@ -25,7 +25,10 @@ import RoomScreen from './screens/RoomScreen.jsx';
  * `/room/:roomId` рендерит `JoinGate` (задача 20) — экран запроса имени +
  * первичный `getUserMedia` по клику «Войти» (user-gesture, F-37). После
  * успешного `onJoin(name)` рендерится `RoomScreen` (задача 24) — полноценная
- * оркестрация media → mesh → signaling.
+ * оркестрация media → mesh → signaling. Подтверждённый выход
+ * (`ExitConfirmModal.jsx`, задача 42) вызывает `RoomScreen.onLeave` →
+ * `handleRoomLeave` ниже — та же навигация обратно на `/`, что и создание
+ * комнаты (`handleCreate`), в обратную сторону.
  */
 
 /** Design §6.4: `/room/:roomId` — извлечение `roomId` из пути. */
@@ -92,6 +95,24 @@ function App({ deps = {} } = {}) {
     setJoinedName(joinName);
   }, []);
 
+  /**
+   * Задача 42 (баг-фикс): подтверждённый выход из `ExitConfirmModal`
+   * (`RoomScreen.onLeave`, вызывается сразу после реального `emit('leave')`)
+   * должен вернуть на стартовый экран (README §7: «После выхода — возврат на
+   * стартовый экран ввода имени»). До этого фикса `RoomScreen` эмитил `leave`
+   * на сервер, но никак не сообщал `App.jsx` — пользователь визуально
+   * оставался на экране комнаты. Тот же приём навигации, что `handleCreate`
+   * выше (`pushState` + ручной `setPathname`, без `popstate`), плюс сброс
+   * `joinedName` — повторный заход на ту же `/room/:id` (например, по кнопке
+   * «Назад» браузера или новой ссылке) снова начинается с `JoinGate`, а не
+   * с «протухшего» `RoomScreen`.
+   */
+  const handleRoomLeave = useCallback(() => {
+    globalThis.history.pushState(null, '', '/');
+    setPathname('/');
+    setJoinedName(null);
+  }, []);
+
   if (!supported) {
     return <NoWebRtcBanner />;
   }
@@ -104,7 +125,12 @@ function App({ deps = {} } = {}) {
         joinedName === null ? (
           <JoinGate roomId={roomMatch[1]} onJoin={handleJoin} />
         ) : (
-          <RoomScreen roomId={roomMatch[1]} name={joinedName} deps={deps.room} />
+          <RoomScreen
+            roomId={roomMatch[1]}
+            name={joinedName}
+            onLeave={handleRoomLeave}
+            deps={deps.room}
+          />
         )
       ) : (
         <StartScreen onCreate={handleCreate} />

@@ -30,6 +30,12 @@ test.describe('Выход/обрыв участника (US-10)', () => {
       await pageB.getByTestId('leave-button').click();
       await pageB.getByTestId('exit-confirm-leave').click();
 
+      // Баг-фикс задачи 42: ушедший сам должен вернуться на стартовый экран
+      // (README §7 «После выхода — возврат на стартовый экран ввода имени»),
+      // а не остаться визуально в комнате.
+      await expect(pageB.getByRole('button', { name: 'Создать комнату' })).toBeVisible();
+      expect(new URL(pageB.url()).pathname).toBe('/');
+
       await waitForParticipantCount(pageA, 1);
       const namesOnA = await pageA.getByTestId('participant-list-name').allTextContents();
       expect(namesOnA.join(' ')).not.toContain('Борис');
