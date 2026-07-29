@@ -1,0 +1,269 @@
+/*
+ * VideoTile.module.css — плитка участника: варианты Сцена/Лента и 3 причины
+ * заглушки (задача 40, addendum §3 RESTRUCTURE, + RESTYLE для autoplay-пилюли).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §4
+ * «Рабочая область»/§6 «Заглушка видео (силуэт + имя)»/§9 «Заблокирован
+ * autoplay звука». Токены — из `styles/tokens.css`; одноразовые значения без
+ * соответствующего токена — хардкод с комментарием на месте (тот же приём,
+ * что `RoomTopBar.module.css`/`VideoGrid.module.css`).
+ *
+ * Геометрия силуэта (голова/плечи) для варианта «лента» взята из README §4
+ * дословно («силуэт 54px: голова 22px, плечи 44×24px»); для «сцены» README
+ * даёт только итоговый размер («силуэт 104px») без разбивки на части — здесь
+ * подчасти масштабированы от ленты тем же коэффициентом (104/54), т.к. это
+ * единственный контекст, где README даёт полную разбивку. Точная пиксельная
+ * сверка — на человеке в браузере (addendum §6 «Тестирование и приёмка»),
+ * этот файл покрывает только структуру/цвет, которые проверяются RTL-тестом.
+ */
+
+.tile {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------------------------------------------------------------------
+ * Заглушка — общий каркас
+ * ------------------------------------------------------------------- */
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+}
+
+.placeholderOff {
+  /* README §6 п.1: градиент только для этой заглушки, отдельного токена нет */
+  background: linear-gradient(160deg, #e6e2d9 0%, #d8d3c8 100%);
+}
+
+.placeholderNoAccess {
+  /* README §6 п.2: градиент только для этой заглушки, отдельного токена нет */
+  background: linear-gradient(160deg, #e8e1da 0%, #dcd2c8 100%);
+}
+
+.placeholderConnecting {
+  border: 1px dashed var(--dash);
+  background: var(--surface-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Силуэт (причины «off»/«no-access»)
+ * ------------------------------------------------------------------- */
+
+.silhouette {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.silhouetteOff .silhouetteHead,
+.silhouetteOff .silhouetteBody {
+  background: var(--silhouette);
+}
+
+.silhouetteNoAccess .silhouetteHead,
+.silhouetteNoAccess .silhouetteBody {
+  background: var(--silhouette-2);
+  opacity: 0.75; /* README §6 п.2 */
+}
+
+.silhouetteStage .silhouetteHead {
+  width: 42px; /* README §4 «сцена»: силуэт 104px — масштаб от ленты (22px × 104/54) */
+  height: 42px;
+  border-radius: var(--radius-999);
+}
+
+.silhouetteStage .silhouetteBody {
+  width: 85px; /* масштаб от ленты (44×24 × 104/54) */
+  height: 46px;
+  border-radius: 46px 46px 0 0;
+  margin-top: -4px;
+}
+
+.silhouetteRibbon .silhouetteHead {
+  width: 22px; /* README §4 «лента»: голова 22px — дословно */
+  height: 22px;
+  border-radius: var(--radius-999);
+}
+
+.silhouetteRibbon .silhouetteBody {
+  width: 44px; /* README §4 «лента»: плечи 44×24px — дословно */
+  height: 24px;
+  border-radius: 24px 24px 0 0;
+  margin-top: -2px;
+}
+
+/* ---------------------------------------------------------------------
+ * Точки ожидания (причина «connecting»)
+ * ------------------------------------------------------------------- */
+
+.connectingDots {
+  display: inline-flex;
+  gap: 4px; /* README: точки 4px — вне скейла токенов, см. VideoGrid.module.css */
+}
+
+.connectingDot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-999);
+  background: var(--muted-2);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.connectingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.connectingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* ---------------------------------------------------------------------
+ * Подпись заглушки (только вариант «сцена» — README addendum §3/§6)
+ * ------------------------------------------------------------------- */
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.captionMono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.captionOff {
+  color: var(--muted-2);
+}
+
+.captionNoAccess {
+  color: #b4552b; /* README §6 п.2: подпись «НЕТ ДОСТУПА К КАМЕРЕ» — токена нет */
+}
+
+.captionConnectingMain {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--body);
+}
+
+.captionConnectingHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Эквалайзер «ГОВОРИТ» (только вариант «сцена», визуальный, без VAD —
+ * addendum §5.1)
+ * ------------------------------------------------------------------- */
+
+.speaking {
+  position: absolute;
+  bottom: 16px;
+  left: 88px; /* README §4: рядом с чипом имени, ширина чипа вне скейла — оценочно */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-10);
+  border-radius: var(--radius-999);
+  background: var(--scrim);
+}
+
+.speakingBars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.speakingBar {
+  width: 3px;
+  border-radius: var(--radius-999);
+  background: var(--ok-bright);
+}
+
+.speakingBar:nth-child(1) {
+  height: 7px;
+}
+
+.speakingBar:nth-child(2) {
+  height: 14px;
+}
+
+.speakingBar:nth-child(3) {
+  height: 10px;
+}
+
+.speakingLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: rgba(246, 244, 240, 0.75); /* README §4: то же, что --on-dark, но с альфой — отдельного токена нет */
+}
+
+/* ---------------------------------------------------------------------
+ * Пилюля «Включить звук» (README §9 «Заблокирован autoplay звука»)
+ * ------------------------------------------------------------------- */
+
+.unmutePill {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6);
+  padding-right: var(--space-14);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-999);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.unmuteIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-999);
+  background: var(--ink);
+  color: var(--on-dark);
+  font-size: 14px;
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 1;
+  }
+}

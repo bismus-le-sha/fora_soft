@@ -307,7 +307,7 @@
 - [x] PR в `develop` открыт — [#50](https://github.com/bismus-le-sha/fora_soft/pull/50)
 
 ### [ ] Задача 40 — VideoTile — варианты сцена/лента и 3 состояния заглушки — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+- [x] Код написан, тесты зелёные — `implementer` (`VideoTile.jsx` получил `variant="stage"|"ribbon"` (README §4: крупный/мелкий силуэт, mono-подпись причины только на сцене) и приоритетную логику причины заглушки `noAccess > mediaState.video===false > нет stream` (README §6: «нет доступа» / «камера выключена» / «участник подключается», с именем в тексте последней причины); эквалайзер «ГОВОРИТ» — только на сцене при наличии видео (визуальный, без VAD, addendum §5.1); пилюля «Включить звук» (задача 31) restyled под README §9. Новые `VideoTile.module.css`/`VideoTile.content.js` (копирайт вынесен по `CLAUDE.md`). `VideoGrid.jsx` форвардит `variant` на Сцену/Ленту и `noAccess` ТОЛЬКО в self-плитку через новый проп `selfDeviceDenied`; `RoomScreen.jsx` прокидывает `media.deviceDenied`. Обновлены существующие тесты `VideoTile.test.jsx`/`VideoGrid.test.jsx` (autoplay-пилюля — новая структура иконка+текст; self-суффикс «(я)» не менялся, RESTYLE ограничен пилюлью по addendum §3). 229 server + 373 client тестов зелёные, lint чист (1 pre-existing warning в server вне скоупа). Визуальная сверка полного флоу в браузере заблокирована нативным диалогом разрешения камеры/микрофона (не часть DOM, автоматизация не может на него ответить) — структурная/копирайт-корректность подтверждена RTL-тестами по критериям приёмки; пиксельная сверка — задача 44 (человек в браузере, addendum §6).)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] PR в `develop` открыт
 

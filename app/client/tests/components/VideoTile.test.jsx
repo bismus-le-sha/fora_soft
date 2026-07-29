@@ -158,8 +158,8 @@ describe('VideoTile (Design §4.2/§11.3, критерий приёмки зад
         <VideoTile participant={participant} stream={{}} mediaState={{ audio: true, video: true }} />,
       );
 
-      const button = await waitFor(() => getByTestId('video-tile-unmute'));
-      expect(button.textContent).toBe('Включить звук');
+      await waitFor(() => getByTestId('video-tile-unmute'));
+      expect(getByTestId('video-tile-unmute-label').textContent).toBe('Включить звук');
     });
 
     it('клик по «Включить звук» повторно вызывает play(); успех прячет кнопку', async () => {
@@ -181,6 +181,125 @@ describe('VideoTile (Design §4.2/§11.3, критерий приёмки зад
       );
 
       expect(getByTestId('video-tile-video').muted).toBe(true);
+    });
+  });
+
+  describe('варианты сцена/лента и 3 причины заглушки (задача 40, README §4/§6)', () => {
+    it('mediaState.video === false — причина "off", копирайт «КАМЕРА ВЫКЛЮЧЕНА» видна на сцене', () => {
+      const { getByTestId } = render(
+        <VideoTile
+          participant={participant}
+          mediaState={{ audio: true, video: false }}
+          variant="stage"
+        />,
+      );
+
+      const placeholder = getByTestId('video-tile-placeholder');
+      expect(placeholder.getAttribute('data-reason')).toBe('off');
+      expect(getByTestId('video-tile-placeholder-caption').textContent).toBe('КАМЕРА ВЫКЛЮЧЕНА');
+    });
+
+    it('noAccess=true — причина "no-access" (приоритет выше video===false), копирайт «НЕТ ДОСТУПА К КАМЕРЕ»', () => {
+      const { getByTestId } = render(
+        <VideoTile
+          participant={participant}
+          mediaState={{ audio: true, video: false }}
+          noAccess
+          isSelf
+          variant="stage"
+        />,
+      );
+
+      const placeholder = getByTestId('video-tile-placeholder');
+      expect(placeholder.getAttribute('data-reason')).toBe('no-access');
+      expect(getByTestId('video-tile-placeholder-caption').textContent).toBe('НЕТ ДОСТУПА К КАМЕРЕ');
+    });
+
+    it('video !== false, но stream ещё не пришёл — причина "connecting", копирайт «{имя} подключается» + подсказка', () => {
+      const { getByTestId } = render(
+        <VideoTile
+          participant={participant}
+          stream={null}
+          mediaState={{ audio: true, video: true }}
+          variant="stage"
+        />,
+      );
+
+      const placeholder = getByTestId('video-tile-placeholder');
+      expect(placeholder.getAttribute('data-reason')).toBe('connecting');
+      const caption = getByTestId('video-tile-placeholder-caption');
+      expect(caption.textContent).toContain('Алекс подключается');
+      expect(caption.textContent).toContain('ВИДЕО ВОТ-ВОТ ПОЯВИТСЯ');
+    });
+
+    it('SEC-04: XSS-payload в имени на причине "connecting" рендерится как текст, без <img>/<script>', () => {
+      const maliciousParticipant = { id: 'p3', name: '<img src=x onerror=alert(1)>' };
+      const { getByTestId, container } = render(
+        <VideoTile
+          participant={maliciousParticipant}
+          stream={null}
+          mediaState={{ audio: true, video: true }}
+          variant="stage"
+        />,
+      );
+
+      expect(getByTestId('video-tile-placeholder-caption').textContent).toContain(
+        '<img src=x onerror=alert(1)> подключается',
+      );
+      expect(container.querySelector('img')).toBeNull();
+    });
+
+    it('variant="ribbon" (по умолчанию) — заглушка без mono-подписи причины, независимо от причины', () => {
+      const { queryByTestId } = render(
+        <VideoTile participant={participant} mediaState={{ audio: true, video: false }} />,
+      );
+
+      expect(queryByTestId('video-tile-placeholder-caption')).toBeNull();
+    });
+
+    it('variant="stage" — заглушка показывает mono-подпись причины', () => {
+      const { getByTestId } = render(
+        <VideoTile
+          participant={participant}
+          mediaState={{ audio: true, video: false }}
+          variant="stage"
+        />,
+      );
+
+      expect(getByTestId('video-tile-placeholder-caption')).toBeTruthy();
+    });
+
+    it('variant="stage" + видео есть — эквалайзер «ГОВОРИТ» рендерится (визуальный, без VAD, addendum §5.1)', () => {
+      const { getByTestId } = render(
+        <VideoTile
+          participant={participant}
+          stream={{}}
+          mediaState={{ audio: true, video: true }}
+          variant="stage"
+        />,
+      );
+
+      expect(getByTestId('video-tile-speaking').textContent).toBe('ГОВОРИТ');
+    });
+
+    it('variant="ribbon" + видео есть — эквалайзер «ГОВОРИТ» не рендерится', () => {
+      const { queryByTestId } = render(
+        <VideoTile participant={participant} stream={{}} mediaState={{ audio: true, video: true }} />,
+      );
+
+      expect(queryByTestId('video-tile-speaking')).toBeNull();
+    });
+
+    it('заглушка есть — эквалайзер «ГОВОРИТ» не рендерится, даже на сцене', () => {
+      const { queryByTestId } = render(
+        <VideoTile
+          participant={participant}
+          mediaState={{ audio: true, video: false }}
+          variant="stage"
+        />,
+      );
+
+      expect(queryByTestId('video-tile-speaking')).toBeNull();
     });
   });
 });

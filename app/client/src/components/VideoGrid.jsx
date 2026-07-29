@@ -32,9 +32,10 @@ import {
  * не связанный с `RoomScreen`, см. его JSDoc); механизм сжатия готов здесь
  * заранее, чтобы задаче 41 не пришлось трогать `VideoGrid.jsx` снова.
  *
- * `VideoTile` (задача 26) переиспользуется как есть — размерные варианты
- * сцена/лента и 3 состояния заглушки (README §4/§6) вводит отдельная задача
- * 40 (`после 39`), здесь только контейнеры-обёртки задают геометрию.
+ * `VideoTile` получает `variant="stage"`/`"ribbon"` от `renderTile` ниже —
+ * размерные варианты сцена/лента и 3 состояния заглушки (README §4/§6)
+ * реализованы в `VideoTile.jsx` (задача 40); здесь только контейнеры-обёртки
+ * задают геометрию (`.stage`/`.ribbonTile`).
  *
  * Requirements: F-07, F-37, US-6, US-13. Design: addendum §3/§5.1, §4.2.
  *
@@ -157,6 +158,11 @@ function InviteCard({ roomUrl = '', deps = {} }) {
  * @param {boolean} [props.isChatOpen] — задача 41 подключит реальное
  *   состояние сворачиваемой панели; пока default `false` (Лента полной
  *   ширины 292px).
+ * @param {boolean} [props.selfDeviceDenied] — `useMedia().deviceDenied`
+ *   (задача 30/31): отказ/потеря доступа к камере/микрофону. Форвардится в
+ *   `VideoTile` как `noAccess` ТОЛЬКО для self-плитки (задача 40, README §6
+ *   п.2) — протокол не переносит эту причину для остальных участников (см.
+ *   JSDoc `VideoTile.jsx`).
  * @param {object} [props.deps] — DI, только для тестируемости.
  * @param {(text: string) => Promise<void>} [props.deps.clipboardWrite]
  */
@@ -167,6 +173,7 @@ function VideoGrid({
   remoteStreams = {},
   roomUrl = '',
   isChatOpen = false,
+  selfDeviceDenied = false,
   deps = {},
 }) {
   const count = participants.length;
@@ -181,8 +188,11 @@ function VideoGrid({
   const showInviteCard = count === 1;
   const showFreeSlot = count > 1 && count < ROOM_CAPACITY;
 
-  /** Единая точка рендера плитки — Сцена и Лента используют один и тот же приём (задача 25/31). */
-  function renderTile(participant) {
+  /**
+   * Единая точка рендера плитки — Сцена и Лента используют один и тот же
+   * приём (задача 25/31), различаясь только `variant` (задача 40, README §4).
+   */
+  function renderTile(participant, variant) {
     const isSelf = participant.id === selfId;
     const stream = isSelf ? localStream : (remoteStreams[participant.id] ?? null);
     return (
@@ -192,6 +202,8 @@ function VideoGrid({
         stream={stream}
         mediaState={participant.media ?? {}}
         isSelf={isSelf}
+        variant={variant}
+        noAccess={isSelf && selfDeviceDenied}
       />
     );
   }
@@ -203,7 +215,7 @@ function VideoGrid({
           className={`${styles.stage} ${activeSpeaker && activeSpeaker.id === selfId ? styles.stageSelf : ''}`}
           data-testid="video-stage"
         >
-          {activeSpeaker ? renderTile(activeSpeaker) : null}
+          {activeSpeaker ? renderTile(activeSpeaker, 'stage') : null}
         </div>
       </div>
 
@@ -219,7 +231,7 @@ function VideoGrid({
               key={participant.id}
               className={`${styles.ribbonTile} ${participant.id === selfId ? styles.ribbonTileSelf : ''}`}
             >
-              {renderTile(participant)}
+              {renderTile(participant, 'ribbon')}
             </div>
           ))}
           {showFreeSlot ? <FreeSlot /> : null}

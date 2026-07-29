@@ -264,4 +264,43 @@ describe('VideoGrid (Design addendum §3/§5.1, критерий приёмки 
       expect(ribbon.className.trim().split(/\s+/)).toHaveLength(1);
     });
   });
+
+  describe('вариант плитки и noAccess — проводка в VideoTile (задача 40, README §4/§6)', () => {
+    it('Сцена рендерит VideoTile с variant="stage" (mono-подпись причины видна без stream)', () => {
+      const participants = makeParticipants(1); // только self — на Сцене
+      const { getByTestId } = render(<VideoGrid participants={participants} selfId="p1" />);
+
+      const stage = getByTestId('video-stage');
+      expect(stage.querySelector('[data-testid="video-tile-placeholder-caption"]')).not.toBeNull();
+    });
+
+    it('Лента рендерит VideoTile с variant="ribbon" (mono-подпись причины отсутствует)', () => {
+      const participants = makeParticipants(2); // p1=self (Сцена), p2 (Лента)
+      const { getByTestId } = render(<VideoGrid participants={participants} selfId="p1" />);
+
+      const ribbon = getByTestId('video-ribbon');
+      expect(ribbon.querySelector('[data-testid="video-tile-placeholder-caption"]')).toBeNull();
+    });
+
+    it('selfDeviceDenied=true — noAccess попадает ТОЛЬКО в self-плитку, не в чужие', () => {
+      // p1=self, p2 чужой — эвристика (§5.1) ставит на Сцену первого ЧУЖОГО
+      // (p2), self (p1) остаётся в Ленте (см. describe «activeSpeakerId-эвристика» выше).
+      const participants = makeParticipants(2);
+      const { getByTestId } = render(
+        <VideoGrid participants={participants} selfId="p1" selfDeviceDenied />,
+      );
+
+      // Сцена — p2 (чужой, media.video===true, нет stream) — "connecting", не "no-access".
+      const stagePlaceholder = getByTestId('video-stage').querySelector(
+        '[data-testid="video-tile-placeholder"]',
+      );
+      expect(stagePlaceholder.getAttribute('data-reason')).not.toBe('no-access');
+
+      // Лента — p1 (self) — noAccess форвардится, реальная причина "no-access".
+      const selfPlaceholder = getByTestId('video-ribbon').querySelector(
+        '[data-testid="video-tile-placeholder"]',
+      );
+      expect(selfPlaceholder.getAttribute('data-reason')).toBe('no-access');
+    });
+  });
 });

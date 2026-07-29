@@ -318,6 +318,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
         localStream={media.localStream}
         remoteStreams={mesh.remoteStreams}
         roomUrl={roomUrl}
+        selfDeviceDenied={media.deviceDenied}
       />
 
       <ParticipantList participants={participants} selfId={selfId} />
