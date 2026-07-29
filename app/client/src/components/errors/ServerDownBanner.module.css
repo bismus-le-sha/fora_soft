@@ -1,0 +1,76 @@
+/*
+ * ServerDownBanner.module.css — баннер недоступности сигнального сервера
+ * (задача 43, RESTYLE).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §9 —
+ * строка «Сервер недоступен» + прототип `design-handoff/prototypes/Видеочат -
+ * экраны и состояния.dc.html` (блок `1d`, шестая карточка). Кнопка
+ * «Попробовать сейчас» и mono-строка «попытка N · через M с» из «UI»-колонки
+ * этой строки в этот заход не реализуются (см. JSDoc `ServerDownBanner.jsx`).
+ */
+
+.wrapper {
+  display: grid;
+  place-items: center;
+  padding: var(--space-32) var(--space-24);
+  box-sizing: border-box;
+  background-color: var(--bg);
+  background-image: var(--dots-bg-image);
+  background-size: var(--dots-bg-size);
+  background-position: var(--dots-bg-position);
+  border-radius: var(--radius-16);
+}
+
+.stack {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+  text-align: center;
+}
+
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px; /* README §9 прототип: gap 5px — вне скейла токенов */
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-999);
+  background: var(--line-2);
+}
+
+.dot:last-child {
+  background: var(--ink);
+  animation: dotPulse 1.6s ease-in-out infinite;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 1;
+  }
+}

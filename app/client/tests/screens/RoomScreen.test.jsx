@@ -248,7 +248,7 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
       signaling.trigger('join:rejected', { code: 'room-full', message: 'Комната заполнена' });
     });
 
-    await waitFor(() => expect(getByRole('alert').textContent).toContain('Комната заполнена'));
+    await waitFor(() => expect(getByRole('alert').textContent).toContain('Похоже, комната уже занята'));
   });
 
   it('signal:offer/answer/ice маршрутизируются в mesh.handleSignal', async () => {
@@ -440,7 +440,7 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
   });
 
   describe('Задача 30 — баннеры ошибок и состояний (Design §8, F-33/F-35/F-36, US-5/US-12/US-13, SEC-15)', () => {
-    it('join:rejected{room-full} → RoomFullBanner с кнопкой «Повторить вход», повторный клик повторно эмитит join', async () => {
+    it('join:rejected{room-full} → RoomFullBanner с кнопкой «Попробовать снова», повторный клик повторно эмитит join', async () => {
       const { getByTestId, getByRole, signaling } = renderRoomScreen();
       await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
       signaling.api.emit.mockClear();
@@ -450,9 +450,9 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
       });
 
       const banner = getByTestId('room-full-banner');
-      expect(banner.textContent).toContain('Комната заполнена');
+      expect(banner.textContent).toContain('Похоже, комната уже занята');
 
-      fireEvent.click(getByRole('button', { name: 'Повторить вход' }));
+      fireEvent.click(getByRole('button', { name: 'Попробовать снова' }));
 
       expect(signaling.api.emit).toHaveBeenCalledWith('join', { roomId: 'room-1', name: 'Алекс' });
     });

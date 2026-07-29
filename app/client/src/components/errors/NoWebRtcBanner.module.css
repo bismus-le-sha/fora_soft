@@ -1,0 +1,55 @@
+/*
+ * NoWebRtcBanner.module.css — фатальный экран «браузер не поддерживает
+ * WebRTC» (задача 43, RESTYLE).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §9 —
+ * строка «Браузер без WebRTC» + прототип `design-handoff/prototypes/Видеочат
+ * - экраны и состояния.dc.html` (блок `1d`, седьмая карточка).
+ */
+
+.wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-32) var(--space-24);
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  padding: var(--space-26);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
