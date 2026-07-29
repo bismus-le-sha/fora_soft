@@ -1,0 +1,114 @@
+/*
+ * ExitConfirmModal.module.css — модалка подтверждения выхода (задача 42).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md → «7.
+ * Подтверждение выхода». Значения берутся из `styles/tokens.css` там, где для
+ * них есть токен; хардкод — только там, где README/Design Tokens не дают
+ * соответствующей переменной (отмечено комментарием на месте, тот же приём,
+ * что `RoomTopBar.module.css`).
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-exit);
+  backdrop-filter: blur(6px);
+  animation: overlayFadeIn 0.22s ease;
+}
+
+.card {
+  width: 380px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-modal);
+  animation: fadeUp 0.22s ease;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-8);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+}
+
+.title {
+  margin: 0 0 var(--space-12);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.body {
+  margin: 0 0 var(--space-20);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  gap: 9px; /* README §7: «gap: 9px» — вне скейла токенов */
+}
+
+.stayButton,
+.leaveButton {
+  flex: 1;
+  padding: var(--space-12) var(--space-14);
+  border-radius: var(--radius-10);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.stayButton {
+  border: 1px solid var(--line-2);
+  background: #fff; /* README §7: фон #FFFFFF, отдельного токена нет (см. прецедент RoomTopBar.module.css .leaveButton:hover) */
+  color: var(--ink);
+}
+
+.stayButton:hover {
+  border-color: var(--ink);
+}
+
+.leaveButton {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.leaveButton:hover {
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

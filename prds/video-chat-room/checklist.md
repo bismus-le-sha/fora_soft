@@ -316,8 +316,8 @@
 - [x] Code review пройден — `code-reviewer` (PASS; 1 nit — `.bubble` padding 14px vs README §5 13px — исправлено в этом же PR)
 - [x] PR в `develop` открыт — [#53](https://github.com/bismus-le-sha/fora_soft/pull/53)
 
-### [ ] Задача 42 — Модалка подтверждения выхода (новый компонент) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
+### [x] Задача 42 — Модалка подтверждения выхода (новый компонент) — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (новый `components/ExitConfirmModal.jsx` + `.content.js`/`.module.css`, README §7 дословно: оверлей blur+fade, карточка 380px, «Остаться»/«Выйти» нейтрального тона; `RoomScreen.jsx` рендерит его вместо временного гейта задачи 38, контракт `handleStay`/`handleConfirmLeave`/testid'ы не менялись; `RoomScreen.content.js` удалён — контент перенесён в `ExitConfirmModal.content.js`. 392 client + 229 server vitest зелёные, lint чист, все 6 e2e-сценариев зелёные (серийно, `--workers=1`); визуально сверено Playwright-скриншотом модалки — совпадает с README §7)
 - [ ] Code review пройден — `code-reviewer`
 - [ ] PR в `develop` открыт
 

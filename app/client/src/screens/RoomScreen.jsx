@@ -5,11 +5,11 @@ import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
 import RoomTopBar from '../components/RoomTopBar.jsx';
 import ChatSidePanel from '../components/ChatSidePanel.jsx';
+import ExitConfirmModal from '../components/ExitConfirmModal.jsx';
 import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
 import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 import PermissionPrep from './PermissionPrep.jsx';
-import { EXIT_CONFIRM } from './RoomScreen.content.js';
 import styles from './RoomScreen.module.css';
 
 /**
@@ -52,10 +52,9 @@ import styles from './RoomScreen.module.css';
  * ссылку» получает `roomUrl` в формате `${window.location.origin}/room/${roomId}`
  * (тот же маршрут, что разбирает `App.jsx` `ROOM_PATH`). «Выйти» БОЛЬШЕ НЕ
  * эмитит `leave` напрямую (критерий приёмки задачи 38) — вызывает
- * `handleRequestLeave`, который открывает `isExitConfirmOpen` (временный
- * неоформленный гейт подтверждения ниже, пока задача 42 не подключит
- * полноценную `ExitConfirmModal.jsx`, README §7); только подтверждение внутри
- * него реально эмитит `leave`.
+ * `handleRequestLeave`, который открывает `isExitConfirmOpen`; задача 42
+ * рендерит по нему полноценную `ExitConfirmModal.jsx` (README §7) ниже —
+ * только подтверждение внутри неё реально эмитит `leave`.
  * `ParticipantList` (задача 29) и `ChatPanel` (задача 28) с задачи 41 больше
  * НЕ рендерятся напрямую здесь — они объединены в `ChatSidePanel.jsx`
  * (design addendum §3/§5.4, RESTRUCTURE): одна сворачиваемая панель с табами
@@ -111,9 +110,9 @@ function RoomScreen({ roomId, name, deps = {} }) {
   const [joinedAt, setJoinedAt] = useState(null);
   /**
    * Задача 38 (критерий приёмки): гейт перед реальным `leave` — «Выйти»
-   * больше не эмитит его напрямую. Задача 42 заменит временный блок ниже на
-   * полноценную `ExitConfirmModal.jsx` (README §7), не меняя этот контракт
-   * (`isExitConfirmOpen`/`handleRequestLeave`/`handleStay`/`handleConfirmLeave`).
+   * больше не эмитит его напрямую. Задача 42 рендерит по этому флагу
+   * `ExitConfirmModal.jsx` (README §7), контракт колбэков
+   * (`handleRequestLeave`/`handleStay`/`handleConfirmLeave`) не менялся.
    */
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
 
@@ -405,23 +404,8 @@ function RoomScreen({ roomId, name, deps = {} }) {
         />
       </div>
 
-      {/*
-       * Задача 38 — временный неоформленный гейт подтверждения выхода (см.
-       * JSDoc `isExitConfirmOpen` выше). Задача 42 заменит это на
-       * `ExitConfirmModal.jsx` (README §7: карточка, «Остаться»/«Выйти»,
-       * нейтральный тон) — контракт колбэков (`handleStay`/`handleConfirmLeave`)
-       * не изменится.
-       */}
       {isExitConfirmOpen ? (
-        <div role="dialog" aria-modal="true" data-testid="exit-confirm">
-          <p>{EXIT_CONFIRM.question}</p>
-          <button type="button" data-testid="exit-confirm-stay" onClick={handleStay}>
-            {EXIT_CONFIRM.stayLabel}
-          </button>
-          <button type="button" data-testid="exit-confirm-leave" onClick={handleConfirmLeave}>
-            {EXIT_CONFIRM.leaveLabel}
-          </button>
-        </div>
+        <ExitConfirmModal onStay={handleStay} onConfirmLeave={handleConfirmLeave} />
       ) : null}
     </div>
   );
