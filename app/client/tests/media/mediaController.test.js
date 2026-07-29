@@ -92,6 +92,46 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
 
       expect(state).toEqual({ audio: false, video: false });
     });
+
+    it('повторный init не оставляет предыдущий захваченный поток работающим', async () => {
+      const firstAudio = fakeTrack('audio');
+      const firstVideo = fakeTrack('video');
+      const secondAudio = fakeTrack('audio');
+      const secondVideo = fakeTrack('video');
+      const getUserMedia = vi
+        .fn()
+        .mockResolvedValueOnce(fakeStream([firstAudio, firstVideo]))
+        .mockResolvedValueOnce(fakeStream([secondAudio, secondVideo]));
+      const controller = createMediaController({ getUserMedia });
+
+      await Promise.all([controller.init(), controller.init()]);
+
+      expect(firstAudio.stop).toHaveBeenCalledTimes(1);
+      expect(firstVideo.stop).toHaveBeenCalledTimes(1);
+      expect(controller.getLocalStream().getTracks()).toEqual([secondAudio, secondVideo]);
+    });
+
+    it('если dispose вызван во время getUserMedia, поздно полученный поток сразу освобождается', async () => {
+      const audio = fakeTrack('audio');
+      const video = fakeTrack('video');
+      let resolveStream;
+      const getUserMedia = vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveStream = resolve;
+          }),
+      );
+      const controller = createMediaController({ getUserMedia });
+
+      const initPromise = controller.init();
+      controller.dispose();
+      resolveStream(fakeStream([audio, video]));
+      await initPromise;
+
+      expect(audio.stop).toHaveBeenCalledTimes(1);
+      expect(video.stop).toHaveBeenCalledTimes(1);
+      expect(controller.getLocalStream()).toBeNull();
+    });
   });
 
   describe('toggleAudio()', () => {
@@ -207,11 +247,53 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
 
       await expect(controller.toggleVideo()).resolves.toEqual({ audio: false, video: false });
     });
+
+    it('выход во время повторного getUserMedia освобождает поздно полученную видеодорожку', async () => {
+      const initialVideo = fakeTrack('video');
+      const lateVideo = fakeTrack('video');
+      let resolveVideo;
+      const getUserMedia = vi
+        .fn()
+        .mockResolvedValueOnce(fakeStream([initialVideo]))
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveVideo = resolve;
+            }),
+        );
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+      await controller.toggleVideo();
+
+      const enablePromise = controller.toggleVideo();
+      controller.dispose();
+      resolveVideo(fakeStream([lateVideo]));
+      await enablePromise;
+
+      expect(lateVideo.stop).toHaveBeenCalledTimes(1);
+      expect(controller.getLocalStream()).toBeNull();
+    });
   });
 
   describe('getLocalStream()', () => {
     it('возвращает null до init()', () => {
       const controller = createMediaController({ getUserMedia: vi.fn() });
+      expect(controller.getLocalStream()).toBeNull();
+    });
+  });
+
+  describe('dispose()', () => {
+    it('останавливает все живые локальные треки и освобождает камеру/микрофон', async () => {
+      const audio = fakeTrack('audio');
+      const video = fakeTrack('video');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
+      const controller = createMediaController({ getUserMedia });
+      await controller.init();
+
+      controller.dispose();
+
+      expect(audio.stop).toHaveBeenCalledTimes(1);
+      expect(video.stop).toHaveBeenCalledTimes(1);
       expect(controller.getLocalStream()).toBeNull();
     });
   });

@@ -154,6 +154,27 @@ export function createMediaController(deps = {}) {
   let audioTrack = null;
   /** @type {MediaStreamTrack | null} */
   let videoTrack = null;
+  /**
+   * Версия асинхронного захвата. Новый init/toggle/dispose инвалидирует
+   * предыдущий незавершённый getUserMedia, чтобы поздний результат не мог
+   * снова занять устройство после выключения камеры или выхода.
+   */
+  let captureVersion = 0;
+  let deviceListenerAttached = false;
+
+  function stopTrack(track) {
+    try {
+      track?.stop?.();
+    } catch {
+      // Ignore stop errors during shutdown/toggle.
+    }
+  }
+
+  function stopStream(stream) {
+    for (const track of stream?.getTracks?.() ?? []) {
+      stopTrack(track);
+    }
+  }
 
   /** @returns {{audio: boolean, video: boolean}} */
   function getMediaState() {
@@ -273,7 +294,21 @@ export function createMediaController(deps = {}) {
     }
   }
 
-  mediaDevices?.addEventListener?.('devicechange', handleDeviceChange);
+  function attachDeviceListener() {
+    if (!deviceListenerAttached && mediaDevices?.addEventListener) {
+      mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      deviceListenerAttached = true;
+    }
+  }
+
+  function detachDeviceListener() {
+    if (deviceListenerAttached && mediaDevices?.removeEventListener) {
+      mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+      deviceListenerAttached = false;
+    }
+  }
+
+  attachDeviceListener();
 
   /**
    * Первичный запрос устройств — audio+video по умолчанию (PRD «При входе в
@@ -286,8 +321,18 @@ export function createMediaController(deps = {}) {
    * @returns {Promise<{audio: boolean, video: boolean}>}
    */
   async function init() {
+    attachDeviceListener();
+    const requestVersion = ++captureVersion;
     try {
       const stream = await getUserMedia({ audio: true, video: true });
+      if (requestVersion !== captureVersion) {
+        stopStream(stream);
+        return getMediaState();
+      }
+
+      if (localStream && localStream !== stream) {
+        stopStream(localStream);
+      }
       localStream = stream;
       audioTrack = stream.getAudioTracks()[0] ?? null;
       videoTrack = stream.getVideoTracks()[0] ?? null;
@@ -298,6 +343,9 @@ export function createMediaController(deps = {}) {
         attachTrackLossHandler(videoTrack, 'video');
       }
     } catch {
+      if (requestVersion !== captureVersion) {
+        return getMediaState();
+      }
       // Design §8: остаться в комнате с выключенными устройствами, не бросать.
       localStream = null;
       audioTrack = null;
@@ -333,11 +381,18 @@ export function createMediaController(deps = {}) {
    */
   async function toggleVideo() {
     if (videoTrack) {
+      captureVersion += 1;
       const stoppedTrack = videoTrack;
       videoTrack = null;
-      stoppedTrack.stop();
+      stopTrack(stoppedTrack);
       if (localStream) {
         localStream.removeTrack(stoppedTrack);
+        for (const extraVideoTrack of localStream.getVideoTracks()) {
+          if (extraVideoTrack !== stoppedTrack) {
+            stopTrack(extraVideoTrack);
+            localStream.removeTrack(extraVideoTrack);
+          }
+        }
       }
       for (const sender of getVideoSenders()) {
         await sender.replaceTrack(null);
@@ -345,10 +400,16 @@ export function createMediaController(deps = {}) {
       return getMediaState();
     }
 
+    const requestVersion = ++captureVersion;
     try {
       const stream = await getUserMedia({ video: true });
+      if (requestVersion !== captureVersion) {
+        stopStream(stream);
+        return getMediaState();
+      }
       const newTrack = stream.getVideoTracks()[0] ?? null;
       if (!newTrack) {
+        stopStream(stream);
         return getMediaState();
       }
       videoTrack = newTrack;
@@ -362,6 +423,9 @@ export function createMediaController(deps = {}) {
         await sender.replaceTrack(newTrack);
       }
     } catch {
+      if (requestVersion !== captureVersion) {
+        return getMediaState();
+      }
       // Design §8 «Отказ в доступе»: остаться off, не бросать наружу.
       onDeviceDenied?.();
     }
@@ -379,7 +443,12 @@ export function createMediaController(deps = {}) {
    * комнаты, симметрично `MeshManager.closeAll()`.
    */
   function dispose() {
-    mediaDevices?.removeEventListener?.('devicechange', handleDeviceChange);
+    captureVersion += 1;
+    detachDeviceListener();
+    stopStream(localStream);
+    localStream = null;
+    audioTrack = null;
+    videoTrack = null;
   }
 
   return { init, toggleAudio, toggleVideo, getLocalStream, onStateChange, dispose };

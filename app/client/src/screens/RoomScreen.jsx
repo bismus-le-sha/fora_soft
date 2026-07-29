@@ -11,6 +11,7 @@ import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 import PermissionPrep from './PermissionPrep.jsx';
 import styles from './RoomScreen.module.css';
+import { useSpeakingParticipants } from '../hooks/useSpeakingParticipants.js';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -304,6 +305,24 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
     () => `${globalThis.location?.origin ?? ''}/room/${roomId}`,
     [roomId],
   );
+  const speakingStreamEntries = useMemo(
+    () =>
+      participants
+        .map((participant) => ({
+          participantId: participant.id,
+          stream: participant.id === selfId ? media.localStream : (mesh.remoteStreams[participant.id] ?? null),
+        }))
+        .filter((entry) => entry.stream),
+    [participants, selfId, media.localStream, mesh.remoteStreams],
+  );
+  const speakingParticipantIds = useSpeakingParticipants(speakingStreamEntries);
+  const visibleParticipants = useMemo(
+    () =>
+      participants.map((participant) =>
+        participant.id === selfId ? { ...participant, media: media.mediaState } : participant,
+      ),
+    [participants, selfId, media.mediaState],
+  );
 
   /**
    * Задача 38 (критерий приёмки): клик «Выйти» в шапке открывает гейт
@@ -372,14 +391,18 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
     return <PermissionPrep />;
   }
 
+  if (joinRejected?.code === 'room-full') {
+    return (
+      <main className={styles.joinErrorScreen} data-testid="room-full-screen">
+        <RoomFullBanner onRetry={handleRetryJoin} />
+      </main>
+    );
+  }
+
   return (
     <div className={styles.roomScreen} data-testid="room-screen">
       <p>Комната: {roomId}</p>
-      {joinRejected?.code === 'room-full' ? (
-        <RoomFullBanner onRetry={handleRetryJoin} />
-      ) : joinRejected ? (
-        <p role="alert">Не удалось войти в комнату.</p>
-      ) : null}
+      {joinRejected ? <p role="alert">Не удалось войти в комнату.</p> : null}
       {connectionError ? <ServerDownBanner /> : null}
       {media.deviceDenied ? <DeviceDeniedBanner /> : null}
 
@@ -399,10 +422,11 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
 
       <div className={styles.content}>
         <VideoGrid
-          participants={participants}
+          participants={visibleParticipants}
           selfId={selfId}
           localStream={media.localStream}
           remoteStreams={mesh.remoteStreams}
+          speakingParticipantIds={speakingParticipantIds}
           roomUrl={roomUrl}
           isChatOpen={isChatOpen}
           selfDeviceDenied={media.deviceDenied}
@@ -416,7 +440,7 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
           messages={messages}
           selfId={selfId}
           onSend={(text) => emit('chat:send', { text })}
-          participants={participants}
+          participants={visibleParticipants}
         />
       </div>
 

@@ -19,7 +19,8 @@ import JoinGate from '../../src/screens/JoinGate.jsx';
  */
 describe('JoinGate (Design §4.2/§7.1/§8, F-01/F-04/F-37, US-1/US-4/US-13)', () => {
   const getNameInput = (container) => container.querySelector('input');
-  const getJoinButton = (getByRole) => getByRole('button', { name: /войти/i });
+  const getJoinButton = (getByRole, name = /войти|как вас зовут/i) =>
+    getByRole('button', { name });
 
   function fakeStream(tracks) {
     return { getTracks: () => tracks };
@@ -38,22 +39,34 @@ describe('JoinGate (Design §4.2/§7.1/§8, F-01/F-04/F-37, US-1/US-4/US-13)', (
     expect(getJoinButton(getByRole)).not.toBeNull();
   });
 
-  it('без имени вход заблокирован: кнопка «Войти» disabled', () => {
+  it('без имени использует aria-disabled, но не native disabled — как кнопка создания комнаты', () => {
     const { getByRole } = render(
       <JoinGate onJoin={vi.fn()} deps={{ getUserMedia: vi.fn() }} />,
     );
 
-    expect(getJoinButton(getByRole).disabled).toBe(true);
+    expect(getJoinButton(getByRole).disabled).toBe(false);
+    expect(getJoinButton(getByRole).getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('имя из одних пробелов также блокирует кнопку', () => {
+  it('имя из одних пробелов также оставляет aria-disabled', () => {
     const { container, getByRole } = render(
       <JoinGate onJoin={vi.fn()} deps={{ getUserMedia: vi.fn() }} />,
     );
 
     fireEvent.change(getNameInput(container), { target: { value: '   ' } });
 
-    expect(getJoinButton(getByRole).disabled).toBe(true);
+    expect(getJoinButton(getByRole).disabled).toBe(false);
+    expect(getJoinButton(getByRole).getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('при наведении на кнопку с пустым именем меняет текст на «Как вас зовут»', () => {
+    const { getByRole } = render(
+      <JoinGate onJoin={vi.fn()} deps={{ getUserMedia: vi.fn() }} />,
+    );
+
+    fireEvent.mouseEnter(getJoinButton(getByRole, /войти/i));
+
+    expect(getJoinButton(getByRole, /как вас зовут/i)).not.toBeNull();
   });
 
   it('без имени: клик не вызывает ни getUserMedia, ни onJoin (вход не происходит)', () => {
@@ -77,6 +90,7 @@ describe('JoinGate (Design §4.2/§7.1/§8, F-01/F-04/F-37, US-1/US-4/US-13)', (
     fireEvent.change(getNameInput(container), { target: { value: 'Алекс' } });
 
     expect(getJoinButton(getByRole).disabled).toBe(false);
+    expect(getJoinButton(getByRole).getAttribute('aria-disabled')).toBe('false');
   });
 
   it('клик «Войти» с валидным именем вызывает getUserMedia(audio+video) и onJoin(name) (user-gesture, F-37)', async () => {

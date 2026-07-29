@@ -258,6 +258,50 @@
   font-size: 14px;
 }
 
+.overlay {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.name {
+  max-width: calc(100% - 56px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: var(--radius-999);
+  background: rgba(17, 17, 17, 0.68);
+  color: var(--on-dark);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.micBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-999);
+  background: rgba(17, 17, 17, 0.68);
+  color: var(--on-dark);
+  font-size: 15px;
+}
+
+.micBadgeOn {
+  background: rgba(17, 17, 17, 0.68);
+}
+
+.micBadgeOff {
+  background: rgba(180, 85, 43, 0.92);
+}
+
 @keyframes dotPulse {
   0%,
   100% {

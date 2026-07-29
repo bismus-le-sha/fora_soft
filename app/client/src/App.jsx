@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { checkWebrtcSupport } from './lib/compat.js';
 import { generateRoomId } from './lib/roomId.js';
+import { validateParticipantName } from './lib/nameValidation.js';
 import NoWebRtcBanner from './components/errors/NoWebRtcBanner.jsx';
 import StartScreen from './screens/StartScreen.jsx';
 import JoinGate from './screens/JoinGate.jsx';
@@ -33,6 +34,41 @@ import RoomScreen from './screens/RoomScreen.jsx';
 
 /** Design §6.4: `/room/:roomId` — извлечение `roomId` из пути. */
 const ROOM_PATH = /^\/room\/([^/]+)\/?$/;
+const ROOM_SESSION_KEY = 'video-chat-room:active-session';
+
+function readJoinedName(pathname) {
+  const roomMatch = ROOM_PATH.exec(pathname);
+  if (!roomMatch) {
+    return null;
+  }
+
+  try {
+    const stored = JSON.parse(globalThis.sessionStorage?.getItem(ROOM_SESSION_KEY) ?? 'null');
+    if (stored?.roomId !== roomMatch[1]) {
+      return null;
+    }
+    const validation = validateParticipantName(stored.name);
+    return validation.ok ? validation.value : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRoomSession(roomId, name) {
+  try {
+    globalThis.sessionStorage?.setItem(ROOM_SESSION_KEY, JSON.stringify({ roomId, name }));
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts.
+  }
+}
+
+function forgetRoomSession() {
+  try {
+    globalThis.sessionStorage?.removeItem(ROOM_SESSION_KEY);
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts.
+  }
+}
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
    (см. JoinGate.jsx/StartScreen.jsx), PropTypes не подключена (Design §3.2/§10.5 SEC-19). */
@@ -52,15 +88,15 @@ function App({ deps = {} } = {}) {
     () => globalThis.location?.pathname ?? '/',
   );
   /** Имя, введённое в `JoinGate` — прокидывается в `RoomScreen` (Design §7.1). */
-  const [joinedName, setJoinedName] = useState(null);
+  const [joinedName, setJoinedName] = useState(
+    () => readJoinedName(globalThis.location?.pathname ?? '/'),
+  );
 
   useEffect(() => {
     function handlePopState() {
-      setPathname(globalThis.location.pathname);
-      // Навигация назад/вперёд покидает текущий вход в комнату — сброс
-      // `joinedName` гарантирует, что повторный заход на `/room/:id`
-      // снова начинается с JoinGate, а не «протухшего» RoomScreen.
-      setJoinedName(null);
+      const nextPathname = globalThis.location.pathname;
+      setPathname(nextPathname);
+      setJoinedName(readJoinedName(nextPathname));
     }
     globalThis.addEventListener('popstate', handlePopState);
     return () => globalThis.removeEventListener('popstate', handlePopState);
@@ -76,11 +112,13 @@ function App({ deps = {} } = {}) {
    * используется: перенос имени на экран комнаты — часть JoinGate (задача 20),
    * вне скоупа задачи 19.
    */
-  const handleCreate = useCallback((_name) => {
+  const handleCreate = useCallback((name) => {
     const roomId = generateRoomId();
     const nextPath = `/room/${roomId}`;
+    rememberRoomSession(roomId, name);
     globalThis.history.pushState(null, '', nextPath);
     setPathname(nextPath);
+    setJoinedName(name);
   }, []);
 
   /**
@@ -92,8 +130,12 @@ function App({ deps = {} } = {}) {
    * и дальнейшую оркестрацию media → mesh → signaling (задача 24).
    */
   const handleJoin = useCallback((joinName) => {
+    const roomMatch = ROOM_PATH.exec(pathname);
+    if (roomMatch) {
+      rememberRoomSession(roomMatch[1], joinName);
+    }
     setJoinedName(joinName);
-  }, []);
+  }, [pathname]);
 
   /**
    * Задача 42 (баг-фикс): подтверждённый выход из `ExitConfirmModal`
@@ -108,6 +150,7 @@ function App({ deps = {} } = {}) {
    * с «протухшего» `RoomScreen`.
    */
   const handleRoomLeave = useCallback(() => {
+    forgetRoomSession();
     globalThis.history.pushState(null, '', '/');
     setPathname('/');
     setJoinedName(null);

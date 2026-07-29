@@ -16,6 +16,7 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
     globalThis.RTCPeerConnection = function () {};
     globalThis.isSecureContext = true;
     globalThis.history.pushState(null, '', '/room/existing-room-id');
+    globalThis.sessionStorage.clear();
     // Задача 32 (E2E): после `onJoin` рендерится реальный `RoomScreen` →
     // реальный `ChatPanel.jsx` — jsdom не реализует
     // `Element.prototype.scrollIntoView` (тот же полифилл-мок, что уже
@@ -24,6 +25,7 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
   });
 
   afterEach(() => {
+    globalThis.sessionStorage.clear();
     delete globalThis.RTCPeerConnection;
     delete globalThis.isSecureContext;
     if (globalThis.navigator) {
@@ -96,6 +98,54 @@ describe('App: интеграция JoinGate на /room/:id (задача 20, De
 
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true, video: true });
+  });
+
+  it('после перехода из JoinGate в комнату освобождает проверочный медиапоток', async () => {
+    const previewTrack = { stop: vi.fn() };
+    globalThis.navigator.mediaDevices = {
+      getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [previewTrack] }),
+    };
+
+    const roomDeps = {
+      signaling: {
+        createSignalingClient: () => ({
+          connect: vi.fn(),
+          emit: vi.fn(),
+          on: vi.fn(),
+          onError: vi.fn(() => () => {}),
+          disconnect: vi.fn(),
+        }),
+      },
+      mesh: {
+        createMeshManager: () => ({
+          onParticipantJoined: vi.fn(),
+          addExistingParticipant: vi.fn(),
+          onParticipantLeft: vi.fn(),
+          handleSignal: vi.fn(),
+          attachLocalTrack: vi.fn(),
+          getVideoSenders: vi.fn(() => []),
+          getRemoteStream: vi.fn(() => null),
+          getPeerIds: vi.fn(() => []),
+          onRemoteStream: vi.fn(() => () => {}),
+          closeAll: vi.fn(),
+        }),
+      },
+      media: {
+        createMediaController: () => ({
+          init: vi.fn().mockResolvedValue({ audio: false, video: false }),
+          toggleAudio: vi.fn(),
+          toggleVideo: vi.fn(),
+          getLocalStream: vi.fn(() => null),
+        }),
+      },
+    };
+
+    const { container, getByRole, findByTestId } = render(<App deps={{ room: roomDeps }} />);
+    fireEvent.change(container.querySelector('input'), { target: { value: 'Алекс' } });
+    fireEvent.click(getByRole('button', { name: /войти/i }));
+
+    expect(await findByTestId('room-screen')).not.toBeNull();
+    expect(previewTrack.stop).toHaveBeenCalledTimes(1);
   });
 
   it('клик «Войти» переключает рендер с JoinGate на RoomScreen (Design §4.2/§7.1, задача 24)', async () => {

@@ -189,6 +189,27 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     expect(mesh.addExistingParticipant).not.toHaveBeenCalledWith('self-1');
   });
 
+  it('локальная плитка отражает фактическое отсутствие камеры и выключенный микрофон, а не состояние из join:ok', async () => {
+    const { getAllByTestId, signaling } = renderRoomScreen({
+      mediaState: { audio: false, video: false },
+    });
+    await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+    act(() => {
+      signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+    });
+
+    const selfTile = await waitFor(() => {
+      const tile = getAllByTestId('video-tile').find((candidate) => candidate.textContent.includes('Алекс'));
+      expect(tile).toBeTruthy();
+      return tile;
+    });
+
+    expect(selfTile.querySelector('[data-testid="video-tile-placeholder"]')).not.toBeNull();
+    expect(selfTile.querySelector('[data-testid="video-tile-mic-off"]')).not.toBeNull();
+    expect(selfTile.querySelector('[data-testid="video-tile-mic-on"]')).toBeNull();
+  });
+
   it('participant:joined добавляет участника в сетку/список и вызывает mesh.onParticipantJoined', async () => {
     const { getAllByTestId, getByTestId, signaling, mesh } = renderRoomScreen();
     await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
@@ -241,7 +262,7 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
   });
 
   it('join:rejected рендерит предупреждение и не падает', async () => {
-    const { getByRole, signaling } = renderRoomScreen();
+    const { getByRole, queryByTestId, signaling } = renderRoomScreen();
     await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
 
     act(() => {
@@ -249,6 +270,8 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     });
 
     await waitFor(() => expect(getByRole('alert').textContent).toContain('Похоже, комната уже занята'));
+    expect(queryByTestId('room-top-bar')).toBeNull();
+    expect(queryByTestId('video-grid')).toBeNull();
   });
 
   it('signal:offer/answer/ice маршрутизируются в mesh.handleSignal', async () => {

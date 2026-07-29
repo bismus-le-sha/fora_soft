@@ -1,62 +1,16 @@
 import { useState } from 'react';
 import styles from './StartScreen.module.css';
-import { TOP_BAR, HERO, PATH_STEPS, ACTIVE_PATH_STEP_ID, NAME_CARD, HINTS, FOOTNOTE } from './StartScreen.content.js';
+import {
+  TOP_BAR,
+  HERO,
+  PATH_STEPS,
+  ACTIVE_PATH_STEP_ID,
+  NAME_CARD,
+  HINTS,
+  FOOTNOTE,
+} from './StartScreen.content.js';
+import { NAME_ERROR_CODES, NAME_MAX, validateParticipantName } from '../lib/nameValidation.js';
 
-/**
- * StartScreen — стартовый экран: ввод имени + «Создать комнату» (задача 19,
- * визуальная реализация — задача 35).
- *
- * Design §4.2 (таблица компонентов): «`StartScreen.jsx` | Ввод имени
- * (клиентская валидация — UX), «Создать комнату» → генерирует roomId и
- * переходит на `/room/:id`. | props: `onCreate(name)`».
- * Design §6.4 (URL-контракт): «Создание комнаты на StartScreen генерирует
- * `roomId = crypto.randomUUID()` (SEC-14) и делает `navigate(/room/:roomId)`».
- *
- * UI Design Addendum §3 (`design-ui-video-chat-room.md`, статус RESTRUCTURE):
- * путь-схема (3 mono-пилюли «ссылка/имя/комната», активна «имя» — путь ещё не
- * пройден до конца), карточка ввода с состояниями подсказки §9, сноска.
- * Источник точных значений — `design-handoff/README.md` §1/§9. CSS Module
- * (`StartScreen.module.css`) — токены из `styles/tokens.css`. Весь
- * пользовательский текст — в `StartScreen.content.js` (`CLAUDE.md` →
- * «Архитектура фронтенда: без хардкода, компонент — кирпичик»): компонент
- * не хардкодит копирайт литералами в JSX, а импортирует его из отдельного
- * модуля контента, оставаясь переиспользуемым «кирпичиком».
- *
- * Requirements: F-01, F-02, US-1, US-2.
- *
- * Компонент сам НЕ генерирует roomId и НЕ выполняет навигацию — это
- * ответственность вызывающей стороны (композиционный корень, App.jsx/будущая
- * задача маршрутизации), которая передаёт конкретный `onCreate(name)`,
- * вызывающий `generateRoomId()` (`lib/roomId.js`, SEC-14) и переход на
- * `/room/:roomId`. Здесь эта связка проверяется контрактно — валидный сабмит
- * триггерит `onCreate`, невалидный — нет (см. `tests/screens/StartScreen.test.jsx`).
- *
- * Валидация здесь — **только UX** (блокировка кнопки при пустом/пробельном
- * имени, `trim().length > 0`). Источник истины — серверная `validateName`
- * (SEC-01, Design §4.1); клиент ей не подменяет и не заменяет. Задача 35 —
- * чисто визуальная реструктуризация, логика валидации НЕ менялась (критерий
- * приёмки задачи 35 в `impl-video-chat-room.md`).
- *
- * `hasAttemptedSubmit` — локальный UI-флаг (не часть логики валидации): по
- * README §9 «после первой неудачной попытки подсказка меняется на явную».
- * Он только переключает ТЕКСТ подсказки под пустым именем, ничего не решает
- * о валидности значения. Реализованы только 3 реально достижимых при
- * текущей UX-валидации (`trim().length > 0`) состояния подсказки: пустое-
- * нетронутое / пустое-после-попытки / валидно. Состояния README §9
- * «> 30 символов» и «недопустимые символы» **сознательно не реализованы**:
- * они требуют более строгой клиентской валидации (regex разрешённых
- * символов/явная проверка лимита), которая вне скоупа задачи 35 — критерий
- * приёмки прямо запрещает менять существующую логику валидации. Переполнение
- * длины и так физически блокируется атрибутом `maxLength` на инпуте, поэтому
- * ветка «> 30» недостижима в принципе и не стилизуется как мёртвый код; при
- * появлении отдельной задачи на богатую UX-валидацию эти состояния можно
- * будет включить.
- */
-
-/** PRD §4 «Стартовый экран»: поле имени до 30 символов (US-1, UX-подсказка). */
-const NAME_MAX = 30;
-
-/** Инлайн-SVG стрелки для CTA (README §1: «иконка-стрелка 15px справа»). */
 function ArrowIcon() {
   return (
     <svg
@@ -77,21 +31,13 @@ function ArrowIcon() {
   );
 }
 
-/* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
-   (см. signalingClient.js/compat.js), PropTypes как рантайм-зависимость не
-   подключена (Design §3.2/§10.5 SEC-19 — минимум прод-зависимостей). */
-
-/**
- * @param {object} props
- * @param {(name: string) => void} props.onCreate — вызывается с валидным
- *   (непустым после trim) именем при клике «Создать комнату» (Design §4.2).
- */
 function StartScreen({ onCreate }) {
   const [name, setName] = useState('');
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [isCtaHovered, setIsCtaHovered] = useState(false);
 
-  const trimmedName = name.trim();
-  const isValid = trimmedName.length > 0;
+  const validation = validateParticipantName(name);
+  const isValid = validation.ok;
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -99,19 +45,23 @@ function StartScreen({ onCreate }) {
       setHasAttemptedSubmit(true);
       return;
     }
-    onCreate(trimmedName);
+    onCreate(validation.value);
   }
 
-  let hintText;
+  let hintText = HINTS.empty;
   let hintClassName = styles.hint;
   if (isValid) {
     hintText = HINTS.valid;
     hintClassName = `${styles.hint} ${styles.hintValid}`;
+  } else if (validation.code === NAME_ERROR_CODES.invalidChars) {
+    hintText = HINTS.invalidChars;
+  } else if (validation.code === NAME_ERROR_CODES.tooLong) {
+    hintText = HINTS.tooLong;
   } else if (hasAttemptedSubmit) {
     hintText = HINTS.emptyAfterAttempt;
-  } else {
-    hintText = HINTS.empty;
   }
+
+  const ctaLabel = !isValid && isCtaHovered ? NAME_CARD.invalidCtaLabel : NAME_CARD.ctaLabel;
 
   return (
     <div className={styles.screen}>
@@ -141,9 +91,7 @@ function StartScreen({ onCreate }) {
                   >
                     {step.label}
                   </span>
-                  {index < PATH_STEPS.length - 1 ? (
-                    <span className={styles.pathDot} aria-hidden="true" />
-                  ) : null}
+                  {index < PATH_STEPS.length - 1 ? <span className={styles.pathDot} aria-hidden="true" /> : null}
                 </li>
               ))}
             </ol>
@@ -169,8 +117,16 @@ function StartScreen({ onCreate }) {
               onChange={(event) => setName(event.target.value)}
             />
             <p className={hintClassName}>{hintText}</p>
-            <button type="submit" className={styles.cta} disabled={!isValid}>
-              {NAME_CARD.ctaLabel}
+            <button
+              type="submit"
+              className={`${styles.cta} ${!isValid ? styles.ctaInvalid : ''}`}
+              aria-disabled={!isValid}
+              onMouseEnter={() => setIsCtaHovered(true)}
+              onMouseLeave={() => setIsCtaHovered(false)}
+              onFocus={() => setIsCtaHovered(true)}
+              onBlur={() => setIsCtaHovered(false)}
+            >
+              {ctaLabel}
               <ArrowIcon />
             </button>
           </form>
@@ -181,7 +137,5 @@ function StartScreen({ onCreate }) {
     </div>
   );
 }
-
-/* eslint-enable react/prop-types */
 
 export default StartScreen;
