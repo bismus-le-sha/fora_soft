@@ -81,12 +81,44 @@ export async function participantNames(page) {
 }
 
 /**
+ * Открывает сворачиваемую панель Чат/Участники (задача 41, `ChatSidePanel.jsx`,
+ * `RoomTopBar.jsx` кнопка «Чат») — по умолчанию закрыта (README §5), клик
+ * всегда открывает её на вкладке «Чат» (`RoomScreen.handleToggleChat`).
+ * Идемпотентна — если панель уже открыта, повторный клик её закроет, поэтому
+ * сначала проверяем `aria-pressed`.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function openChatPanel(page) {
+  const toggle = page.getByTestId('chat-toggle-button');
+  if ((await toggle.getAttribute('aria-pressed')) !== 'true') {
+    await toggle.click();
+  }
+}
+
+/**
+ * Открывает панель (если закрыта) и переключает её на вкладку «Участники» —
+ * `ParticipantList` теперь смонтирован внутри `ChatSidePanel.jsx` (задача 41)
+ * и не виден, пока панель закрыта/на другой вкладке.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function openParticipantsTab(page) {
+  await openChatPanel(page);
+  await page.getByTestId('chat-side-panel-tab-participants').click();
+}
+
+/**
  * Отправка сообщения через `ChatPanel` (Design §7.4 `chat:send{text}`, F-24/US-8).
+ * Задача 41: `ChatPanel` — содержимое вкладки «Чат» сворачиваемой панели,
+ * закрытой по умолчанию — открываем её (панель открывается сразу на вкладке
+ * «Чат», `openChatPanel` выше) перед вводом.
  *
  * @param {import('@playwright/test').Page} page
  * @param {string} text
  */
 export async function sendChatMessage(page, text) {
+  await openChatPanel(page);
   await page.getByTestId('chat-input').fill(text);
   await page.getByTestId('chat-send-button').click();
 }

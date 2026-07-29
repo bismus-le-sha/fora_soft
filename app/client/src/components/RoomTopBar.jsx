@@ -38,12 +38,13 @@ import { formatRoomCode } from '../lib/roomId.js';
  * подтверждения (см. его JSDoc) — интерфейс `onRequestLeave` не меняется,
  * когда задача 42 подключит настоящую модалку.
  *
- * «Чат»/бейдж непрочитанных — задача 38 создаёт только вёрстку и локальный
- * визуальный тумблер «открыт/закрыт» (`isChatOpen` — состояние этого
- * компонента, ничем пока не управляет — реальная сворачиваемая панель и
- * подсчёт непрочитанных вне скоупа, см. задачу 41); `unreadCount` — проп с
- * default 0 (бейдж не рендерится, пока задача 41 не начнёт передавать
- * реальное значение).
+ * «Чат»/бейдж непрочитанных — задача 41 подключила реальное состояние:
+ * `isChatOpen` теперь controlled-проп (источник истины — `RoomScreen`,
+ * `ChatSidePanel.jsx`), этот компонент больше не хранит собственный
+ * визуальный тумблер — клик только вызывает `onToggleChat`, открытие/закрытие
+ * решает `RoomScreen` (нужно единое состояние — та же панель управляет
+ * шириной Ленты `VideoGrid`, addendum §5.4). `unreadCount` — реальный счётчик
+ * из `RoomScreen` (инкремент/сброс по правилам addendum §5.4).
  *
  * Requirements: F-03, F-09, F-10, F-17, US-3, US-7, US-10.
  * Design: addendum §3/§5.2/§5.3, README §4.
@@ -164,11 +165,13 @@ function formatElapsed(joinedAt, now) {
  *   (тот же формат, что собирает `RoomScreen`).
  * @param {number} [props.participantCount] — `participants.length` (включая
  *   self, Design §5.3/§6.2) для счётчика `N/4`.
- * @param {number} [props.unreadCount] — задача 41 подключит реальный подсчёт;
- *   пока default 0 — бейдж не рендерится.
- * @param {() => void} [props.onToggleChat] — задача 41 подключит реальное
- *   открытие/закрытие панели; пока не обязателен (кнопка держит только
- *   собственный визуальный тумблер).
+ * @param {number} [props.unreadCount] — задача 41 (addendum §5.4): счётчик
+ *   непрочитанных из `RoomScreen`; default 0 — бейдж не рендерится.
+ * @param {boolean} [props.isChatOpen] — задача 41: controlled-состояние
+ *   сворачиваемой панели (`RoomScreen`/`ChatSidePanel.jsx`) — этот компонент
+ *   сам его не хранит, только отражает через `aria-pressed`/стиль кнопки.
+ * @param {() => void} [props.onToggleChat] — задача 41: реальное открытие/
+ *   закрытие панели, решает `RoomScreen`.
  * @param {() => void} props.onRequestLeave — клик «Выйти»: НЕ эмитит `leave`
  *   напрямую (критерий приёмки задачи 38) — открывает гейт подтверждения в
  *   `RoomScreen` (задача 42 — полноценная модалка).
@@ -186,12 +189,12 @@ function RoomTopBar({
   roomUrl,
   participantCount = 0,
   unreadCount = 0,
+  isChatOpen = false,
   onToggleChat,
   onRequestLeave,
   deps = {},
 }) {
   const [copyFeedback, setCopyFeedback] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [now, setNow] = useState(() => (deps.now ?? Date.now)());
 
   const clipboardWrite = deps.clipboardWrite ?? defaultClipboardWrite;
@@ -244,7 +247,6 @@ function RoomTopBar({
   }
 
   function handleToggleChat() {
-    setIsChatOpen((open) => !open);
     onToggleChat?.();
   }
 

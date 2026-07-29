@@ -313,6 +313,107 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     });
   });
 
+  describe('Задача 41 — сворачиваемая панель Чат/Участники (addendum §5.4, критерий приёмки)', () => {
+    it('по умолчанию панель закрыта, бейдж непрочитанных не рендерится', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      expect(getByTestId('chat-side-panel').getAttribute('data-open')).toBe('false');
+      expect(queryByTestId('chat-unread-badge')).toBeNull();
+    });
+
+    it('chat:message, пока панель закрыта, инкрементирует unreadCount (бейдж в RoomTopBar)', async () => {
+      const { getByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+
+      act(() => {
+        signaling.trigger('chat:message', { id: 'm2', authorId: 'peer-1', authorName: 'Боб', text: 'Привет', ts: 2 });
+      });
+      await waitFor(() => expect(getByTestId('chat-unread-badge').textContent).toBe('1'));
+
+      act(() => {
+        signaling.trigger('chat:message', { id: 'm3', authorId: 'peer-1', authorName: 'Боб', text: 'Ещё', ts: 3 });
+      });
+      await waitFor(() => expect(getByTestId('chat-unread-badge').textContent).toBe('2'));
+    });
+
+    it('chat:system (join/leave), пока панель закрыта, тоже инкрементирует unreadCount', async () => {
+      const { getByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+
+      act(() => {
+        signaling.trigger('chat:system', { id: 's1', event: 'join', subjectName: 'Вика', ts: 4 });
+      });
+
+      await waitFor(() => expect(getByTestId('chat-unread-badge').textContent).toBe('1'));
+    });
+
+    it('открытие панели кнопкой «Чат» сбрасывает unreadCount в 0', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+      act(() => {
+        signaling.trigger('chat:message', { id: 'm2', authorId: 'peer-1', authorName: 'Боб', text: 'Привет', ts: 2 });
+      });
+      await waitFor(() => expect(getByTestId('chat-unread-badge').textContent).toBe('1'));
+
+      fireEvent.click(getByTestId('chat-toggle-button'));
+
+      await waitFor(() => expect(queryByTestId('chat-unread-badge')).toBeNull());
+      expect(getByTestId('chat-side-panel').getAttribute('data-open')).toBe('true');
+      // Кнопка «Чат» открывает панель именно на вкладке «Чат» (README §5).
+      expect(getByTestId('chat-side-panel-tab-chat').getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('новое сообщение, пока панель открыта на вкладке «Чат», НЕ инкрементирует бейдж', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+      fireEvent.click(getByTestId('chat-toggle-button'));
+      expect(getByTestId('chat-side-panel-tab-chat').getAttribute('aria-selected')).toBe('true');
+
+      act(() => {
+        signaling.trigger('chat:message', { id: 'm2', authorId: 'peer-1', authorName: 'Боб', text: 'Привет', ts: 2 });
+      });
+
+      expect(queryByTestId('chat-unread-badge')).toBeNull();
+    });
+
+    it('переключение на вкладку «Участники» при открытой панели — новое сообщение снова инкрементирует бейдж; возврат на «Чат» сбрасывает его', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      act(() => {
+        signaling.trigger('join:ok', JOIN_OK_PAYLOAD);
+      });
+      fireEvent.click(getByTestId('chat-toggle-button'));
+      fireEvent.click(getByTestId('chat-side-panel-tab-participants'));
+
+      act(() => {
+        signaling.trigger('chat:message', { id: 'm2', authorId: 'peer-1', authorName: 'Боб', text: 'Привет', ts: 2 });
+      });
+      await waitFor(() => expect(getByTestId('chat-unread-badge').textContent).toBe('1'));
+
+      fireEvent.click(getByTestId('chat-side-panel-tab-chat'));
+
+      await waitFor(() => expect(queryByTestId('chat-unread-badge')).toBeNull());
+    });
+  });
+
   describe('Задача 30 — баннеры ошибок и состояний (Design §8, F-33/F-35/F-36, US-5/US-12/US-13, SEC-15)', () => {
     it('join:rejected{room-full} → RoomFullBanner с кнопкой «Повторить вход», повторный клик повторно эмитит join', async () => {
       const { getByTestId, getByRole, signaling } = renderRoomScreen();

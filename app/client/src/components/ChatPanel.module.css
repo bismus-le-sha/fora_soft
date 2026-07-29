@@ -1,0 +1,201 @@
+/*
+ * ChatPanel.module.css — история чата + ввод, содержимое вкладки «Чат»
+ * внутри `ChatSidePanel.jsx` (задача 41).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §5
+ * «Панель чата и участников» → «Лента сообщений»/«Поле ввода». Значения
+ * берутся из `styles/tokens.css` там, где для них есть токен; хардкод —
+ * только там, где README не даёт соответствующей переменной (тот же приём,
+ * что `RoomTopBar.module.css`/`VideoGrid.module.css`).
+ */
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------------
+ * Лента сообщений
+ * ------------------------------------------------------------------- */
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px var(--space-18); /* README §5: «padding: 16px 18px», 16 — вне скейла токенов */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  box-sizing: border-box;
+}
+
+.messageRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* README §5: вне скейла токенов */
+  animation: msgIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.messageRowSelf {
+  align-items: flex-end;
+}
+
+.messageRowOther {
+  align-items: flex-start;
+}
+
+.messageMeta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.messageAuthor {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--body);
+}
+
+.messageTime {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint-2);
+}
+
+.bubble {
+  max-width: 88%;
+  padding: 10px var(--space-14); /* README §5: «padding: 10px 13px», 10 — вне скейла токенов */
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.bubbleSelf {
+  composes: bubble;
+  background: var(--ink);
+  color: var(--on-dark);
+  border-radius: var(--radius-14) var(--radius-14) 4px var(--radius-14);
+}
+
+.bubbleOther {
+  composes: bubble;
+  background: #fff; /* README §5: чужое сообщение — фон #FFFFFF, отдельного токена нет */
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: var(--radius-14) var(--radius-14) var(--radius-14) 4px;
+}
+
+.messageText {
+  display: block;
+}
+
+/* Системное событие (вход/выход) — README §5: строка на всю ширину, линии
+   по бокам, mono-текст по центру, никогда не выглядит как реплика человека. */
+.systemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  animation: msgIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.systemLine {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.systemText {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Поле ввода
+ * ------------------------------------------------------------------- */
+
+.form {
+  flex-shrink: 0;
+  display: flex;
+  padding: 14px 16px; /* README §5: «padding: 14px 16px» — оба значения вне скейла токенов */
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+  box-sizing: border-box;
+}
+
+.inputWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  background: #fff; /* README §5: обёртка ввода — фон #FFFFFF */
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-14);
+  padding: var(--space-6) var(--space-6) var(--space-6) var(--space-14);
+  box-sizing: border-box;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+}
+
+.input::placeholder {
+  color: #a9a29a; /* README: тот же цвет плейсхолдера, что и на других экранах */
+}
+
+.sendButton {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: var(--radius-10);
+  background: var(--chip);
+  color: var(--faint);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.sendButton:not(:disabled) {
+  background: var(--ink);
+  color: var(--on-dark);
+  cursor: pointer;
+}
+
+.sendButton:disabled {
+  cursor: default;
+}
+
+.sendIcon {
+  width: 16px;
+  height: 16px;
+}

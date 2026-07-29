@@ -4,13 +4,13 @@ import { useMesh } from '../hooks/useMesh.js';
 import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
 import RoomTopBar from '../components/RoomTopBar.jsx';
-import ParticipantList from '../components/ParticipantList.jsx';
-import ChatPanel from '../components/ChatPanel.jsx';
+import ChatSidePanel from '../components/ChatSidePanel.jsx';
 import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
 import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 import PermissionPrep from './PermissionPrep.jsx';
 import { EXIT_CONFIRM } from './RoomScreen.content.js';
+import styles from './RoomScreen.module.css';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -56,17 +56,19 @@ import { EXIT_CONFIRM } from './RoomScreen.content.js';
  * неоформленный гейт подтверждения ниже, пока задача 42 не подключит
  * полноценную `ExitConfirmModal.jsx`, README §7); только подтверждение внутри
  * него реально эмитит `leave`.
- * `ParticipantList` (задача 29) подключена ниже — рендерит `participants` тем
- * же React state, что обновляют `onParticipantJoined`/`onParticipantLeft`/
- * `onMediaState` выше (F-16, US-9, Design §6.2), сам по себе презентационный
- * (тот же приём, что `VideoGrid`/`ControlBar`, задачи 25/27).
- * `ChatPanel` (задача 28, `components/ChatPanel.jsx`) подключена ниже (задача
- * 32 — во время подготовки сквозного E2E-потока обнаружено и закрыто: до
- * этого здесь оставалась инлайн-разметка вместо реального компонента, без
- * поля ввода — отправить сообщение через UI было нельзя). `onSend` эмитит
- * `chat:send {text}` тем же `emit`, что и остальные исходящие события
- * (Design §7.4); `messages`/`selfId` — тот же React state, что уже наполняли
- * обработчики выше.
+ * `ParticipantList` (задача 29) и `ChatPanel` (задача 28) с задачи 41 больше
+ * НЕ рендерятся напрямую здесь — они объединены в `ChatSidePanel.jsx`
+ * (design addendum §3/§5.4, RESTRUCTURE): одна сворачиваемая панель с табами
+ * «Чат»/«Участники» вместо двух всегда видимых блоков. `RoomScreen` владеет
+ * единым состоянием панели (`isChatOpen`/`chatActiveTab`) — оно нужно сразу
+ * трём потребителям: `RoomTopBar` (подсветка кнопки «Чат»/бейдж), `VideoGrid`
+ * (сжатие Ленты, задача 39) и самой `ChatSidePanel` (что рендерить/какой таб
+ * активен). `unreadCount` — тоже здесь: инкремент на `onChatMessage`/
+ * `onChatSystem` ниже, пока панель закрыта или открыта не на вкладке «Чат»,
+ * сброс эффектом при `isChatOpen && chatActiveTab === 'chat'` (addendum
+ * §5.4). `onSend` эмитит `chat:send {text}` тем же `emit`, что и остальные
+ * исходящие события (Design §7.4); `messages`/`selfId`/`participants` — тот
+ * же React state, что уже наполняли обработчики выше.
  *
  * Баннеры ошибок и состояний (задача 30, Design §8): `join:rejected{room-full}`
  * → `RoomFullBanner` с кнопкой «Повторить вход» (`handleRetryJoin` повторно
@@ -114,6 +116,39 @@ function RoomScreen({ roomId, name, deps = {} }) {
    * (`isExitConfirmOpen`/`handleRequestLeave`/`handleStay`/`handleConfirmLeave`).
    */
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
+
+  /**
+   * Задача 41 (addendum §5.4): единое состояние сворачиваемой панели
+   * Чат/Участники — источник истины для `RoomTopBar`/`VideoGrid`/
+   * `ChatSidePanel` (см. JSDoc выше). Закрыта и на вкладке «Чат» по
+   * умолчанию (README §5: «по умолчанию закрыта»).
+   */
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatActiveTab, setChatActiveTab] = useState('chat');
+  /** Addendum §5.4: инкремент/сброс — см. `handlers.onChatMessage/onChatSystem` и эффект ниже. */
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  /**
+   * `handlers` ниже создаётся один раз (`useMemo(..., [])`, см. его
+   * собственный JSDoc) — чтобы инкремент непрочитанных видел АКТУАЛЬные
+   * `isChatOpen`/`chatActiveTab`, а не значения на момент создания
+   * замыкания, состояние дублируется в refs, обновляемые эффектами ниже.
+   */
+  const isChatOpenRef = useRef(isChatOpen);
+  const chatActiveTabRef = useRef(chatActiveTab);
+  useEffect(() => {
+    isChatOpenRef.current = isChatOpen;
+  }, [isChatOpen]);
+  useEffect(() => {
+    chatActiveTabRef.current = chatActiveTab;
+  }, [chatActiveTab]);
+
+  /** Addendum §5.4: «сброс при открытии на неё [вкладку «Чат»]». */
+  useEffect(() => {
+    if (isChatOpen && chatActiveTab === 'chat') {
+      setUnreadCount(0);
+    }
+  }, [isChatOpen, chatActiveTab]);
 
   /**
    * Разрывает циклическую зависимость объявлений: `useMesh`/`useMedia`
@@ -175,13 +210,24 @@ function RoomScreen({ roomId, name, deps = {} }) {
         setParticipants((prev) => prev.filter((p) => p.id !== payload.id));
         mesh.ensureMesh().onParticipantLeft(payload.id);
       },
-      /** Design §7.4: чат-сообщение — текстовые узлы рендерит JSX сам (SEC-04). */
+      /**
+       * Design §7.4: чат-сообщение — текстовые узлы рендерит JSX сам (SEC-04).
+       * Addendum §5.4: инкремент `unreadCount`, пока панель закрыта или
+       * открыта не на вкладке «Чат» (актуальные значения — через refs, см.
+       * их JSDoc выше, `handlers` создаётся один раз).
+       */
       onChatMessage(payload) {
         setMessages((prev) => [...prev, { ...payload, kind: 'chat' }]);
+        if (!(isChatOpenRef.current && chatActiveTabRef.current === 'chat')) {
+          setUnreadCount((prev) => prev + 1);
+        }
       },
-      /** Design §6.2 `chat:system { event: 'join'|'leave', subjectName }`. */
+      /** Design §6.2 `chat:system { event: 'join'|'leave', subjectName }`; addendum §5.4 — тот же инкремент, что onChatMessage. */
       onChatSystem(payload) {
         setMessages((prev) => [...prev, { ...payload, kind: 'system' }]);
+        if (!(isChatOpenRef.current && chatActiveTabRef.current === 'chat')) {
+          setUnreadCount((prev) => prev + 1);
+        }
       },
       /** Design §6.2/§7.2: обновить mic/cam статус конкретного участника. */
       onMediaState(payload) {
@@ -274,6 +320,27 @@ function RoomScreen({ roomId, name, deps = {} }) {
   }, [emit]);
 
   /**
+   * Задача 41 (addendum §5.4): кнопка «Чат» в `RoomTopBar` — единственный
+   * способ открыть панель (README §5), поэтому открытие всегда возвращает
+   * активный таб на «Чат» (закрытие тут ни на что не влияет — контент
+   * панели скрыт, см. JSDoc `ChatSidePanel.jsx`).
+   */
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen((prevOpen) => !prevOpen);
+    setChatActiveTab('chat');
+  }, []);
+
+  /** Клик по табу внутри уже открытой панели. */
+  const handleChatTabChange = useCallback((tab) => {
+    setChatActiveTab(tab);
+  }, []);
+
+  /** Кнопка-крестик в шапке панели — закрывает, не трогая выбранный таб. */
+  const handleChatClose = useCallback(() => {
+    setIsChatOpen(false);
+  }, []);
+
+  /**
    * Задача 30, критерий приёмки: кнопка «Повторить вход» (`RoomFullBanner`)
    * даёт пользователю повторить попытку присоединения. Design §8 «Комната
    * заполнена»: сервер отклоняет `join` только если `socket.data.roomId`
@@ -291,7 +358,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
   }
 
   return (
-    <div className="room-screen" data-testid="room-screen">
+    <div className={styles.roomScreen} data-testid="room-screen">
       <p>Комната: {roomId}</p>
       {joinRejected?.code === 'room-full' ? (
         <RoomFullBanner onRetry={handleRetryJoin} />
@@ -309,25 +376,34 @@ function RoomScreen({ roomId, name, deps = {} }) {
         onToggleVideo={media.toggleVideo}
         roomUrl={roomUrl}
         participantCount={participants.length}
+        unreadCount={unreadCount}
+        isChatOpen={isChatOpen}
+        onToggleChat={handleToggleChat}
         onRequestLeave={handleRequestLeave}
       />
 
-      <VideoGrid
-        participants={participants}
-        selfId={selfId}
-        localStream={media.localStream}
-        remoteStreams={mesh.remoteStreams}
-        roomUrl={roomUrl}
-        selfDeviceDenied={media.deviceDenied}
-      />
+      <div className={styles.content}>
+        <VideoGrid
+          participants={participants}
+          selfId={selfId}
+          localStream={media.localStream}
+          remoteStreams={mesh.remoteStreams}
+          roomUrl={roomUrl}
+          isChatOpen={isChatOpen}
+          selfDeviceDenied={media.deviceDenied}
+        />
 
-      <ParticipantList participants={participants} selfId={selfId} />
-
-      <ChatPanel
-        messages={messages}
-        selfId={selfId}
-        onSend={(text) => emit('chat:send', { text })}
-      />
+        <ChatSidePanel
+          isOpen={isChatOpen}
+          activeTab={chatActiveTab}
+          onTabChange={handleChatTabChange}
+          onClose={handleChatClose}
+          messages={messages}
+          selfId={selfId}
+          onSend={(text) => emit('chat:send', { text })}
+          participants={participants}
+        />
+      </div>
 
       {/*
        * Задача 38 — временный неоформленный гейт подтверждения выхода (см.

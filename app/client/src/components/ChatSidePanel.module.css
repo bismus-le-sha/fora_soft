@@ -1,0 +1,134 @@
+/*
+ * ChatSidePanel.module.css — сворачиваемая панель Чат/Участники (задача 41).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §5
+ * «Панель чата и участников» → «Шапка». Значения берутся из
+ * `styles/tokens.css` там, где для них есть токен; хардкод — только там, где
+ * README не даёт соответствующей переменной (тот же приём, что
+ * `RoomTopBar.module.css`/`VideoGrid.module.css`).
+ */
+
+.panel {
+  width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-left: 1px solid transparent;
+  background: var(--surface-3);
+  transition:
+    width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panelOpen {
+  width: 344px;
+  border-left-color: var(--line);
+}
+
+/* README §5: «Внутреннее содержимое фиксированной ширины 344px (не
+   сжимается при анимации)» — ширина панели анимируется, содержимое нет. */
+.inner {
+  width: 344px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Шапка: переключатель табов + закрыть
+ * ------------------------------------------------------------------- */
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px; /* README §5: «padding: 16px 18px», 16 — вне скейла токенов */
+  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+.tabs {
+  display: inline-flex;
+  padding: 3px; /* README §5: вне скейла токенов */
+  border-radius: var(--radius-999);
+  background: #eae7e0; /* README §5: фон переключателя, отдельного токена нет */
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  color: var(--muted-2);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  padding: 6px 13px; /* README §5: «padding: 6px 13px», оба значения вне скейла токенов */
+  border-radius: var(--radius-999);
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.tabActive {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.closeButton {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--muted-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+
+.closeButton:hover {
+  background: #eae7e0; /* README §5: тот же фон, что у переключателя табов */
+}
+
+.closeIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------------------------------------------------------------------
+ * Тело панели: обе вкладки смонтированы всегда (сохраняем состояние
+ * черновика ChatPanel при переключении, addendum §5.4/критерий приёмки
+ * задачи 41), видимость переключается через display, не unmount.
+ * ------------------------------------------------------------------- */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.tabPanel {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabPanelHidden {
+  composes: tabPanel;
+  display: none;
+}
+
+/* README §5: список участников — контейнер со скроллом, сам `ParticipantList`
+   не меняется (задача 41: «без изменения своей внутренней логики»). */
+.participantsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-12);
+  box-sizing: border-box;
+}

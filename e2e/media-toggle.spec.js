@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createRoom, joinRoomByUrl, waitForParticipantCount } from './helpers.js';
+import { createRoom, joinRoomByUrl, waitForParticipantCount, openParticipantsTab } from './helpers.js';
 
 /**
  * E2E-smoke — toggle камеры/микрофона отражается у собеседника (задача 32).
@@ -26,6 +26,11 @@ test.describe('Toggle камеры/микрофона (US-7)', () => {
       await joinRoomByUrl(pageB, roomUrl, 'Борис');
       await waitForParticipantCount(pageA, 2);
       await waitForParticipantCount(pageB, 2);
+
+      // Задача 41: `ParticipantList` теперь внутри сворачиваемой панели
+      // (закрыта по умолчанию) — открываем её на вкладке «Участники» у
+      // Бориса, иначе `participant-list-mic-off` не виден для `toBeVisible()`.
+      await openParticipantsTab(pageB);
 
       const aleksItemOnB = pageB.getByTestId('participant-list-item').filter({ hasText: 'Алекс' });
       const aleksTileOnB = pageB.getByTestId('video-tile').filter({ hasText: 'Алекс' });
