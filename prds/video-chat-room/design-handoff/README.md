@@ -58,7 +58,7 @@
 **Components:**
 
 1. **Надзаголовок** «VIDEO ROOM» — Workbench 13px, `letter-spacing: .3em`, `#B4ADA1`.
-2. **H1** «Позвоните без лишних шагов» — Golos Text 58px/1.02, weight 600,
+2. **H1** «Общайтесь без лишних шагов» — Golos Text 58px/1.02, weight 600,
    `letter-spacing: -.035em`, `#14130F`, `text-wrap: balance`, центр.
 3. **Подзаголовок** «Создайте комнату, отправьте ссылку. До четырёх человек, прямо в браузере.» —
    15px/1.5, `#7A756B`, `max-width: 420px`.

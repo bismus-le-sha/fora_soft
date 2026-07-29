@@ -5,7 +5,7 @@ export const TOP_BAR = {
 
 export const HERO = {
   eyebrow: "VIDEO ROOM",
-  title: "Позвоните без лишних шагов",
+  title: "Общайтесь без лишних шагов",
   subtitle:
     "Создайте комнату, отправьте ссылку. До четырёх человек, прямо в браузере.",
 };
