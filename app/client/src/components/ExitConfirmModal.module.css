@@ -17,6 +17,10 @@
   justify-content: center;
   background: var(--overlay-exit);
   backdrop-filter: blur(6px);
+  /* README §7 attributes «fadeUp .22s ease» to the overlay as a whole; split
+     here into a plain opacity fade on the full-screen backdrop + fadeUp
+     (opacity+translateY) on .card below — a translating full-screen backdrop
+     would look wrong, the card is what should visibly rise. */
   animation: overlayFadeIn 0.22s ease;
 }
 

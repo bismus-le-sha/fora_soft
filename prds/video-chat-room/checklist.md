@@ -318,7 +318,7 @@
 
 ### [x] Задача 42 — Модалка подтверждения выхода (новый компонент) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (новый `components/ExitConfirmModal.jsx` + `.content.js`/`.module.css`, README §7 дословно: оверлей blur+fade, карточка 380px, «Остаться»/«Выйти» нейтрального тона; `RoomScreen.jsx` рендерит его вместо временного гейта задачи 38, контракт `handleStay`/`handleConfirmLeave`/testid'ы не менялись; `RoomScreen.content.js` удалён — контент перенесён в `ExitConfirmModal.content.js`. 392 client + 229 server vitest зелёные, lint чист, все 6 e2e-сценариев зелёные (серийно, `--workers=1`); визуально сверено Playwright-скриншотом модалки — совпадает с README §7)
-- [ ] Code review пройден — `code-reviewer`
+- [x] Code review пройден — `/code-review` (Standards+Spec, PASS; 1 minor находка — комментарий к отклонению от буквального README §7 по цели анимации `fadeUp`, применён)
 - [ ] PR в `develop` открыт
 
 ### [ ] Задача 43 — Баннеры/состояния — вёрстка и сверка копирайта (§9) — critical: NO
