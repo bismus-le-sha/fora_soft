@@ -42,7 +42,10 @@ import { EXIT_CONFIRM } from './RoomScreen.content.js';
  * `VideoGrid` (задача 25) уже выделена в `components/VideoGrid.jsx`; с задачи
  * 31 получает `localStream={media.localStream}`/`remoteStreams={mesh.remoteStreams}`
  * (ранее отложенная проводка, см. отчёт code-review задачи 26) — так плитки
- * реально показывают видео/играют звук, а не только заглушку-силуэт.
+ * реально показывают видео/играют звук, а не только заглушку-силуэт. Задача
+ * 39 (Сцена + Лента, design addendum §3/§5.1) дополнительно получает
+ * `roomUrl` — тот же URL, что «Скопировать ссылку» в `RoomTopBar`, нужен
+ * карточке приглашения при 1 участнике (README §4).
  * `RoomTopBar` (задача 38, замена `ControlBar.jsx` задачи 27) подключена ниже
  * — тумблеры mic/cam вызывают `media.toggleAudio`/`media.toggleVideo` (сами
  * эмитят `media:state`, Design §7.2, см. JSDoc `useMedia.js`), «Копировать
@@ -314,6 +317,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
         selfId={selfId}
         localStream={media.localStream}
         remoteStreams={mesh.remoteStreams}
+        roomUrl={roomUrl}
       />
 
       <ParticipantList participants={participants} selfId={selfId} />

@@ -1,0 +1,233 @@
+/*
+ * VideoGrid.module.css — рабочая область комнаты: Сцена + Лента (задача 39).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md → «4.
+ * Экран комнаты — вариант 1c» → «Рабочая область». Значения берутся из
+ * `styles/tokens.css` там, где для них есть токен; хардкод — только там, где
+ * README/Design Tokens не дают соответствующей переменной (отмечено
+ * комментарием на месте, тот же приём, что `RoomTopBar.module.css`).
+ *
+ * `VideoTile.jsx` сам пока без CSS Module (RESTYLE/RESTRUCTURE вариантов
+ * сцена/лента — задача 40, `после 39`) — стили здесь ограничены контейнерами
+ * Сцены/Ленты, не содержимым плитки.
+ */
+
+.workArea {
+  flex: 1;
+  padding: var(--space-18);
+  display: flex;
+  gap: var(--space-14);
+  box-sizing: border-box;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Сцена (активный участник)
+ * ------------------------------------------------------------------- */
+
+.stageWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  background: var(--surface-2);
+  animation: tileIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stageSelf {
+  border-color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------
+ * Лента справа
+ * ------------------------------------------------------------------- */
+
+.ribbon {
+  width: 292px; /* README §4: сжимается до 208px при открытой панели чата (проводка — задача 41) */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  overflow: hidden;
+  min-height: 0;
+  transition: width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ribbonNarrow {
+  width: 208px;
+}
+
+.ribbonTile {
+  flex: 1 1 0;
+  max-height: 164px;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  border-radius: var(--radius-14);
+  overflow: hidden;
+  border: 1.5px solid transparent;
+}
+
+.ribbonTileSelf {
+  border-color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------
+ * Свободный слот (2–3 участника)
+ * ------------------------------------------------------------------- */
+
+.freeSlot {
+  flex: 1 1 0;
+  min-height: 78px;
+  border: 1px dashed var(--dash);
+  border-radius: var(--radius-14);
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  box-sizing: border-box;
+}
+
+.freeSlotDots {
+  display: inline-flex;
+  gap: 4px; /* README §4: точки 4px — вне скейла токенов */
+}
+
+.freeSlotDot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-999);
+  background: var(--muted-2);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.freeSlotDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.freeSlotDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.freeSlotText {
+  font-size: 12.5px;
+  color: var(--muted-2);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+ * Карточка приглашения (комната из одного участника)
+ * ------------------------------------------------------------------- */
+
+.inviteCard {
+  width: 320px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-16);
+  padding: var(--space-26);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+
+.inviteDots {
+  display: inline-flex;
+  gap: 4px; /* README §4: точки 4px — вне скейла токенов */
+}
+
+.inviteDot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-999);
+  background: var(--muted-2);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.inviteDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.inviteDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.inviteHeading {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.inviteText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.inviteLinkField {
+  border: 1px dashed var(--dash);
+  border-radius: var(--radius-11);
+  background: var(--surface-2);
+  padding: var(--space-10) var(--space-12);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.inviteCopyButton {
+  padding: 13px 18px; /* README §4: вне скейла токенов */
+  border: none;
+  border-radius: var(--radius-11);
+  background: var(--ink);
+  color: var(--on-dark);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------
+ * Анимации (README «Motion»)
+ * ------------------------------------------------------------------- */
+
+@keyframes tileIn {
+  from {
+    opacity: 0;
+    transform: scale(0.965) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 1;
+  }
+}

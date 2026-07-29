@@ -301,10 +301,10 @@
 - [x] Code review пройден — `code-reviewer` (Standards+Spec, 2 параллельных под-агента; Spec — 0 находок; Standards — 1 hard violation (хардкод копирайта гейта выхода в `RoomScreen.jsx` вместо контент-модуля) + 2 minor duplication smells (CSS пилюль-кнопок, JSX mic/cam тумблеров) — все три закрыты в том же PR: новый `RoomScreen.content.js`, общий класс `.pillButton`, компонент `MediaToggleButton`; повторный прогон тестов/lint зелёный)
 - [x] PR в `develop` открыт — [#49](https://github.com/bismus-le-sha/fora_soft/pull/49)
 
-### [ ] Задача 39 — Сцена + Лента (реструктуризация VideoGrid) — critical: NO
-- [ ] Код написан, тесты зелёные — `implementer`
-- [ ] Code review пройден — `code-reviewer`
-- [ ] PR в `develop` открыт
+### [x] Задача 39 — Сцена + Лента (реструктуризация VideoGrid) — critical: NO
+- [x] Код написан, тесты зелёные — `implementer` (`VideoGrid.jsx` реструктурирован в Сцену+Ленту: `computeActiveSpeakerId` (`lib/activeSpeaker.js`, addendum §5.1 — первый чужой по порядку массива, иначе self) определяет, кто на Сцене; остальные — в Ленте (`VideoGrid.module.css`); при 1 участнике — карточка приглашения (`roomUrl`, копирование со фидбеком 2200ms) вместо Ленты; при 2–3 — свободный слот; при 4 — без слота. `VideoTile` не тронут (варианты сцена/лента — задача 40). `RoomScreen.jsx` форвардит `roomUrl` в `VideoGrid`. Визуально сверено в браузере (127.0.0.1:5173, 4 вкладки, отказ getUserMedia — состояния 1/2/2→4 участников подтверждены). 361/361 client + 229/229 server тестов зелёные, lint чист.)
+- [x] Code review пройден — `code-reviewer` (вердикт **PASS**; 361/361 тестов и client-lint зелёные; эвристика/render-условия/stream-проводка/SEC-04 сверены, дифф строго в скоупе 7 файлов, 0 блокеров)
+- [x] PR в `develop` открыт — [#50](https://github.com/bismus-le-sha/fora_soft/pull/50)
 
 ### [ ] Задача 40 — VideoTile — варианты сцена/лента и 3 состояния заглушки — critical: NO
 - [ ] Код написан, тесты зелёные — `implementer`
