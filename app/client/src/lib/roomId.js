@@ -34,3 +34,25 @@
 export function generateRoomId() {
   return globalThis.crypto.randomUUID();
 }
+
+/**
+ * Косметический «код комнаты» для верхней плашки (задача 38, design-ui
+ * addendum §5.2, README §4: `RM-4F2A`).
+ *
+ * SEC-14 (§10.4 TDD, addendum §4/§5.2): это ЧИСТО отображение — не новая
+ * схема идентификаторов. Реальный `roomId` (UUIDv4, §6.4) не меняется, не
+ * заменяется и не изменяется этой функцией; она только форматирует его для
+ * показа. Коллизия отображаемого кода у двух разных комнат допустима — это
+ * декоративная деталь, не идентификатор (см. addendum §5.2).
+ *
+ * @param {string} [roomId] — реальный `roomId` (UUIDv4 из URL/`join`).
+ * @returns {string} `RM-XXXX` — первые 4 hex-символа `roomId` (без дефисов),
+ *   в верхнем регистре; пустая строка, если `roomId` не передан.
+ */
+export function formatRoomCode(roomId) {
+  if (!roomId) {
+    return '';
+  }
+  const code = roomId.replace(/-/g, '').slice(0, 4).toUpperCase();
+  return `RM-${code}`;
+}

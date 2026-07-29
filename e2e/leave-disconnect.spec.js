@@ -8,6 +8,11 @@ import { createRoom, joinRoomByUrl, waitForParticipantCount, chatTexts } from '.
  * SEC-11 (очистка комнаты при выходе последнего — покрыто интеграционными
  * тестами сервера отдельно, здесь — сквозной UX-эффект). Design §11.1/§11.4,
  * §7.3 «leave/disconnect».
+ *
+ * Задача 38: «Выйти» в шапке больше не эмитит `leave` напрямую — открывает
+ * гейт подтверждения (`RoomScreen`, временный неоформленный блок до задачи 42
+ * `ExitConfirmModal.jsx`); реальный `leave` уходит только по клику
+ * `exit-confirm-leave` внутри гейта.
  */
 test.describe('Выход/обрыв участника (US-10)', () => {
   test('клик «Выйти» убирает участника у соседа + системное сообщение в чате', async ({ browser }) => {
@@ -23,6 +28,7 @@ test.describe('Выход/обрыв участника (US-10)', () => {
       await waitForParticipantCount(pageB, 2);
 
       await pageB.getByTestId('leave-button').click();
+      await pageB.getByTestId('exit-confirm-leave').click();
 
       await waitForParticipantCount(pageA, 1);
       const namesOnA = await pageA.getByTestId('participant-list-name').allTextContents();
