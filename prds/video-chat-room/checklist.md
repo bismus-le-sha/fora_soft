@@ -286,10 +286,10 @@
   - Re-review (`code-reviewer`): вердикт **PASS**. Все 3 находки закрыты по существу (grep подтвердил отсутствие `isOverLimit`/`.counterOver`; токен `--pill-bg-inactive` аддитивен, `--on-dark` не переименован; JSX без литералов копирайта). 327/327 client тестов зелёные, lint чист.
 - [x] PR в `develop` открыт — [#46](https://github.com/bismus-le-sha/fora_soft/pull/46)
 
-### [ ] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO
+### [x] Задача 36 — JoinGate — вёрстка и пилюля присутствия — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`JoinGate.jsx` реструктурирован по прецеденту задачи 35 — та же путь-схема/карточка ввода/hint-состояния, копирайт вынесен в `JoinGate.content.js`, CSS Module `JoinGate.module.css` на токенах `tokens.css` (аддитивные `--presence-pill-bg`/`--presence-pill-border`/`--avatar-1`/`--avatar-2`); новая пилюля присутствия «N уже в комнате» (наложенные аватары-инициалы, `Intl.ListFormat('ru')`) — принимает участников через проп `participants` (по умолчанию `[]`, не рендерится), т.к. ни один существующий socket-контракт не отдаёт состав комнаты до `join` (см. JSDoc компонента) — не заводился новый протокольный запрос вне скоупа задачи. Логика валидации имени не менялась. Визуально сверено в браузере (Playwright-скриншоты empty/valid состояний + отдельная проверка presence-пилюли рендером с `participants`); `JoinGate.test.jsx` 8/8 и `App.joinGate.test.jsx` 3/3 зелёные без правок; монорепо 229 server + 328 client зелёные, lint чист)
-- [x] Code review пройден — `code-reviewer`
-- [ ] PR в `develop` открыт
+- [x] Code review пройден — `code-reviewer` (вердикт **PASS** с первого прохода, замечаний нет)
+- [x] PR в `develop` открыт — [#48](https://github.com/bismus-le-sha/fora_soft/pull/48)
 
 ### [ ] Задача 37 — Экран подготовки к доступу (новый компонент) — critical: NO
 - [x] Код написан, тесты зелёные — `implementer` (`PermissionPrep.jsx` + `PermissionPrep.content.js`/`PermissionPrep.module.css` — новый экран подготовки к системному диалогу доступа по README §3: пульс-кольцо, иконка микрофона, три точки и копирайт ожидания; `RoomScreen.jsx` рендерит его пока `mediaReady === false`, то есть между стартом `media.init()` и его resolve/reject, затем скрывает и продолжает прежний поток signaling/join без изменения socket-контракта. Тест: `RoomScreen.test.jsx` проверяет показ до завершения `media.init()`, отсутствие `connect` до готовности медиа и скрытие после. Прогоны: `npx vitest run tests/screens/RoomScreen.test.jsx` — 11/11 зелёные; `npm run test` в `app/client` — 328/328 зелёные; `npm run lint` в `app/client` — чист.)
