@@ -38,3 +38,5 @@ playwright/.cache/
 
 # graphify — сгенерированный вывод (граф, кэш, отчёт), не коммитим
 graphify-out/
+
+.vite/
