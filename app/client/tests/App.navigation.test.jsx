@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import App from '../src/App.jsx';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -82,8 +82,9 @@ describe('App navigation', () => {
 
   it('direct /room/:id visit still renders JoinGate first', async () => {
     globalThis.history.pushState(null, '', '/room/existing-room-id');
-    const { getByText, queryByRole } = render(<App deps={{ room: makeRoomDeps() }} />);
-    await waitFor(() => expect(getByText(/existing-room-id/i)).not.toBeNull());
+    const { container, findByRole, queryByRole } = render(<App deps={{ room: makeRoomDeps() }} />);
+    expect(await findByRole('button', { name: /войти/i })).not.toBeNull();
+    expect(container.textContent).not.toContain('existing-room-id');
     expect(queryByRole('button', { name: /создать комнату/i })).toBeNull();
   });
 });

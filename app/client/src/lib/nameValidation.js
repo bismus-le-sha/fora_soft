@@ -1,5 +1,5 @@
 const NAME_MAX = 30;
-const NAME_ALLOWED_RE = /^[\p{L}\p{N} '\-.]+$/u;
+const NAME_ALLOWED_RE = /^[A-Za-zА-Яа-яЁё0-9 _.-]+$/;
 
 export const NAME_ERROR_CODES = {
   empty: 'empty',

@@ -94,7 +94,7 @@ import { createPeerConnection } from './PeerConnection.js';
  *   addExistingParticipant: (id: string) => void,
  *   onParticipantLeft: (id: string) => void,
  *   handleSignal: (msg: { type: string, from: string, sdp?: string, candidate?: object }) => void,
- *   attachLocalTrack: (track: MediaStreamTrack, stream?: MediaStream) => void,
+ *   attachLocalTrack: (track: MediaStreamTrack, stream?: MediaStream) => Promise<void>,
  *   getVideoSenders: () => RTCRtpSender[],
  *   getRemoteStream: (id: string) => MediaStream | null,
  *   getPeerIds: () => string[],
@@ -126,6 +126,9 @@ export function createMeshManager(deps = {}) {
    * @type {Map<string, RTCRtpSender>}
    */
   const videoSenders = new Map();
+  /** @type {Map<string, RTCRtpSender>} */
+  const audioSenders = new Map();
+  let renegotiationQueue = Promise.resolve();
   /** @type {Set<(id: string, stream: MediaStream | null) => void>} */
   const remoteStreamHandlers = new Set();
 
@@ -139,6 +142,8 @@ export function createMeshManager(deps = {}) {
     const sender = pc.addTrack(track, stream);
     if (track && track.kind === 'video') {
       videoSenders.set(peerId, sender);
+    } else if (track && track.kind === 'audio') {
+      audioSenders.set(peerId, sender);
     }
   }
 
@@ -278,6 +283,7 @@ export function createMeshManager(deps = {}) {
     peers.delete(peerId);
     remoteStreams.delete(peerId);
     videoSenders.delete(peerId);
+    audioSenders.delete(peerId);
     notifyRemoteStream(peerId, null);
   }
 
@@ -345,10 +351,31 @@ export function createMeshManager(deps = {}) {
    * @param {MediaStream} [stream]
    */
   function attachLocalTrack(track, stream) {
+    const existingIndex = localTracks.findIndex(({ track: current }) => current.kind === track.kind);
+    if (existingIndex !== -1) {
+      localTracks[existingIndex] = { track, stream };
+      const senders = track.kind === 'video' ? videoSenders : audioSenders;
+      return Promise.all(
+        Array.from(senders.values(), (sender) =>
+          sender.track === track ? Promise.resolve() : sender.replaceTrack(track),
+        ),
+      ).then(() => undefined);
+    }
     localTracks.push({ track, stream });
     for (const [peerId, pc] of peers.entries()) {
       attachTrackToPeer(pc, peerId, track, stream);
     }
+    const peersToRenegotiate = Array.from(peers.entries());
+    renegotiationQueue = renegotiationQueue.then(() =>
+      Promise.all(
+        peersToRenegotiate.map(([peerId, pc]) =>
+          pc.createOffer().then((sdp) => {
+            emit('signal:offer', { to: peerId, sdp });
+          }),
+        ),
+      ).then(() => undefined),
+    );
+    return renegotiationQueue;
   }
 
   /**

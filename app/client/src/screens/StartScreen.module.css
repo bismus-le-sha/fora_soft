@@ -287,16 +287,10 @@
   transform: translateY(-1px);
 }
 
-.ctaInvalid {
-  cursor: pointer;
-  background: #bdb6aa;
-  color: #f8f5ee;
-}
-
-.ctaInvalid:hover,
-.ctaInvalid:focus-visible {
-  transform: translateY(-1px);
-  background: #a59d90;
+.cta:disabled {
+  cursor: not-allowed;
+  background: var(--line);
+  color: var(--faint);
 }
 
 .ctaIcon {

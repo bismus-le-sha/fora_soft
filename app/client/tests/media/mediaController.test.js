@@ -62,13 +62,22 @@ function fakeMediaDevices() {
 
 describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', () => {
   describe('init()', () => {
-    it('запрашивает audio+video по умолчанию и включает оба тумблера при успехе', async () => {
+    it('по умолчанию не захватывает устройства и начинает с mic/cam off', async () => {
+      const getUserMedia = vi.fn();
+      const controller = createMediaController({ getUserMedia });
+
+      await expect(controller.init()).resolves.toEqual({ audio: false, video: false });
+      expect(getUserMedia).not.toHaveBeenCalled();
+      expect(controller.getLocalStream()).toBeNull();
+    });
+
+    it('запрашивает audio+video, когда оба устройства выбраны', async () => {
       const audio = fakeTrack('audio');
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
       const controller = createMediaController({ getUserMedia });
 
-      const state = await controller.init();
+      const state = await controller.init({ audio: true, video: true });
 
       expect(getUserMedia).toHaveBeenCalledWith({ audio: true, video: true });
       expect(state).toEqual({ audio: true, video: true });
@@ -88,7 +97,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockRejectedValue(notFound);
       const controller = createMediaController({ getUserMedia });
 
-      const state = await controller.init();
+      const state = await controller.init({ audio: true, video: true });
 
       expect(state).toEqual({ audio: false, video: false });
     });
@@ -104,7 +113,10 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
         .mockResolvedValueOnce(fakeStream([secondAudio, secondVideo]));
       const controller = createMediaController({ getUserMedia });
 
-      await Promise.all([controller.init(), controller.init()]);
+      await Promise.all([
+        controller.init({ audio: true, video: true }),
+        controller.init({ audio: true, video: true }),
+      ]);
 
       expect(firstAudio.stop).toHaveBeenCalledTimes(1);
       expect(firstVideo.stop).toHaveBeenCalledTimes(1);
@@ -123,7 +135,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       );
       const controller = createMediaController({ getUserMedia });
 
-      const initPromise = controller.init();
+      const initPromise = controller.init({ audio: true, video: true });
       controller.dispose();
       resolveStream(fakeStream([audio, video]));
       await initPromise;
@@ -141,9 +153,9 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
       const getVideoSenders = vi.fn().mockReturnValue([fakeSender()]);
       const controller = createMediaController({ getUserMedia, getVideoSenders });
-      await controller.init();
+      await controller.init({ audio: true, video: true });
 
-      const state = controller.toggleAudio();
+      const state = await controller.toggleAudio();
 
       expect(audio.enabled).toBe(false);
       expect(state).toEqual({ audio: false, video: true });
@@ -154,22 +166,43 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const audio = fakeTrack('audio');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: true, video: false });
 
-      controller.toggleAudio();
-      const state = controller.toggleAudio();
+      await controller.toggleAudio();
+      const state = await controller.toggleAudio();
 
       expect(audio.enabled).toBe(true);
       expect(state.audio).toBe(true);
     });
 
-    it('без активной дорожки (устройство отсутствовало) — no-op, не бросает', async () => {
-      const getUserMedia = vi.fn().mockRejectedValue(new Error('denied'));
+    it('без активной дорожки запрашивает микрофон и включает его', async () => {
+      const audio = fakeTrack('audio');
+      const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio]));
+      const onLocalTrackAdded = vi.fn();
+      const controller = createMediaController({ getUserMedia, onLocalTrackAdded });
+      await controller.init();
+
+      await expect(controller.toggleAudio()).resolves.toEqual({ audio: true, video: false });
+      expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(controller.getLocalStream().getAudioTracks()).toEqual([audio]);
+      expect(onLocalTrackAdded).toHaveBeenCalledWith(audio, controller.getLocalStream());
+    });
+
+    it('параллельное включение микрофона и камеры не отменяет один из запросов', async () => {
+      const audio = fakeTrack('audio');
+      const video = fakeTrack('video');
+      const getUserMedia = vi.fn(({ audio: wantsAudio }) =>
+        Promise.resolve(fakeStream([wantsAudio ? audio : video])),
+      );
       const controller = createMediaController({ getUserMedia });
       await controller.init();
 
-      expect(() => controller.toggleAudio()).not.toThrow();
-      expect(controller.toggleAudio()).toEqual({ audio: false, video: false });
+      await Promise.all([controller.toggleAudio(), controller.toggleVideo()]);
+
+      expect(controller.getLocalStream().getAudioTracks()).toEqual([audio]);
+      expect(controller.getLocalStream().getVideoTracks()).toEqual([video]);
+      expect(audio.stop).not.toHaveBeenCalled();
+      expect(video.stop).not.toHaveBeenCalled();
     });
   });
 
@@ -182,7 +215,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
       const getVideoSenders = vi.fn().mockReturnValue([senderA, senderB]);
       const controller = createMediaController({ getUserMedia, getVideoSenders });
-      await controller.init();
+      await controller.init({ audio: true, video: true });
 
       const state = await controller.toggleVideo();
 
@@ -196,7 +229,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia }); // deps.getVideoSenders не задан
-      await controller.init();
+      await controller.init({ audio: false, video: true });
 
       await expect(controller.toggleVideo()).resolves.toEqual({ audio: false, video: false });
       expect(video.stop).toHaveBeenCalledTimes(1);
@@ -206,7 +239,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
 
       await controller.toggleVideo();
 
@@ -225,7 +258,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
         .mockResolvedValueOnce(fakeStream([newVideo]));
       const getVideoSenders = vi.fn().mockReturnValue([senderA]);
       const controller = createMediaController({ getUserMedia, getVideoSenders });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       await controller.toggleVideo(); // off
 
       const state = await controller.toggleVideo(); // on again
@@ -242,7 +275,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
         .mockResolvedValueOnce(fakeStream([video]))
         .mockRejectedValueOnce(new Error('Permission denied'));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       await controller.toggleVideo(); // off
 
       await expect(controller.toggleVideo()).resolves.toEqual({ audio: false, video: false });
@@ -262,7 +295,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
             }),
         );
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: true, video: true });
       await controller.toggleVideo();
 
       const enablePromise = controller.toggleVideo();
@@ -288,7 +321,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: true, video: false });
 
       controller.dispose();
 
@@ -304,7 +337,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const onDeviceDenied = vi.fn();
       const controller = createMediaController({ getUserMedia, onDeviceDenied });
 
-      await controller.init();
+      await controller.init({ audio: true, video: false });
 
       expect(onDeviceDenied).toHaveBeenCalledTimes(1);
     });
@@ -315,7 +348,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const onDeviceDenied = vi.fn();
       const controller = createMediaController({ getUserMedia, onDeviceDenied });
 
-      await controller.init();
+      await controller.init({ audio: true, video: false });
 
       expect(onDeviceDenied).not.toHaveBeenCalled();
     });
@@ -324,7 +357,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockRejectedValue(new Error('Permission denied'));
       const onDeviceDenied = vi.fn();
       const controller = createMediaController({ getUserMedia, onDeviceDenied });
-      await controller.init(); // тоже reject — уже 1 вызов
+      await controller.init({ audio: true, video: true }); // тоже reject — уже 1 вызов
       onDeviceDenied.mockClear();
 
       await controller.toggleVideo(); // videoTrack отсутствует → ветка включения
@@ -336,7 +369,10 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockRejectedValue(new Error('denied'));
       const controller = createMediaController({ getUserMedia });
 
-      await expect(controller.init()).resolves.toEqual({ audio: false, video: false });
+      await expect(controller.init({ audio: true, video: true })).resolves.toEqual({
+        audio: false,
+        video: false,
+      });
     });
   });
 
@@ -348,7 +384,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio, video]));
       const getVideoSenders = vi.fn().mockReturnValue([senderA]);
       const controller = createMediaController({ getUserMedia, getVideoSenders });
-      await controller.init();
+      await controller.init({ audio: true, video: true });
       getUserMedia.mockClear();
 
       video.onended();
@@ -364,21 +400,18 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const audio = fakeTrack('audio');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([audio]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: true, video: false });
 
       audio.onended();
 
       expect(controller.getLocalStream().getAudioTracks()).toEqual([]);
-      // toggleAudio() без активной дорожки — no-op (см. существующий тест выше),
-      // возвращаемое состояние подтверждает audio:false.
-      expect(controller.toggleAudio()).toEqual({ audio: false, video: false });
     });
 
     it('onStateChange(cb) уведомляется новым состоянием при потере видео', async () => {
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       const handler = vi.fn();
       controller.onStateChange(handler);
 
@@ -395,7 +428,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
         .mockResolvedValueOnce(fakeStream([initialVideo]))
         .mockResolvedValueOnce(fakeStream([newVideo]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       await controller.toggleVideo(); // off (ручной путь) — videoTrack теперь null
       await controller.toggleVideo(); // on again — videoTrack теперь newVideo
       const handler = vi.fn();
@@ -412,7 +445,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       const broken = vi.fn(() => {
         throw new Error('boom');
       });
@@ -428,7 +461,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const video = fakeTrack('video');
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       const handler = vi.fn();
       const unsubscribe = controller.onStateChange(handler);
       unsubscribe();
@@ -446,7 +479,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
         .mockResolvedValueOnce(fakeStream([initialVideo]))
         .mockResolvedValueOnce(fakeStream([newVideo]));
       const controller = createMediaController({ getUserMedia });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       await controller.toggleVideo(); // off
       await controller.toggleVideo(); // on again -> newVideo
       const handler = vi.fn();
@@ -471,7 +504,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const mediaDevices = fakeMediaDevices();
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia, mediaDevices });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
       video.readyState = 'ended'; // симулируем: track.onended браузер не прислал
 
       mediaDevices._trigger();
@@ -484,7 +517,7 @@ describe('mediaController (Design §3.3/§4.2/§7.2/§8, F-09/F-10/F-19/F-33)', 
       const mediaDevices = fakeMediaDevices();
       const getUserMedia = vi.fn().mockResolvedValue(fakeStream([video]));
       const controller = createMediaController({ getUserMedia, mediaDevices });
-      await controller.init();
+      await controller.init({ audio: false, video: true });
 
       mediaDevices._trigger();
 

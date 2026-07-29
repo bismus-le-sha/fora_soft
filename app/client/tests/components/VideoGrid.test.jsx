@@ -28,31 +28,17 @@ describe('VideoGrid', () => {
     expect(queryByTestId('video-ribbon')).toBeNull();
   });
 
-  it('shows ribbon and free slot when there is an active speaker and room is not full', () => {
+  it('shows ribbon and free slot when room is not full', () => {
     const participants = makeParticipants(3);
-    const { getByTestId } = render(
-      <VideoGrid participants={participants} selfId="p1" speakingParticipantIds={['p2']} />,
-    );
+    const { getByTestId } = render(<VideoGrid participants={participants} selfId="p1" />);
     expect(getByTestId('video-ribbon')).toBeTruthy();
     expect(getByTestId('video-grid-free-slot')).toBeTruthy();
   });
 
-  it('falls back to an even gallery when nobody is speaking', () => {
+  it('puts the first participant other than self on stage', () => {
     const participants = makeParticipants(3);
-    const { getByTestId, queryByTestId, getAllByTestId } = render(
-      <VideoGrid participants={participants} selfId="p1" speakingParticipantIds={[]} />,
-    );
-    expect(getByTestId('video-gallery')).toBeTruthy();
-    expect(queryByTestId('video-ribbon')).toBeNull();
-    expect(getAllByTestId('video-tile')).toHaveLength(3);
-  });
-
-  it('puts the speaking participant on stage', () => {
-    const participants = makeParticipants(3);
-    const { getByTestId } = render(
-      <VideoGrid participants={participants} selfId="p1" speakingParticipantIds={['p3']} />,
-    );
-    expect(getByTestId('video-stage').querySelector('[data-participant-id="p3"]')).not.toBeNull();
+    const { getByTestId } = render(<VideoGrid participants={participants} selfId="p1" />);
+    expect(getByTestId('video-stage').querySelector('[data-participant-id="p2"]')).not.toBeNull();
   });
 
   it('copies invite link and restores button text after timeout', async () => {

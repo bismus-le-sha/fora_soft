@@ -175,8 +175,8 @@
 }
 
 /* ---------------------------------------------------------------------
- * Эквалайзер «ГОВОРИТ» (только вариант «сцена», визуальный, без VAD —
- * addendum §5.1)
+ * Зарезервированный эквалайзер «ГОВОРИТ». Стили сохраняются для будущего
+ * реального VAD, но компонент пока намеренно не рендерит индикатор.
  * ------------------------------------------------------------------- */
 
 .speaking {
@@ -260,9 +260,9 @@
 
 .overlay {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  left: var(--space-12);
+  right: var(--space-12);
+  bottom: var(--space-12);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -270,13 +270,13 @@
 }
 
 .name {
-  max-width: calc(100% - 56px);
+  max-width: calc(100% - var(--space-44) - var(--space-12));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 8px 12px;
+  padding: var(--space-8) var(--space-12);
   border-radius: var(--radius-999);
-  background: rgba(17, 17, 17, 0.68);
+  background: var(--scrim);
   color: var(--on-dark);
   font-size: 13px;
   font-weight: 500;
@@ -286,20 +286,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--space-32);
+  height: var(--space-32);
   border-radius: var(--radius-999);
-  background: rgba(17, 17, 17, 0.68);
+  background: var(--scrim);
   color: var(--on-dark);
   font-size: 15px;
 }
 
 .micBadgeOn {
-  background: rgba(17, 17, 17, 0.68);
+  background: var(--scrim);
 }
 
 .micBadgeOff {
-  background: rgba(180, 85, 43, 0.92);
+  background: var(--accent-ink);
 }
 
 @keyframes dotPulse {

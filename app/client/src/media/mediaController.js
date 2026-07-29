@@ -127,6 +127,9 @@ function defaultGetVideoSenders() {
  *   (Design §3.3 п.2/§7.2 «на всех PeerConnection»/«на всех sender»); в
  *   рантайме — `MeshManager.getVideoSenders()` (задача 23), здесь — только
  *   инъекция для тестируемости и развязки от ещё не написанного модуля.
+ * @param {(track: MediaStreamTrack, stream: MediaStream) => void} [deps.onLocalTrackAdded]
+ *   — сообщает оркестратору о дорожке, впервые захваченной тумблером уже
+ *   после входа без устройств.
  * @param {() => void} [deps.onDeviceDenied] — задача 30: вызывается при
  *   каждом отказе `getUserMedia` (см. JSDoc модуля выше); необязателен —
  *   без него контроллер ведёт себя как раньше (задача 21).
@@ -134,8 +137,8 @@ function defaultGetVideoSenders() {
  *   `devicechange`, только для тестируемости; по умолчанию реальный
  *   `navigator.mediaDevices`.
  * @returns {{
- *   init: () => Promise<{audio: boolean, video: boolean}>,
- *   toggleAudio: () => {audio: boolean, video: boolean},
+ *   init: (initialState?: {audio: boolean, video: boolean}) => Promise<{audio: boolean, video: boolean}>,
+ *   toggleAudio: () => Promise<{audio: boolean, video: boolean}>,
  *   toggleVideo: () => Promise<{audio: boolean, video: boolean}>,
  *   getLocalStream: () => MediaStream | null,
  *   onStateChange: (cb: (state: {audio: boolean, video: boolean}) => void) => () => void,
@@ -145,6 +148,7 @@ function defaultGetVideoSenders() {
 export function createMediaController(deps = {}) {
   const getUserMedia = deps.getUserMedia ?? defaultGetUserMedia;
   const getVideoSenders = deps.getVideoSenders ?? defaultGetVideoSenders;
+  const onLocalTrackAdded = deps.onLocalTrackAdded;
   const onDeviceDenied = deps.onDeviceDenied;
   const mediaDevices = deps.mediaDevices ?? defaultMediaDevices();
 
@@ -159,7 +163,9 @@ export function createMediaController(deps = {}) {
    * предыдущий незавершённый getUserMedia, чтобы поздний результат не мог
    * снова занять устройство после выключения камеры или выхода.
    */
-  let captureVersion = 0;
+  let lifecycleVersion = 0;
+  let audioCaptureVersion = 0;
+  let videoCaptureVersion = 0;
   let deviceListenerAttached = false;
 
   function stopTrack(track) {
@@ -311,8 +317,8 @@ export function createMediaController(deps = {}) {
   attachDeviceListener();
 
   /**
-   * Первичный запрос устройств — audio+video по умолчанию (PRD «При входе в
-   * комнату микрофон и камера должны быть включены по умолчанию»).
+   * Первичный запрос устройств следует сохранённому выбору пользователя.
+   * Без выбора оба устройства выключены и `getUserMedia` не вызывается.
    *
    * Design §8 «Отказ в доступе»/«Нет физических устройств»: reject
    * перехватывается целиком — контроллер остаётся в состоянии «оба off»,
@@ -320,12 +326,25 @@ export function createMediaController(deps = {}) {
    *
    * @returns {Promise<{audio: boolean, video: boolean}>}
    */
-  async function init() {
+  async function init(initialState = { audio: false, video: false }) {
     attachDeviceListener();
-    const requestVersion = ++captureVersion;
+    const requestVersion = ++lifecycleVersion;
+    const constraints = {
+      audio: initialState.audio === true,
+      video: initialState.video === true,
+    };
+
+    if (!constraints.audio && !constraints.video) {
+      stopStream(localStream);
+      localStream = null;
+      audioTrack = null;
+      videoTrack = null;
+      return getMediaState();
+    }
+
     try {
-      const stream = await getUserMedia({ audio: true, video: true });
-      if (requestVersion !== captureVersion) {
+      const stream = await getUserMedia(constraints);
+      if (requestVersion !== lifecycleVersion) {
         stopStream(stream);
         return getMediaState();
       }
@@ -343,7 +362,7 @@ export function createMediaController(deps = {}) {
         attachTrackLossHandler(videoTrack, 'video');
       }
     } catch {
-      if (requestVersion !== captureVersion) {
+      if (requestVersion !== lifecycleVersion) {
         return getMediaState();
       }
       // Design §8: остаться в комнате с выключенными устройствами, не бросать.
@@ -356,15 +375,50 @@ export function createMediaController(deps = {}) {
   }
 
   /**
-   * Design §4.2/PRD F-09: тумблер микрофона — только `track.enabled`, без
-   * renegotiation и без обращения к sender'ам (см. JSDoc модуля). Нет
-   * активной дорожки (устройство отсутствовало/отказано) — no-op.
+   * При существующей дорожке тумблер меняет `track.enabled`. Если комната
+   * была открыта с выключенным микрофоном, включение отдельно запрашивает
+   * только audio-дорожку.
    *
-   * @returns {{audio: boolean, video: boolean}}
+   * @returns {Promise<{audio: boolean, video: boolean}>}
    */
-  function toggleAudio() {
+  async function toggleAudio() {
     if (audioTrack) {
       audioTrack.enabled = !audioTrack.enabled;
+      return getMediaState();
+    }
+
+    const requestVersion = ++audioCaptureVersion;
+    const requestLifecycle = lifecycleVersion;
+    try {
+      const stream = await getUserMedia({ audio: true });
+      if (
+        requestVersion !== audioCaptureVersion ||
+        requestLifecycle !== lifecycleVersion
+      ) {
+        stopStream(stream);
+        return getMediaState();
+      }
+      const newTrack = stream.getAudioTracks()[0] ?? null;
+      if (!newTrack) {
+        stopStream(stream);
+        return getMediaState();
+      }
+      audioTrack = newTrack;
+      attachTrackLossHandler(newTrack, 'audio');
+      if (localStream) {
+        localStream.addTrack(newTrack);
+      } else {
+        localStream = stream;
+      }
+      onLocalTrackAdded?.(newTrack, localStream);
+    } catch {
+      if (
+        requestVersion !== audioCaptureVersion ||
+        requestLifecycle !== lifecycleVersion
+      ) {
+        return getMediaState();
+      }
+      onDeviceDenied?.();
     }
     return getMediaState();
   }
@@ -381,7 +435,7 @@ export function createMediaController(deps = {}) {
    */
   async function toggleVideo() {
     if (videoTrack) {
-      captureVersion += 1;
+      videoCaptureVersion += 1;
       const stoppedTrack = videoTrack;
       videoTrack = null;
       stopTrack(stoppedTrack);
@@ -400,10 +454,14 @@ export function createMediaController(deps = {}) {
       return getMediaState();
     }
 
-    const requestVersion = ++captureVersion;
+    const requestVersion = ++videoCaptureVersion;
+    const requestLifecycle = lifecycleVersion;
     try {
       const stream = await getUserMedia({ video: true });
-      if (requestVersion !== captureVersion) {
+      if (
+        requestVersion !== videoCaptureVersion ||
+        requestLifecycle !== lifecycleVersion
+      ) {
         stopStream(stream);
         return getMediaState();
       }
@@ -422,8 +480,12 @@ export function createMediaController(deps = {}) {
       for (const sender of getVideoSenders()) {
         await sender.replaceTrack(newTrack);
       }
+      onLocalTrackAdded?.(newTrack, localStream);
     } catch {
-      if (requestVersion !== captureVersion) {
+      if (
+        requestVersion !== videoCaptureVersion ||
+        requestLifecycle !== lifecycleVersion
+      ) {
         return getMediaState();
       }
       // Design §8 «Отказ в доступе»: остаться off, не бросать наружу.
@@ -443,7 +505,9 @@ export function createMediaController(deps = {}) {
    * комнаты, симметрично `MeshManager.closeAll()`.
    */
   function dispose() {
-    captureVersion += 1;
+    lifecycleVersion += 1;
+    audioCaptureVersion += 1;
+    videoCaptureVersion += 1;
     detachDeviceListener();
     stopStream(localStream);
     localStream = null;

@@ -13,9 +13,11 @@ describe('StartScreen', () => {
     expect(getCreateButton(getByRole)).not.toBeNull();
   });
 
-  it('marks button as aria-disabled for empty name', () => {
+  it('keeps the empty-name CTA clickable without a forbidden cursor', () => {
     const { getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-    expect(getCreateButton(getByRole).getAttribute('aria-disabled')).toBe('true');
+    const button = getCreateButton(getByRole);
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('keeps button invalid for whitespace-only name', () => {
@@ -27,27 +29,38 @@ describe('StartScreen', () => {
   it('activates button for a valid name', () => {
     const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
     fireEvent.change(getNameInput(container), { target: { value: 'Алекс' } });
-    expect(getCreateButton(getByRole, /создать комнату/i).getAttribute('aria-disabled')).toBe('false');
+    expect(getCreateButton(getByRole).disabled).toBe(false);
+    expect(getCreateButton(getByRole).getAttribute('aria-disabled')).toBe('false');
   });
 
-  it('shows validation for invalid characters', () => {
+  it('shows validation for invalid characters and an overlong name', () => {
     const { container, getByText } = render(<StartScreen onCreate={vi.fn()} />);
-    fireEvent.change(getNameInput(container), { target: { value: 'Alex<' } });
-    expect(getByText(/можно использовать буквы/i)).not.toBeNull();
+    const input = getNameInput(container);
+
+    fireEvent.change(input, { target: { value: 'Alex<' } });
+    expect(getByText(/лишние символы/i)).not.toBeNull();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+
+    fireEvent.change(input, { target: { value: 'А'.repeat(31) } });
+    expect(getByText(/не больше 30 символов/i)).not.toBeNull();
+    expect(input.value).toHaveLength(31);
   });
 
-  it('hovering invalid CTA changes copy instead of showing a disabled cursor state', () => {
-    const { getByRole } = render(<StartScreen onCreate={vi.fn()} />);
-    const button = getCreateButton(getByRole, /создать комнату/i);
+  it('allows underscore and changes invalid CTA copy on hover', () => {
+    const { container, getByRole } = render(<StartScreen onCreate={vi.fn()} />);
+    const button = getCreateButton(getByRole);
     fireEvent.mouseEnter(button);
-    expect(getByRole('button', { name: /как вас зовут/i })).not.toBeNull();
+    expect(getCreateButton(getByRole, /как вас зовут/i)).not.toBeNull();
+
+    fireEvent.change(getNameInput(container), { target: { value: 'Алекс_1' } });
+    expect(getCreateButton(getByRole, /создать комнату/i).getAttribute('aria-disabled')).toBe('false');
   });
 
   it('calls onCreate(name) once with a trimmed valid name', () => {
     const onCreate = vi.fn();
     const { container, getByRole } = render(<StartScreen onCreate={onCreate} />);
     fireEvent.change(getNameInput(container), { target: { value: '  Алекс  ' } });
-    fireEvent.click(getCreateButton(getByRole, /создать комнату/i));
+    fireEvent.click(getCreateButton(getByRole));
     expect(onCreate).toHaveBeenCalledTimes(1);
     expect(onCreate).toHaveBeenCalledWith('Алекс');
   });

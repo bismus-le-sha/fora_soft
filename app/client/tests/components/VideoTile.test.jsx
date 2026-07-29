@@ -52,17 +52,20 @@ describe('VideoTile', () => {
     expect(getByTestId('video-tile-name').textContent).toContain('(я)');
   });
 
-  it('renders speaking indicator only when isSpeaking is true', () => {
-    const speaking = render(
-      <VideoTile participant={participant} stream={{}} mediaState={{ audio: true, video: true }} isSpeaking />,
+  it('does not infer speaking state from being on stage', () => {
+    const stage = render(
+      <VideoTile participant={participant} stream={{}} mediaState={{ audio: true, video: true }} variant="stage" />,
     );
-    expect(speaking.getByTestId('video-tile-speaking').textContent).toContain('ГОВОРИТ');
-    speaking.unmount();
+    expect(stage.queryByTestId('video-tile-speaking')).toBeNull();
+    expect(stage.queryByText('ГОВОРИТ')).toBeNull();
+  });
 
-    const silent = render(
-      <VideoTile participant={participant} stream={{}} mediaState={{ audio: true, video: true }} />,
+  it('treats an unknown audio state as muted until the server confirms it is on', () => {
+    const { getByTestId, queryByTestId } = render(
+      <VideoTile participant={participant} mediaState={{ video: false }} />,
     );
-    expect(silent.queryByTestId('video-tile-speaking')).toBeNull();
+    expect(getByTestId('video-tile-mic-off').textContent).toBe('🔇');
+    expect(queryByTestId('video-tile-mic-on')).toBeNull();
   });
 
   it('renders autoplay fallback button when play() is blocked', async () => {

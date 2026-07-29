@@ -13,6 +13,8 @@ import {
 const ROOM_CAPACITY = 4;
 const INVITE_COPY_FEEDBACK_MS = 2200;
 
+/* eslint-disable react/prop-types -- пропсы описаны контрактами компонентов, PropTypes не подключена. */
+
 function defaultClipboardWrite(text) {
   return globalThis.navigator.clipboard.writeText(text);
 }
@@ -89,7 +91,6 @@ function VideoGrid({
   selfId = null,
   localStream = null,
   remoteStreams = {},
-  speakingParticipantIds = [],
   roomUrl = '',
   isChatOpen = false,
   selfDeviceDenied = false,
@@ -98,14 +99,13 @@ function VideoGrid({
   const count = participants.length;
 
   const activeSpeakerId = useMemo(
-    () => computeActiveSpeakerId(participants, selfId, speakingParticipantIds),
-    [participants, selfId, speakingParticipantIds],
+    () => computeActiveSpeakerId(participants, selfId),
+    [participants, selfId],
   );
   const activeSpeaker = participants.find((participant) => participant.id === activeSpeakerId) ?? null;
   const ribbonParticipants = participants.filter((participant) => participant.id !== activeSpeakerId);
-  const showStageLayout = Boolean(activeSpeaker);
   const showInviteCard = count === 1;
-  const showFreeSlot = count > 1 && count < ROOM_CAPACITY && showStageLayout;
+  const showFreeSlot = count > 1 && count < ROOM_CAPACITY;
 
   function renderTile(participant, variant) {
     const isSelf = participant.id === selfId;
@@ -118,7 +118,6 @@ function VideoGrid({
         mediaState={participant.media ?? {}}
         isSelf={isSelf}
         variant={variant}
-        isSpeaking={speakingParticipantIds.includes(participant.id)}
         noAccess={isSelf && selfDeviceDenied}
       />
     );
@@ -131,23 +130,13 @@ function VideoGrid({
           className={`${styles.stage} ${activeSpeaker && activeSpeaker.id === selfId ? styles.stageSelf : ''}`}
           data-testid="video-stage"
         >
-          {showStageLayout ? (
-            renderTile(activeSpeaker, 'stage')
-          ) : (
-            <div className={styles.gallery} data-testid="video-gallery">
-              {participants.map((participant) => (
-                <div key={participant.id} className={styles.galleryTile}>
-                  {renderTile(participant, 'stage')}
-                </div>
-              ))}
-            </div>
-          )}
+          {activeSpeaker ? renderTile(activeSpeaker, 'stage') : null}
         </div>
       </div>
 
       {count === 0 ? null : showInviteCard ? (
         <InviteCard roomUrl={roomUrl} deps={deps} />
-      ) : showStageLayout ? (
+      ) : (
         <div className={`${styles.ribbon} ${isChatOpen ? styles.ribbonNarrow : ''}`} data-testid="video-ribbon">
           {ribbonParticipants.map((participant) => (
             <div
@@ -159,9 +148,11 @@ function VideoGrid({
           ))}
           {showFreeSlot ? <FreeSlot /> : null}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
 export default VideoGrid;
+
+/* eslint-enable react/prop-types */

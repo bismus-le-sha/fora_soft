@@ -5,10 +5,12 @@ import {
   PLACEHOLDER_NO_ACCESS_LABEL,
   PLACEHOLDER_CONNECTING_SUFFIX,
   PLACEHOLDER_CONNECTING_HINT,
-  SPEAKING_LABEL,
   UNMUTE_LABEL,
   MIC_OFF_ARIA_LABEL,
+  MIC_ON_ARIA_LABEL,
 } from './VideoTile.content.js';
+
+/* eslint-disable react/prop-types -- пропсы описаны контрактами компонентов, PropTypes не подключена. */
 
 function VideoTile({
   participant,
@@ -16,7 +18,6 @@ function VideoTile({
   mediaState = {},
   isSelf = false,
   variant = 'ribbon',
-  isSpeaking = false,
   noAccess = false,
 }) {
   const videoRef = useRef(null);
@@ -132,16 +133,8 @@ function VideoTile({
         </div>
       )}
 
-      {isSpeaking ? (
-        <div className={styles.speaking} data-testid="video-tile-speaking">
-          <span className={styles.speakingBars} aria-hidden="true">
-            <span className={styles.speakingBar} />
-            <span className={styles.speakingBar} />
-            <span className={styles.speakingBar} />
-          </span>
-          <span className={styles.speakingLabel}>{SPEAKING_LABEL}</span>
-        </div>
-      ) : null}
+      {/* «ГОВОРИТ» намеренно не рендерится до появления реального VAD:
+          положение участника на сцене само по себе не означает, что он говорит. */}
 
       {hasRemoteAudio ? <audio ref={audioRef} data-testid="video-tile-audio" autoPlay hidden /> : null}
 
@@ -165,12 +158,12 @@ function VideoTile({
           {isSelf ? ' (я)' : ''}
         </span>
         <span
-          className={`${styles.micBadge} ${mediaState.audio === false ? styles.micBadgeOff : styles.micBadgeOn}`}
-          data-testid={mediaState.audio === false ? 'video-tile-mic-off' : 'video-tile-mic-on'}
+          className={`${styles.micBadge} ${mediaState.audio === true ? styles.micBadgeOn : styles.micBadgeOff}`}
+          data-testid={mediaState.audio === true ? 'video-tile-mic-on' : 'video-tile-mic-off'}
           role="img"
-          aria-label={mediaState.audio === false ? MIC_OFF_ARIA_LABEL : 'Микрофон включен'}
+          aria-label={mediaState.audio === true ? MIC_ON_ARIA_LABEL : MIC_OFF_ARIA_LABEL}
         >
-          {mediaState.audio === false ? '🔇' : '🎤'}
+          {mediaState.audio === true ? '🎤' : '🔇'}
         </span>
       </div>
     </div>
@@ -178,3 +171,5 @@ function VideoTile({
 }
 
 export default VideoTile;
+
+/* eslint-enable react/prop-types */

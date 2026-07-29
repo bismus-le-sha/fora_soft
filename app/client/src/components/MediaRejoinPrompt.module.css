@@ -1,0 +1,112 @@
+.screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: var(--space-24);
+  background-color: var(--bg);
+  background-image: var(--dots-bg-image);
+  background-size: var(--dots-bg-size);
+  background-position: var(--dots-bg-position);
+}
+
+.card {
+  width: min(var(--media-rejoin-card-max), 100%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-18);
+  padding: var(--space-32);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-10);
+  letter-spacing: 0.14em;
+  color: var(--muted-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-28);
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+
+.description {
+  margin: 0;
+  max-width: var(--media-rejoin-copy-max);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.devices {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-10);
+}
+
+.deviceToggle {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: var(--space-14);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-14);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deviceToggleActive {
+  border-color: var(--ink);
+  background: var(--input-bg);
+}
+
+.deviceState {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-10);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.primary {
+  width: 100%;
+  padding: var(--space-14) var(--space-18);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-999);
+  background: var(--ink);
+  color: var(--on-dark);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:hover,
+.deviceToggle:hover {
+  transform: translateY(-1px);
+}

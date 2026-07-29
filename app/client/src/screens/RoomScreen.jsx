@@ -11,7 +11,6 @@ import DeviceDeniedBanner from '../components/errors/DeviceDeniedBanner.jsx';
 import ServerDownBanner from '../components/errors/ServerDownBanner.jsx';
 import PermissionPrep from './PermissionPrep.jsx';
 import styles from './RoomScreen.module.css';
-import { useSpeakingParticipants } from '../hooks/useSpeakingParticipants.js';
 
 /**
  * RoomScreen.jsx — экран комнаты: оркестрация media → mesh → signaling
@@ -26,8 +25,8 @@ import { useSpeakingParticipants } from '../hooks/useSpeakingParticipants.js';
  * `messages` — React state этого компонента; `localStream`/`mediaState` —
  * состояние `useMedia`; `peers`/`remoteStreams` — состояние `useMesh`.
  *
- * Design §7.1 (sequence «Вход и установка mesh»): порядок — `getUserMedia`
- * (audio+video) → `join {roomId, name}` → (для старожилов) `signal:offer` →
+ * Design §7.1 (sequence «Вход и установка mesh»): порядок — инициализация
+ * сохранённого состояния устройств → `join {roomId, name}` → (для старожилов) `signal:offer` →
  * … Здесь это реализовано через `useMedia().init()` на маунте, и только
  * ПОСЛЕ его завершения (успех/неуспех — не важно, Design §8 «остаться в
  * комнате с off») хук сигналинга переходит `enabled: false → true` и
@@ -107,7 +106,15 @@ import { useSpeakingParticipants } from '../hooks/useSpeakingParticipants.js';
  * @param {object} [props.deps.mesh] — форвардится в `useMesh` как `deps`.
  * @param {object} [props.deps.media] — форвардится в `useMedia` как `deps`.
  */
-function RoomScreen({ roomId, name, onLeave, deps = {} }) {
+function RoomScreen({
+  roomId,
+  name,
+  initialMediaState = { audio: false, video: false },
+  onJoined,
+  onMediaStateChange,
+  onLeave,
+  deps = {},
+}) {
   const [mediaReady, setMediaReady] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -169,7 +176,23 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
   const emit = useCallback((event, payload) => emitRef.current(event, payload), []);
 
   const mesh = useMesh({ emit, deps: deps.mesh });
-  const media = useMedia({ getVideoSenders: mesh.getVideoSenders, emit, deps: deps.media });
+  const hasJoinedRef = useRef(false);
+  const attachNewLocalTrack = useCallback(
+    (track, stream) => {
+      if (hasJoinedRef.current) {
+        mesh.ensureMesh().attachLocalTrack(track, stream);
+      }
+    },
+    [mesh],
+  );
+  const media = useMedia({
+    getVideoSenders: mesh.getVideoSenders,
+    onLocalTrackAdded: attachNewLocalTrack,
+    emit,
+    deps: deps.media,
+  });
+  const mediaStateRef = useRef(media.mediaState);
+  mediaStateRef.current = media.mediaState;
 
   /**
    * `handlers` создаётся один раз (`useMemo(..., [])`) — все замыкаемые
@@ -182,24 +205,25 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
     () => ({
       /** Design §6.2 `join:ok` + §7.1 «правило инициативы». */
       onJoinOk(payload) {
+        hasJoinedRef.current = true;
         const initialParticipants = payload?.participants ?? [];
         setSelfId(payload?.selfId ?? null);
         setParticipants(initialParticipants);
         setMessages(payload?.history ?? []);
         setJoinRejected(null);
         setJoinedAt(Date.now());
+        onJoined?.(roomId, name, mediaStateRef.current);
 
         const meshInstance = mesh.ensureMesh(payload?.iceServers);
-        for (const participant of initialParticipants) {
-          if (participant.id !== payload?.selfId) {
-            meshInstance.addExistingParticipant(participant.id);
-          }
-        }
-
         const stream = media.getLocalStream();
         if (stream) {
           for (const track of stream.getTracks()) {
             meshInstance.attachLocalTrack(track, stream);
+          }
+        }
+        for (const participant of initialParticipants) {
+          if (participant.id !== payload?.selfId) {
+            meshInstance.addExistingParticipant(participant.id);
           }
         }
       },
@@ -277,14 +301,14 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
   }, [signaling.emit]);
 
   /**
-   * Design §7.1: «getUserMedia (audio+video по умолчанию)» — первый шаг
+   * Инициализация сохранённого выбора устройств — первый шаг
    * оркестрации, до сетевого входа (см. `enabled: mediaReady` выше). Отказ
    * устройств не блокирует переход дальше (Design §8, `media.init()` сам не
    * бросает — см. `mediaController.js`).
    */
   useEffect(() => {
     let cancelled = false;
-    media.init().then(() => {
+    media.init(initialMediaState).then(() => {
       if (!cancelled) {
         setMediaReady(true);
       }
@@ -297,6 +321,12 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (mediaReady) {
+      onMediaStateChange?.(roomId, media.mediaState);
+    }
+  }, [mediaReady, media.mediaState, onMediaStateChange, roomId]);
+
   /**
    * US-3/US-10 «Копировать ссылку»: тот же маршрут, что разбирает `App.jsx`
    * (`ROOM_PATH = /^\/room\/([^/]+)\/?$/`) — `${origin}/room/${roomId}`.
@@ -305,17 +335,6 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
     () => `${globalThis.location?.origin ?? ''}/room/${roomId}`,
     [roomId],
   );
-  const speakingStreamEntries = useMemo(
-    () =>
-      participants
-        .map((participant) => ({
-          participantId: participant.id,
-          stream: participant.id === selfId ? media.localStream : (mesh.remoteStreams[participant.id] ?? null),
-        }))
-        .filter((entry) => entry.stream),
-    [participants, selfId, media.localStream, mesh.remoteStreams],
-  );
-  const speakingParticipantIds = useSpeakingParticipants(speakingStreamEntries);
   const visibleParticipants = useMemo(
     () =>
       participants.map((participant) =>
@@ -401,7 +420,6 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
 
   return (
     <div className={styles.roomScreen} data-testid="room-screen">
-      <p>Комната: {roomId}</p>
       {joinRejected ? <p role="alert">Не удалось войти в комнату.</p> : null}
       {connectionError ? <ServerDownBanner /> : null}
       {media.deviceDenied ? <DeviceDeniedBanner /> : null}
@@ -426,7 +444,6 @@ function RoomScreen({ roomId, name, onLeave, deps = {} }) {
           selfId={selfId}
           localStream={media.localStream}
           remoteStreams={mesh.remoteStreams}
-          speakingParticipantIds={speakingParticipantIds}
           roomUrl={roomUrl}
           isChatOpen={isChatOpen}
           selfDeviceDenied={media.deviceDenied}

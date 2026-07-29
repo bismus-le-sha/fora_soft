@@ -24,6 +24,7 @@
   --surface: #fbfaf8;
   --surface-2: #f4f2ed;
   --surface-3: #f7f5f1;
+  --input-bg: #ffffff;
   --chip: #edeae3;
   --line: #e2ded5;
   --line-2: #ddd8ce;
@@ -92,6 +93,13 @@
   --font-sans: 'Golos Text', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Workbench', sans-serif;
+  --font-size-10: 10px;
+  --font-size-14: 14px;
+  --font-size-28: 28px;
+
+  /* Размеры окна выбора устройств при повторном входе */
+  --media-rejoin-card-max: 460px;
+  --media-rejoin-copy-max: 390px;
 
   /* ---------------------------------------------------------------------
    * Отступы — скейл 4 / 6 / 8 / 10 / 12 / 14 / 18 / 20 / 24 / 26 / 32 / 44
@@ -132,6 +140,7 @@
 
   /* Фокус */
   --shadow-focus: 0 0 0 3px rgba(20, 19, 15, 0.07);
+  --shadow-error: 0 0 0 3px rgba(194, 74, 34, 0.09);
 
   /* Точечная сетка фона (Стартовый экран/экран входа) */
   --dots-bg-image: radial-gradient(var(--dots) 1px, transparent 1px);
@@ -154,4 +163,3 @@ html {
 body {
   margin: 0;
 }
-

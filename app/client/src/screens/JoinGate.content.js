@@ -18,27 +18,9 @@ export const PATH_STEPS = [
 export const ACTIVE_PATH_STEP_ID = 'name';
 
 export const NAME_CARD = {
-  label: 'Ваше имя',
-  placeholder: 'Например, Аня',
   ctaLabel: 'Войти в комнату',
-  invalidCtaLabel: 'Как вас зовут?',
 };
-
-export const HINTS = {
-  empty: 'Как вас представить остальным?',
-  emptyAfterAttempt: 'Введите имя — его увидят другие участники',
-  invalidChars: 'Можно использовать буквы, цифры, пробелы, дефис, апостроф и точку',
-  tooLong: 'Имя должно быть не длиннее 30 символов',
-  valid: 'Готово — можно заходить',
-};
-
-export const FOOTNOTE = 'Имя хранится только в этой вкладке и удаляется после выхода';
 
 export const PRESENCE = {
   suffix: 'уже в комнате',
 };
-
-export const MEDIA_DENIED_MESSAGE =
-  'Не удалось получить доступ к камере/микрофону — можно продолжить без них, проверьте разрешения браузера.';
-
-export const ROOM_LABEL_PREFIX = 'Комната: ';
