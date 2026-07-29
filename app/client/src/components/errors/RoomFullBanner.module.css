@@ -1,0 +1,103 @@
+/*
+ * RoomFullBanner.module.css — баннер «Комната заполнена» (задача 43, RESTYLE).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §9 —
+ * строка «Комната заполнена» + прототип `design-handoff/prototypes/Видеочат -
+ * экраны и состояния.dc.html` (блок `1d`, первая карточка).
+ */
+
+.wrapper {
+  display: grid;
+  place-items: center;
+  padding: var(--space-32) var(--space-24);
+  box-sizing: border-box;
+  background-color: var(--bg);
+  background-image: var(--dots-bg-image);
+  background-size: var(--dots-bg-size);
+  background-position: var(--dots-bg-position);
+  border-radius: var(--radius-16);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-18);
+  padding: var(--space-26);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+
+.capacity {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  gap: 9px; /* README §9: gap 9px — вне скейла токенов, тот же приём, что ExitConfirmModal.module.css */
+  margin-top: var(--space-8);
+  width: 100%;
+}
+
+.retryButton,
+.ownRoomLink {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-12);
+  border-radius: var(--radius-999);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.retryButton {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+  font-weight: 600;
+}
+
+.retryButton:hover {
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+.ownRoomLink {
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+  display: block;
+}
+
+.ownRoomLink:hover {
+  border-color: var(--ink);
+}

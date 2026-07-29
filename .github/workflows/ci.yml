@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    name: hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Валидация .claude/settings.json
+        run: node -e "require('./.claude/settings.json'); console.log('settings.json OK')"
+
+      - name: Синтаксис pre-merge хука
+        run: node --check .claude/hooks/pre-merge-gate.js
+
+      - name: Нет маркеров конфликтов слияния
+        run: |
+          if git grep -nE '^(<<<<<<<|>>>>>>>)' -- . ':!.github/workflows/**'; then
+            echo "::error::Найдены маркеры конфликтов слияния"
+            exit 1
+          fi
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Playwright сам поднимает сервер+клиент (см. `playwright.config.js`
+      # `webServer`) и гоняет smoke-набор в headless Chromium с
+      # fake-media-флагами (задача 32, Design §11.1/§11.4).
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      # Блокирующий гейт — только прод-дерево: high/critical в поставляемых
+      # зависимостях блокируют мерж (SEC-20); package-lock.json зафиксирован (SEC-19).
+      # Dev-тулинг (eslint и т.п.) в прод-бандл не попадает и оценивается отдельно ниже.
+      - run: npm run audit
+      # Информационный аудит dev-зависимостей — не блокирует мерж, для видимости.
+      - name: audit (dev, non-blocking)
+        continue-on-error: true
+        run: npm run audit:dev

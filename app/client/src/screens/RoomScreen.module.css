@@ -1,0 +1,38 @@
+/*
+ * RoomScreen.module.css — раскладка экрана комнаты: верхняя плашка + строка
+ * контента (Сцена/Лента + сворачиваемая панель Чат/Участники), задача 41.
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §4 «Экран
+ * комнаты — вариант 1c» (layout сверху вниз). `VideoGrid.module.css`
+ * (`.workArea { flex: 1 }`, задача 39) и `ChatSidePanel.module.css`
+ * (анимация ширины, задача 41) рассчитаны на то, что их общий родитель —
+ * flex-строка на всю оставшуюся высоту; этот файл заводит эту строку.
+ */
+
+.roomScreen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+.joinErrorScreen {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.joinErrorScreen > * {
+  width: 100%;
+}

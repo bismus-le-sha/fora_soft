@@ -1,0 +1,307 @@
+/*
+ * RoomTopBar.module.css — верхняя плашка комнаты (задача 38).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md → «4. Экран
+ * комнаты — вариант 1c» → «Верхняя плашка». Значения берутся из
+ * `styles/tokens.css` там, где для них есть токен; хардкод — только там, где
+ * README/Design Tokens не дают соответствующей переменной (отмечено
+ * комментарием на месте, тот же приём, что `JoinGate.module.css`/
+ * `StartScreen.module.css`).
+ */
+
+.topBar {
+  height: 60px;
+  padding: 0 var(--space-20);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 20;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+/* ---------------------------------------------------------------------
+ * Лого-маркер (8 точек вокруг пустого центра)
+ * ------------------------------------------------------------------- */
+
+.brandMark {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-8); /* README: 7px — ближайший токен 8px, разница не читается на 24px блоке */
+  background: var(--ink);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  place-items: center;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.brandMarkDot {
+  width: 3px;
+  height: 3px;
+  border-radius: var(--radius-999);
+  background: var(--bg);
+}
+
+/* Центр 8-точечной сетки 3×3 остаётся пустым (README: «внутри 8 точек… вокруг
+   пустого центра») — прячем среднюю ячейку grid (5-й элемент). */
+.brandMarkDot:nth-child(5) {
+  visibility: hidden;
+}
+
+.roomCode {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: #dfdad1; /* README §4: цвет разделителя плашки, отдельного токена нет */
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 7px; /* README §4: «gap: 7px» — вне скейла токенов */
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-999);
+  background: var(--ok);
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Кнопки медиа (mic/cam) — круглые 38px
+ * ------------------------------------------------------------------- */
+
+.mediaButton {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-999);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: var(--chip);
+  color: var(--ink);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.mediaButton[aria-pressed='false'] {
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+}
+
+.mediaIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------------------------------------------------------------------
+ * «Скопировать ссылку» + тост
+ * ------------------------------------------------------------------- */
+
+.copyLinkWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/*
+ * Общая форма «пилюльных» кнопок шапки («Скопировать ссылку», «Чат»,
+ * «Выйти» — README §4): flex-строка с иконкой/текстом, скруглённые края,
+ * поверхностный фон, sans 13px/500. Различаются только padding (у каждой
+ * свой, вне скейла токенов) и hover/pressed-состояния — они остаются в
+ * специфичных классах ниже, комбинируются с этим в JSX.
+ */
+.pillButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-999);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.copyLinkButton {
+  padding: 9px 15px 9px 11px; /* README §4: точные значения вне скейла токенов */
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.copyLinkButton:hover {
+  border-color: var(--ink);
+  background: #fff; /* README §4: hover-фон белый, отдельного токена нет (см. прецедент JoinGate/StartScreen .input) */
+}
+
+.copyLinkIconBox {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-6);
+  background: var(--chip);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.copyLinkIcon {
+  width: 13px;
+  height: 13px;
+}
+
+.copyToast {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-14);
+  border-radius: var(--radius-999);
+  background: var(--ink);
+  color: var(--on-dark);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: toastIn 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.copyToastIcon {
+  width: 12px;
+  height: 12px;
+  color: var(--ok-bright);
+  flex-shrink: 0;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Счётчик участников
+ * ------------------------------------------------------------------- */
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px; /* README §4: «gap: 7px» — вне скейла токенов */
+  padding: var(--space-8) var(--space-14) 9px; /* README: «padding: 9px 14px» */
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-999);
+  background: var(--surface);
+  color: var(--body);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.counterIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * «Чат» + бейдж непрочитанных
+ * ------------------------------------------------------------------- */
+
+.chatButton,
+.chatButtonOpen {
+  position: relative;
+  padding: 9px 15px; /* README §4: вне скейла токенов */
+}
+
+.chatButtonOpen {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-dark);
+}
+
+.chatBadge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px; /* README §4: вне скейла токенов */
+  border-radius: var(--radius-999);
+  background: var(--accent);
+  color: #fff; /* README §4: бейдж #FFFFFF — отличается от --on-dark (#F6F4F0), намеренно не переиспользуется */
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  display: grid;
+  place-items: center;
+  animation: badgeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes badgeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * «Выйти»
+ * ------------------------------------------------------------------- */
+
+.leaveButton {
+  padding: 9px 16px 9px 13px; /* README §4: вне скейла токенов */
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.leaveButton:hover {
+  border-color: var(--ink);
+  background: #fff; /* README §4: hover-фон белый, см. .copyLinkButton:hover выше */
+}
+
+.leaveIcon {
+  width: 15px;
+  height: 15px;
+}

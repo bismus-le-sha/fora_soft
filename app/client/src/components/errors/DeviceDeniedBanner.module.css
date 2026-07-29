@@ -1,0 +1,53 @@
+/*
+ * DeviceDeniedBanner.module.css — баннер отказа доступа к камере/микрофону
+ * (задача 43, RESTYLE).
+ *
+ * Источник значений: prds/video-chat-room/design-handoff/README.md §9 —
+ * строка «Отказ в доступе» + прототип `design-handoff/prototypes/Видеочат -
+ * экраны и состояния.dc.html` (блок `1d`, третья карточка, верхняя плашка).
+ */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-14);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius-12);
+}
+
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--warn-text);
+}
+
+.message {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--warn-text);
+}
+
+.fix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  margin-top: var(--space-10);
+  padding: 11px 14px; /* README §9: 11px/14px — вне скейла токенов */
+  border: 1px dashed var(--dash);
+  border-radius: var(--radius-11);
+  font-size: 13px;
+  color: var(--body);
+}
+
+.fixLabel {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}

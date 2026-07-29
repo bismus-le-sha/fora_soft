@@ -1,0 +1,29 @@
+{
+  "name": "video-chat-room",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Видеочат-комната — монорепо (server: Express+Socket.io, client: Vite+React).",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "app/server",
+    "app/client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=client",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "lint": "npm run lint --workspaces --if-present",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "audit:dev": "npm audit --audit-level=high"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0",
+    "concurrently": "^9.1.0"
+  }
+}
