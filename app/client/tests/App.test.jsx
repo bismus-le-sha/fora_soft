@@ -21,7 +21,7 @@ describe('App: preflight-гейт поддержки WebRTC (задача 17)', 
   it('окружение без RTCPeerConnection: рендерится баннер «не поддерживается», #app (комната) не рендерится', () => {
     const { container, getByRole } = render(<App />);
 
-    expect(getByRole('alert').textContent).toContain('WebRTC не поддерживается');
+    expect(getByRole('alert').textContent).toContain('Этот браузер не умеет видеозвонки');
     expect(container.querySelector('#app')).toBeNull();
   });
 

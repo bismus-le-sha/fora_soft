@@ -18,7 +18,7 @@ import { createRoom, joinRoomByUrl, waitForParticipantCount } from './helpers.js
  */
 const ROOM_CAPACITY = 4;
 test.describe(`room-full (лимит ${ROOM_CAPACITY} участников, US-5)`, () => {
-  test(`${ROOM_CAPACITY + 1}-й участник получает join:rejected{room-full} и баннер с кнопкой «Повторить вход»`, async ({
+  test(`${ROOM_CAPACITY + 1}-й участник получает join:rejected{room-full} и баннер с кнопкой «Попробовать снова»`, async ({
     browser,
   }) => {
     test.setTimeout(60_000);
@@ -51,7 +51,7 @@ test.describe(`room-full (лимит ${ROOM_CAPACITY} участников, US-5
 
       const banner = overflowPage.getByTestId('room-full-banner');
       await expect(banner).toBeVisible();
-      await expect(banner.getByRole('button', { name: 'Повторить вход' })).toBeVisible();
+      await expect(banner.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
 
       // Состав комнаты не выросло — лишний участник не попал в список ни у кого.
       await waitForParticipantCount(firstPage, ROOM_CAPACITY);

@@ -1,5 +1,5 @@
 /**
- * RoomFullBanner.jsx — баннер «Комната заполнена» (задача 30).
+ * RoomFullBanner.jsx — баннер «Комната заполнена» (задача 30, RESTYLE в задаче 43).
  *
  * Design §8 (Error Handling & Edge Cases), строка «Комната заполнена
  * (5-й)»: «Сервер → Клиент | `join:rejected{room-full}` → баннер «Комната
@@ -22,23 +22,44 @@
  * `socket.data.roomId` уже установлен предыдущим УСПЕШНЫМ входом — при
  * `room-full` он не установлен).
  *
+ * Задача 43 (RESTYLE, addendum §3): вёрстка + дословная сверка копирайта с
+ * README §9, вынесенного в `RoomFullBanner.content.js`. README §9 «Копирайт»
+ * для этого состояния включает лейблы ОБЕИХ кнопок — «Попробовать снова» /
+ * «Своя комната». Вторая кнопка — обычная навигационная ссылка `<a href="/">`
+ * (полная перезагрузка на стартовый экран), не новый проп/состояние: логика
+ * компонентов задач 17/30 (единственный колбэк `onRetry`) не меняется, как
+ * того требует критерий приёмки задачи 43.
+ *
  * Requirements: F-33, F-35, F-36, US-5, US-12, US-13, SEC-15. Design: §4.2, §8.
  */
+import styles from './RoomFullBanner.module.css';
+import { ROOM_FULL } from './RoomFullBanner.content.js';
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
    (см. ParticipantList.jsx/ChatPanel.jsx), PropTypes не подключена (Design §3.2/§10.5 SEC-19). */
 
 /**
  * @param {object} [props]
- * @param {() => void} [props.onRetry] — обработчик клика «Повторить вход».
+ * @param {() => void} [props.onRetry] — обработчик клика «Попробовать снова».
  */
 function RoomFullBanner({ onRetry } = {}) {
   return (
-    <div role="alert" data-testid="room-full-banner">
-      <p>Комната заполнена</p>
-      <button type="button" onClick={onRetry}>
-        Повторить вход
-      </button>
+    <div className={styles.wrapper} role="alert" data-testid="room-full-banner">
+      <div className={styles.card}>
+        <p className={styles.capacity} aria-hidden="true">
+          {ROOM_FULL.capacityLabel}
+        </p>
+        <h2 className={styles.title}>{ROOM_FULL.title}</h2>
+        <p className={styles.description}>{ROOM_FULL.description}</p>
+        <div className={styles.actions}>
+          <button type="button" className={styles.retryButton} onClick={onRetry}>
+            {ROOM_FULL.retryLabel}
+          </button>
+          <a className={styles.ownRoomLink} href="/">
+            {ROOM_FULL.ownRoomLabel}
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
