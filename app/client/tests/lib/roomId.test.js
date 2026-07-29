@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { generateRoomId } from '../../src/lib/roomId.js';
+import { generateRoomId, formatRoomCode } from '../../src/lib/roomId.js';
 
 /**
  * Задача 19.1 [critical] — Энтропия room-id (SEC-14). Test-first (red).
@@ -103,5 +103,41 @@ describe('generateRoomId — энтропия room-id (SEC-14, Design §6.4/§10
       const uniqueDeltas = new Set(deltas.map(String));
       expect(uniqueDeltas.size).toBeGreaterThan(1);
     });
+  });
+});
+
+/**
+ * Задача 38 — `formatRoomCode` (design-ui addendum §5.2, README §4: «код
+ * комнаты `RM-4F2A`»). Критерий приёмки: покрыт юнит-тестом, не искажает и
+ * не заменяет реальный `roomId`, используемый в `join`/URL (SEC-14).
+ */
+describe('formatRoomCode — косметический код комнаты (addendum §5.2, SEC-14)', () => {
+  it('форматирует UUIDv4 как `RM-` + первые 4 hex-символа без дефисов, в верхнем регистре', () => {
+    expect(formatRoomCode('4f2a9c11-70e2-4b3a-9c2d-1a2b3c4d5e6f')).toBe('RM-4F2A');
+  });
+
+  it('приводит к верхнему регистру даже если исходный roomId уже содержит буквы в нижнем регистре', () => {
+    expect(formatRoomCode('ab12cdef-0000-4000-8000-000000000000')).toBe('RM-AB12');
+  });
+
+  it('пустой/отсутствующий roomId → пустая строка (не бросает, не подставляет плейсхолдер)', () => {
+    expect(formatRoomCode('')).toBe('');
+    expect(formatRoomCode(undefined)).toBe('');
+  });
+
+  it('SEC-14: не мутирует и не возвращает исходный roomId — вход как ключ поиска использовать нельзя', () => {
+    const roomId = '11111111-2222-4333-8444-555555555555';
+    const code = formatRoomCode(roomId);
+
+    expect(roomId).toBe('11111111-2222-4333-8444-555555555555'); // не мутирован
+    expect(code).not.toBe(roomId);
+    expect(code).not.toContain(roomId);
+    expect(code.length).toBe(7); // 'RM-' + 4 символа, не полный UUID
+  });
+
+  it('два разных roomId с одинаковыми первыми 4 hex-символами дают одинаковый код — допустимая коллизия отображения (addendum §5.2), не идентификатор', () => {
+    const a = formatRoomCode('4f2a1111-0000-4000-8000-000000000000');
+    const b = formatRoomCode('4f2a2222-0000-4000-8000-000000000000');
+    expect(a).toBe(b);
   });
 });

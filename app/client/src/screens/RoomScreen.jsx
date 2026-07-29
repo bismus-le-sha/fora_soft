@@ -3,7 +3,7 @@ import { useSignaling } from '../hooks/useSignaling.js';
 import { useMesh } from '../hooks/useMesh.js';
 import { useMedia } from '../hooks/useMedia.js';
 import VideoGrid from '../components/VideoGrid.jsx';
-import ControlBar from '../components/ControlBar.jsx';
+import RoomTopBar from '../components/RoomTopBar.jsx';
 import ParticipantList from '../components/ParticipantList.jsx';
 import ChatPanel from '../components/ChatPanel.jsx';
 import RoomFullBanner from '../components/errors/RoomFullBanner.jsx';
@@ -42,12 +42,16 @@ import PermissionPrep from './PermissionPrep.jsx';
  * 31 получает `localStream={media.localStream}`/`remoteStreams={mesh.remoteStreams}`
  * (ранее отложенная проводка, см. отчёт code-review задачи 26) — так плитки
  * реально показывают видео/играют звук, а не только заглушку-силуэт.
- * `ControlBar` (задача 27) подключена ниже — тумблеры mic/cam вызывают
- * `media.toggleAudio`/`media.toggleVideo` (сами эмитят `media:state`, Design
- * §7.2, см. JSDoc `useMedia.js`), «Выйти» эмитит `signaling.emit('leave')`
- * (Design §7.3 `leave {}`, без payload), «Копировать ссылку» получает
- * `roomUrl` в формате `${window.location.origin}/room/${roomId}` (тот же
- * маршрут, что разбирает `App.jsx` `ROOM_PATH`).
+ * `RoomTopBar` (задача 38, замена `ControlBar.jsx` задачи 27) подключена ниже
+ * — тумблеры mic/cam вызывают `media.toggleAudio`/`media.toggleVideo` (сами
+ * эмитят `media:state`, Design §7.2, см. JSDoc `useMedia.js`), «Копировать
+ * ссылку» получает `roomUrl` в формате `${window.location.origin}/room/${roomId}`
+ * (тот же маршрут, что разбирает `App.jsx` `ROOM_PATH`). «Выйти» БОЛЬШЕ НЕ
+ * эмитит `leave` напрямую (критерий приёмки задачи 38) — вызывает
+ * `handleRequestLeave`, который открывает `isExitConfirmOpen` (временный
+ * неоформленный гейт подтверждения ниже, пока задача 42 не подключит
+ * полноценную `ExitConfirmModal.jsx`, README §7); только подтверждение внутри
+ * него реально эмитит `leave`.
  * `ParticipantList` (задача 29) подключена ниже — рендерит `participants` тем
  * же React state, что обновляют `onParticipantJoined`/`onParticipantLeft`/
  * `onMediaState` выше (F-16, US-9, Design §6.2), сам по себе презентационный
@@ -97,6 +101,15 @@ function RoomScreen({ roomId, name, deps = {} }) {
   const [messages, setMessages] = useState([]);
   const [joinRejected, setJoinRejected] = useState(null);
   const [connectionError, setConnectionError] = useState(null);
+  /** Addendum §5.3: момент успешного `join:ok`, старт таймера звонка `RoomTopBar`. */
+  const [joinedAt, setJoinedAt] = useState(null);
+  /**
+   * Задача 38 (критерий приёмки): гейт перед реальным `leave` — «Выйти»
+   * больше не эмитит его напрямую. Задача 42 заменит временный блок ниже на
+   * полноценную `ExitConfirmModal.jsx` (README §7), не меняя этот контракт
+   * (`isExitConfirmOpen`/`handleRequestLeave`/`handleStay`/`handleConfirmLeave`).
+   */
+  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
 
   /**
    * Разрывает циклическую зависимость объявлений: `useMesh`/`useMedia`
@@ -128,6 +141,7 @@ function RoomScreen({ roomId, name, deps = {} }) {
         setParticipants(initialParticipants);
         setMessages(payload?.history ?? []);
         setJoinRejected(null);
+        setJoinedAt(Date.now());
 
         const meshInstance = mesh.ensureMesh(payload?.iceServers);
         for (const participant of initialParticipants) {
@@ -235,8 +249,23 @@ function RoomScreen({ roomId, name, deps = {} }) {
     [roomId],
   );
 
-  /** Design §7.3 `leave {}` — без payload, клиент явно эмитит выход. */
-  const handleLeave = useCallback(() => {
+  /**
+   * Задача 38 (критерий приёмки): клик «Выйти» в шапке открывает гейт
+   * подтверждения, НЕ эмитит `leave` напрямую (Design §7.3 `leave {}` —
+   * реально эмитится только из `handleConfirmLeave` ниже).
+   */
+  const handleRequestLeave = useCallback(() => {
+    setIsExitConfirmOpen(true);
+  }, []);
+
+  /** Закрыть гейт без выхода («Остаться»). */
+  const handleStay = useCallback(() => {
+    setIsExitConfirmOpen(false);
+  }, []);
+
+  /** Подтверждение внутри гейта — только отсюда реально уходит `leave {}` (Design §7.3). */
+  const handleConfirmLeave = useCallback(() => {
+    setIsExitConfirmOpen(false);
     emit('leave');
   }, [emit]);
 
@@ -268,19 +297,22 @@ function RoomScreen({ roomId, name, deps = {} }) {
       {connectionError ? <ServerDownBanner /> : null}
       {media.deviceDenied ? <DeviceDeniedBanner /> : null}
 
+      <RoomTopBar
+        roomId={roomId}
+        joinedAt={joinedAt}
+        mediaState={media.mediaState}
+        onToggleAudio={media.toggleAudio}
+        onToggleVideo={media.toggleVideo}
+        roomUrl={roomUrl}
+        participantCount={participants.length}
+        onRequestLeave={handleRequestLeave}
+      />
+
       <VideoGrid
         participants={participants}
         selfId={selfId}
         localStream={media.localStream}
         remoteStreams={mesh.remoteStreams}
-      />
-
-      <ControlBar
-        mediaState={media.mediaState}
-        onToggleAudio={media.toggleAudio}
-        onToggleVideo={media.toggleVideo}
-        onLeave={handleLeave}
-        roomUrl={roomUrl}
       />
 
       <ParticipantList participants={participants} selfId={selfId} />
@@ -290,6 +322,25 @@ function RoomScreen({ roomId, name, deps = {} }) {
         selfId={selfId}
         onSend={(text) => emit('chat:send', { text })}
       />
+
+      {/*
+       * Задача 38 — временный неоформленный гейт подтверждения выхода (см.
+       * JSDoc `isExitConfirmOpen` выше). Задача 42 заменит это на
+       * `ExitConfirmModal.jsx` (README §7: карточка, «Остаться»/«Выйти»,
+       * нейтральный тон) — контракт колбэков (`handleStay`/`handleConfirmLeave`)
+       * не изменится.
+       */}
+      {isExitConfirmOpen ? (
+        <div role="dialog" aria-modal="true" data-testid="exit-confirm">
+          <p>Выйти из комнаты?</p>
+          <button type="button" data-testid="exit-confirm-stay" onClick={handleStay}>
+            Остаться
+          </button>
+          <button type="button" data-testid="exit-confirm-leave" onClick={handleConfirmLeave}>
+            Выйти
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

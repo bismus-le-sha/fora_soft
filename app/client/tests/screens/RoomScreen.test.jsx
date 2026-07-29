@@ -273,6 +273,46 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
     });
   });
 
+  describe('Задача 38 — гейт «Выйти» (критерий приёмки: клик больше НЕ эмитит leave напрямую)', () => {
+    it('клик «Выйти» в шапке открывает гейт подтверждения и НЕ эмитит leave', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+      signaling.api.emit.mockClear();
+
+      expect(queryByTestId('exit-confirm')).toBeNull();
+
+      fireEvent.click(getByTestId('leave-button'));
+
+      expect(getByTestId('exit-confirm')).toBeTruthy();
+      expect(signaling.api.emit).not.toHaveBeenCalledWith('leave');
+    });
+
+    it('«Остаться» закрывает гейт без эмита leave', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      fireEvent.click(getByTestId('leave-button'));
+      signaling.api.emit.mockClear();
+      fireEvent.click(getByTestId('exit-confirm-stay'));
+
+      expect(queryByTestId('exit-confirm')).toBeNull();
+      expect(signaling.api.emit).not.toHaveBeenCalledWith('leave');
+    });
+
+    it('подтверждение «Выйти» внутри гейта закрывает его и эмитит leave', async () => {
+      const { getByTestId, queryByTestId, signaling } = renderRoomScreen();
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      fireEvent.click(getByTestId('leave-button'));
+      fireEvent.click(getByTestId('exit-confirm-leave'));
+
+      expect(queryByTestId('exit-confirm')).toBeNull();
+      // Design §7.3 `leave {}` — без payload; обёртка `emit` в RoomScreen всегда
+      // форвардит второй аргумент, поэтому фактический вызов — `('leave', undefined)`.
+      expect(signaling.api.emit).toHaveBeenCalledWith('leave', undefined);
+    });
+  });
+
   describe('Задача 30 — баннеры ошибок и состояний (Design §8, F-33/F-35/F-36, US-5/US-12/US-13, SEC-15)', () => {
     it('join:rejected{room-full} → RoomFullBanner с кнопкой «Повторить вход», повторный клик повторно эмитит join', async () => {
       const { getByTestId, getByRole, signaling } = renderRoomScreen();

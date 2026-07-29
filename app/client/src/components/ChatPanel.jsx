@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
  * (SEC-04) + автопрокрутка». `RoomScreen` подписывается на `chat:message`/
  * `chat:system` и передаёт накопленный массив сюда через `messages` — сам
  * сокет ChatPanel не трогает (тот же презентационный паттерн, что
- * `ControlBar`/`VideoTile`, задачи 26/27).
+ * `RoomTopBar`/`VideoTile`, задачи 26/27).
  * Design §10.1 SEC-04: «React рендерит пользовательский контент только через
  * `{value}` (текстовые узлы) … `dangerouslySetInnerHTML` запрещён (lint-
  * правило)». Здесь `authorName`/`text` рендерятся ИСКЛЮЧИТЕЛЬНО как `{value}`
@@ -49,7 +49,7 @@ function systemText(message) {
 }
 
 /* eslint-disable react/prop-types -- проект типизирует пропсы JSDoc-аннотациями
-   (см. VideoGrid.jsx/VideoTile.jsx/ControlBar.jsx/JoinGate.jsx/StartScreen.jsx),
+   (см. VideoGrid.jsx/VideoTile.jsx/RoomTopBar.jsx/JoinGate.jsx/StartScreen.jsx),
    PropTypes не подключена (Design §3.2/§10.5 SEC-19). */
 
 /**
