@@ -67,7 +67,7 @@
 
 .bubble {
   max-width: 88%;
-  padding: 10px var(--space-14); /* README §5: «padding: 10px 13px», 10 — вне скейла токенов */
+  padding: 10px 13px; /* README §5: «padding: 10px 13px», оба значения вне скейла токенов */
   box-sizing: border-box;
   font-size: 14px;
   line-height: 1.4;
