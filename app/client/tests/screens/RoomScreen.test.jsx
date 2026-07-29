@@ -105,7 +105,7 @@ function deferred() {
  *   контролируемый результат `media.init()` для проверки промежуточного
  *   экрана подготовки к доступу.
  */
-function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, mediaInitResult, onMediaDeps } = {}) {
+function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, mediaInitResult, onMediaDeps, onLeave } = {}) {
   const signaling = makeFakeSignaling();
   const mesh = makeFakeMesh();
   const media = makeFakeMedia(mediaState, mediaInitResult);
@@ -114,6 +114,7 @@ function renderRoomScreen({ roomId = 'room-1', name = 'Алекс', mediaState, 
     <RoomScreen
       roomId={roomId}
       name={name}
+      onLeave={onLeave}
       deps={{
         signaling: { createSignalingClient: () => signaling.api },
         mesh: { createMeshManager: () => mesh },
@@ -310,6 +311,30 @@ describe('RoomScreen (Design §4.2/§5.3/§7.1, критерий приёмки 
       // Design §7.3 `leave {}` — без payload; обёртка `emit` в RoomScreen всегда
       // форвардит второй аргумент, поэтому фактический вызов — `('leave', undefined)`.
       expect(signaling.api.emit).toHaveBeenCalledWith('leave', undefined);
+    });
+
+    it('баг-фикс задачи 42: подтверждение «Выйти» вызывает props.onLeave — иначе пользователь визуально остаётся на экране комнаты', async () => {
+      const onLeave = vi.fn();
+      const { getByTestId, signaling } = renderRoomScreen({ onLeave });
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      fireEvent.click(getByTestId('leave-button'));
+      expect(onLeave).not.toHaveBeenCalled();
+
+      fireEvent.click(getByTestId('exit-confirm-leave'));
+
+      expect(onLeave).toHaveBeenCalledTimes(1);
+    });
+
+    it('«Остаться» не вызывает props.onLeave', async () => {
+      const onLeave = vi.fn();
+      const { getByTestId, signaling } = renderRoomScreen({ onLeave });
+      await waitFor(() => expect(signaling.api.emit).toHaveBeenCalledWith('join', expect.any(Object)));
+
+      fireEvent.click(getByTestId('leave-button'));
+      fireEvent.click(getByTestId('exit-confirm-stay'));
+
+      expect(onLeave).not.toHaveBeenCalled();
     });
   });
 
